@@ -9,7 +9,7 @@ Description: This package implements the cn.mops algorithm
     as well as functions for handling quantitative NGS data
 biocViews: HighThroughputSequencing, Sequencing,
     Bioinformatics, CopyNumberVariants
-Version: 0.99.0
+Version: 1.0.0
 Date: 2011-10-08
 URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
 Depends:
