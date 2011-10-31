@@ -1,0 +1,39 @@
+Package: cn.mops
+Maintainer: Guenter Klambauer <cn.mops@bioinf.jku.at>
+Author: Guenter Klambauer
+License: LGPL (>= 2.0)
+Type: Package
+Title: cn.mops - Mixture of Poisson for CNV detection in
+    NGS data
+Description: This package implements the cn.mops algorithm
+    as well as functions for handling quantitative NGS data
+biocViews: HighThroughputSequencing, Sequencing,
+    Bioinformatics, CopyNumberVariants
+Version: 0.99.0
+Date: 2011-10-08
+URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
+Depends:
+    R (>= 2.13),
+    Biobase,
+    IRanges,
+    GenomicRanges
+Imports:
+    Rsamtools,
+    methods,
+    graphics
+Suggests:
+    snow,
+    DNAcopy
+LazyLoad: yes
+Collate:
+    'AllClasses.R'
+    'cn.mops.R'
+    'getReadCountsFromBAM.R'
+    'normalizeChromosomes.R'
+    'normalizeGenome.R'
+    'plot-methods.R'
+    'show-methods.R'
+    'segment.R'
+    'zzz.R'
+    'AllGenerics.R'
+    'methodsAccess.R'

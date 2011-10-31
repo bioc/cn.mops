@@ -1,0 +1,37 @@
+citHeader("To cite package 'cn.mops' in publications use:")
+
+desc <- packageDescription("cn.mops")
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", desc$Date)
+vers <- paste("R package version", desc$Version)
+url  <- desc$URL
+
+citEntry(entry="Article",
+         title="cn.mops: Mixture of Poissons for Discovering Copy Number Variations 
+in Next Generation Sequencing Data with a Low False Discovery Rate",
+         author=personList(as.person("Guenter Klambauer"),
+                           as.person("Karin Schwarzbauer"),
+                           as.person("Andreas Mayr"),
+                           as.person("Andreas Mitterecker"),
+                           as.person("Djork-Arne Clevert"),
+                           as.person("Ulrich Bodenhofer"),
+                           as.person("Sepp Hochreiter"), 
+                           ),
+         year=year,
+         note=vers,
+         journal="Unpublished",
+         organization=paste("Institute of Bioinformatics",
+                            "Johannes Kepler University", sep=", "),
+         address="Linz, Austria",
+         url=url,
+         textVersion =
+             paste("Guenter Klambauer, Karin Schwarzbauer, Andreas Mayr, Andreas Mitterecker, Djork-Arne Clevert, Ulrich Bodenhofer, Sepp Hochreiter (",
+                   year, 
+                   "). An R package for Discovering Copy Number Variations in Next Generation Sequencing Data with a Low False Discovery Rate ",
+                   "clustering. ", 
+                   vers,
+                   ". Institute of Bioinformatics, ",
+                   "Johannes Kepler University, Linz, Austria.",
+                   sep=""))
+                   
+citFooter("To obtain the references in BibTex format, enter",
+          "'toBibtex(citation(\"cn.mops\"))'")

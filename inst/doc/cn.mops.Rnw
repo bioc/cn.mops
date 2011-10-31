@@ -1,0 +1,293 @@
+% -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
+%\VignetteIndexEntry{cn.mops: Manual for the R package}
+%\VignetteDepends{cn.mops}
+%\VignettePackage{cn.mops}
+%\VignetteKeywords{copy number analysis, mixture distribution, latent variables, Poisson distribution,
+% EM algorithm, NGS, CNV, copy number variant}
+
+
+\documentclass[article]{bioinf}
+
+\usepackage[noae]{Sweave}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage[authoryear]{natbib}
+
+\hypersetup{colorlinks=false,
+   pdfborder=0 0 0,
+   pdftitle={cn.mops: Copy Number Detection from NGS Data},
+   pdfauthor={G\"unter Klambauer}}
+
+\title{cn.mops: Copy Number Detection from NGS Data}
+\author{G\"unter Klambauer}
+\affiliation{Institute of Bioinformatics, Johannes Kepler University
+Linz\\Altenberger Str. 69, 4040 Linz, Austria\\
+\email{cn.mops@bioinf.jku.at}}
+
+\newcommand{\cnmops}{\texttt{cn.mops}}
+\newcommand{\method}[1]{{\fontfamily{phv}\fontshape{rm}\selectfont #1}}
+\newcommand{\R}{R}
+\newcommand{\Real}{\mathbb{R}}
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\setkeys{Gin}{width=0.55\textwidth}
+
+\SweaveOpts{eps=FALSE}
+
+\begin{document}
+<<echo=FALSE>>=
+options(width=75)
+set.seed(0)
+library(cn.mops)
+cn.mopsVersion <- packageDescription("cn.mops")$Version
+@
+\newcommand{\cnmopsVersion}{\Sexpr{cn.mopsVersion}}
+\manualtitlepage[Version \cnmopsVersion, \today]
+
+%\section*{Scope and Purpose of this Document}
+%
+%This document is a user manual for the \R\ package \cnmops.
+%It is only meant as a gentle introduction into how to use the basic
+%functions implemented in this package. Not all features of the \R\
+%package are described in full detail. Such details can be obtained
+%from the documentation enclosed in the  \R\ package. Further note
+%the following: (1) this is neither an introduction to CNV detection from NGS 
+%data; (2) this is not an introduction to \R.
+%If you lack the background for understanding this manual, you first
+%have to read introductory literature on these subjects.
+%
+
+
+\vspace{1cm}
+
+\newlength{\auxparskip}
+\setlength{\auxparskip}{\parskip}
+\setlength{\parskip}{0pt}
+\tableofcontents
+\clearpage
+\setlength{\parskip}{\auxparskip}
+
+\newlength{\Nboxwidth}
+\setlength{\Nboxwidth}{\textwidth}
+\addtolength{\Nboxwidth}{-2\fboxrule}
+\addtolength{\Nboxwidth}{-2\fboxsep}
+
+\newcommand{\notebox}[1]{%
+\begin{center}
+\fbox{\begin{minipage}{\Nboxwidth}
+\noindent{\sffamily\bfseries Note:} #1
+\end{minipage}}
+\end{center}}
+
+\section{Introduction}
+The \cnmops\ package is part of the Bioconductor 
+(\url{http://www.bioconductor.org}) project. The package allows to 
+detect copy number variations (CNVs) from next generation sequencing data sets 
+based on a generative model. Please visit
+\url{http://www.bioinf.jku.at/software/cnmops/cnmops.html} for additional
+information.\par 
+
+To avoid the false discoveries induced by read count variations along
+the chromosome or across samples, we
+propose a ``Mixture Of PoissonS model for CNV detection'' (\method{cn.mops}). 
+The \method{cn.mops} model is not affected by read count variations along the chromosome, because
+at each DNA position a local model is constructed. 
+Read count variations across samples are decomposed by the
+\method{cn.mops} model
+into integer copy numbers and noise by
+its mixture components and Poisson distributions, respectively.
+In contrast to existing methods, \method{cn.mops} model's posterior provides integer
+copy numbers together with their uncertainty. Model selection in a
+Bayesian framework is based on maximizing the posterior given the
+samples by an expectation
+maximization (EM) algorithm. 
+The model incorporates
+the linear dependency between average read counts in a DNA segment and
+its copy number. 
+Most importantly, a Dirichlet prior on the mixture
+components prefers constant copy number 2 for all samples. 
+The more the data drives the posterior away from the Dirichlet prior 
+corresponding to copy number two, 
+the more likely the data is caused by a CNV, and, 
+the higher is the informative/non-informative (I/NI) call.
+\method{cn.mops} detects a CNV in the DNA of an individual as a segment 
+with high I/NI calls.
+I/NI call based CNV detection guarantees a low false discovery rate (FDR)
+ because wrong detections are
+less likely for high I/NI calls.
+We assume that the genome is partitioned into segments in which
+reads are counted but which need not be of constant length throughout the
+genome. For each of such an segment we build a model.
+We consider the read counts $x$ at a certain segment of the genome,
+for which we construct a model across samples. The model incorporates
+both read count variations due to technical or biological noise and
+variations stemming from copy number variations.
+For further information regarding the algorithm and its assessment 
+see the %\cnmops\ 
+\method{cn.mops} homepage at
+\url{http://www.bioinf.jku.at/software/cnmops/cnmops.html}
+
+
+
+\section{Getting started}
+
+To load the package, enter the following in your \R\ session:
+<<echo=TRUE>>=
+library(cn.mops)
+@
+
+\cnmops\ does not require the data samples to be of any
+specific kind or structure. \cnmops\ only requires a {\em read count matrix}, 
+i.e., given $N$ data samples and $m$ genomic segments, this is an $m\times N$ 
+real- or integer- valued matrix $\mathbf{X}$,
+in which an entry $x_{ij}$ corresponds to the read count of sample $j$ in the
+$i$-th segment. 
+
+To get a first impression, we use a data set, where CNVs have been
+artificially introduced. The simulated data set was generated using
+distributions of read counts as they appear in real sequencing experiments. 
+CNVs were implanted under the assumption that the expected read count is linear
+dependent on the copy number (e.g. in a certain genomic we expect $\lambda$
+reads for copy number 2, then we expect $2\lambda$ reads for copy number 4).
+The linear relationship has been reported by \citet{Alkan:09}, \citet{Chiang:09}
+and \citet{Quackenbush:11}.
+ The read counts are stored in the objects \verb+X+ and
+\verb+XRanges+, which are the two basic input types that \cnmops\ allows:
+<<echo=TRUE>>=
+data(cn.mops)
+ls()
+head(XRanges[,1:3])
+dim(X)
+head(X[,1:3])
+@
+
+The regions where the CNVs were implanted (see above) are stored in the
+ object \verb+CNVRanges+.
+<<echo=TRUE>>=
+head(CNVRanges[,1:3])
+@
+
+We are now ready to run \cnmops:
+<<>>=
+resCNMOPS <- cn.mops(XRanges[1:200,1:5])
+@
+The simplest thing we can do with the output is to enter the name of the
+object (which implicitly calls \verb+show+) to get a summary of the
+CNV detection result:
+<<>>=
+resCNMOPS
+@
+
+By using the functions of the \texttt{GenomicRanges} package we can check for
+overlap with the known CNV regions:
+
+<<>>=
+ranges(cnvr(resCNMOPS))
+ranges(cnvr(resCNMOPS)) %in% ranges(CNVRanges)
+@ 
+
+The function \verb+cn.mops+ creates an object belonging to the S4
+class \verb+CNVDetectionResult+ that is defined by the present package. To get
+detailed information on which data are stored in such objects, enter
+<<eval=FALSE>>=
+help(CNVDetectionResult)
+@
+
+\cnmops\ allows for plotting the detected CNV regions:
+\begin{center}
+
+<<eval=FALSE>>=
+plot(resCNMOPS,which=1)
+@
+
+<<fig=FALSE,echo=FALSE,results=hide>>=
+pdf("001.pdf")
+plot(resCNMOPS,which=1,toFile=TRUE)
+dev.off()
+@
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[angle=0,width= 0.75\columnwidth]{001}
+\end{center}
+\end{figure} 
+
+
+
+\end{center}
+
+In the left plot we see the read counts, where one line corresponds to the read
+counts of one sample along the genomic region displayed below in the subtitle.
+In the middle plot the local assessments (signed individual I/NI calls)
+before applying the segmentation algorithm are displayed and on the right the
+final CNV call is shown. Blue lines mark samples having a CNV loss and red
+lines samples having a gain CNV.
+
+\section{Using BAM files as input}
+The most widely used file format for aligned short reads is the Sequence 
+Alignment/Map (SAM) format or in the compressed form the Binary Alignment Map 
+(BAM). We provide a simple function that makes use of the \texttt{Rsamtools} 
+package to obtain the alignment positions of reads. The result object of the
+function can directly be used as input for \cnmops. The author can provide 
+functions for input formats other than BAM upon request: 
+\email{cn.mops@bioinf.jku.at}.
+
+
+
+<<>>=
+BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam",
+		full.names=TRUE)
+bamDataRanges <- getReadCountsFromBAM(BAMFiles,
+		sampleNames=paste("Sample",1:3),WL=5000)
+@
+
+\section{Improving your results}
+The default parameters of both the local models of \cnmops and the segmentation
+algorithm were optimized on a wide ranged of different data sets. However, if
+you are not satisfied with your result, the following parameters should be
+changed:
+
+\begin{itemize}
+\item[\tt upperThreshold] The calling threshold for copy number 
+gains, a positive value.  
+Lowering the threshold will increase the detections, raising will decrease
+ the detections.
+\item[\tt lowerThreshold] The calling threshold for copy number 
+losses, a negative value. Raising the threshold will increase the detections, 
+lowering will decrease the detections.
+\item[\tt priorImpact] This parameter should be optimized for each data set, 
+since it is influenced by number of samples as well as noise level. 
+The higher the value, the more samples will have copy number 2, and 
+consequently less CNVs will be detected. 
+\item[\tt minWidth] The minimum length of CNVs measured in number of segments.
+The more adjacent segments with a high or low copy number call are joined, the
+higher the confidence in the detections.  A lower  value will lead to more
+shorter segments, and a higher value will yield to less, but longer segments.
+\end{itemize}
+
+The length of the initial segments is also crucial. They should be 
+chosen such that on average 100 reads lie in one segment. The {\tt WL} 
+parameter of {\tt getReadCountsFromBAM} determines this resolution.
+
+
+%\section{Future Extensions}
+
+\section{How to cite this package}
+
+If you use this package for research that is published later, you are kindly
+asked to cite it as follows:
+\citep{Klambauer:11}.
+
+To obtain Bib\TeX\ entries of the reference, you can enter the following
+into your R session:
+<<eval=FALSE>>=
+toBibtex(citation("cn.mops"))
+@ 
+
+\bibliographystyle{natbib}
+\bibliography{cnv}
+
+
+\end{document}
