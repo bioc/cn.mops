@@ -1,4 +1,3 @@
-
 setGeneric("normalizedData", function(object) 
 			standardGeneric("normalizedData"))
 setGeneric("localAssessments", function(object) 

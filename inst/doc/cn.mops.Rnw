@@ -16,10 +16,10 @@
 
 \hypersetup{colorlinks=false,
    pdfborder=0 0 0,
-   pdftitle={cn.mops: Copy Number Detection from NGS Data},
+   pdftitle={cn.mops - Mixture of Poisson for CNV detection in NGS data},
    pdfauthor={G\"unter Klambauer}}
 
-\title{cn.mops: Copy Number Detection from NGS Data}
+\title{cn.mops - Mixture of Poisson for CNV detection in NGS data}
 \author{G\"unter Klambauer}
 \affiliation{Institute of Bioinformatics, Johannes Kepler University
 Linz\\Altenberger Str. 69, 4040 Linz, Austria\\
@@ -84,8 +84,8 @@ cn.mopsVersion <- packageDescription("cn.mops")$Version
 \section{Introduction}
 The \cnmops\ package is part of the Bioconductor 
 (\url{http://www.bioconductor.org}) project. The package allows to 
-detect copy number variations (CNVs) from next generation sequencing data sets 
-based on a generative model. Please visit
+detect copy number variations (CNVs) from next generation sequencing (NGS) 
+data sets  based on a generative model. Please visit
 \url{http://www.bioinf.jku.at/software/cnmops/cnmops.html} for additional
 information.\par 
 
@@ -127,77 +127,233 @@ variations stemming from copy number variations.
 For further information regarding the algorithm and its assessment 
 see the %\cnmops\ 
 \method{cn.mops} homepage at
-\url{http://www.bioinf.jku.at/software/cnmops/cnmops.html}
+\url{http://www.bioinf.jku.at/software/cnmops/cnmops.html}.
 
 
 
-\section{Getting started}
+\section{Getting started and quick start}
 
 To load the package, enter the following in your \R\ session:
 <<echo=TRUE>>=
 library(cn.mops)
 @
 
+The whole pipeline will only take a few steps, if BAM files are available 
+(for read count matrices directly go to step 2):
+
+\begin{enumerate}
+\item Getting the input data from BAM files (also see Section \ref{s:bam} and
+Section \ref{s:input}).
+<<eval=FALSE>>=
+BAMFiles <- list.files(pattern=".bam$")
+bamDataRanges <- getReadCountsFromBAM(BAMFiles)
+@
+
+\item Running the algorithm (also see Section \ref{s:cn.mops}).
+<<eval=FALSE>>=
+res <- cn.mops(bamDataRanges)
+@
+
+\item Visualization of the detected CNV regions. For more information about 
+the result objects and visualization see Section \ref{s:cn.mops}.
+<<eval=FALSE>>=
+plot(res,which=1)
+@
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[angle=0,width= 0.75\columnwidth]{cnvrP.pdf}
+\end{center}
+\end{figure} 
+\end{enumerate}
+
+
+\section{Input of cn.mops: BAM files, GRanges objects, or numeric matrices} %!!!!!
+\label{s:input}
+\subsection{Read count matrices as input}
 \cnmops\ does not require the data samples to be of any
 specific kind or structure. \cnmops\ only requires a {\em read count matrix}, 
 i.e., given $N$ data samples and $m$ genomic segments, this is an $m\times N$ 
-real- or integer- valued matrix $\mathbf{X}$,
+real- or integer-valued matrix $\mathbf{X}$,
 in which an entry $x_{ij}$ corresponds to the read count of sample $j$ in the
-$i$-th segment. 
+$i$-th segment. E.g. in the following read count matrix sample three has
+$17$ reads in the second segment: $x_{23}=71$.
 
+
+\newlength{\mylen} 
+\setlength{\mylen}{0.43cm}
+
+\[\mathbf{X}= \begin{array}{c} \\ \mathrm{Segment\ 1} \\ \mathrm{Segment\ 2} \\ 
+\mathrm{Segment\ 3} \\ \mathrm{Segment\ 4}\\ \mathrm{Segment\ 5} \\ 
+\mathrm{Segment\ 6} \\ \hspace{0.2cm} \end{array}               
+\begin{array}{c}
+\begin{array}{cccc}
+\mathrm{Sample\ 1} & \mathrm{Sample\ 2} & \mathrm{Sample\ 3} & 
+\mathrm{Sample\ 4}\end{array}\\
+\left(\begin{array}{cccc}
+\hspace{\mylen}88\hspace{\mylen} & \hspace{\mylen}82\hspace{\mylen} & 
+\hspace{\mylen}79\hspace{\mylen} & \hspace{\mylen}101\hspace{\mylen}\\
+83 & 78 & 71 & 99\\
+43 & 50 & 55 & 37\\
+47 & 58 & 48 & 42 \\
+73 & 86 & 95 & 91\\
+92 & 90 & 80 & 71 
+\end{array}\right) \\ \hspace{0.2cm}  \end{array}
+\]
+
+
+\cnmops\ can handle numeric and integer matrices or \verb+GRanges+ objects, 
+where the read counts are stored as \verb+values+ of the object. 
+
+
+
+\subsection{BAM files as input}
+\label{s:bam}
+The most widely used file format for aligned short reads is the Sequence 
+Alignment Map (SAM) format or in the compressed form the Binary Alignment Map 
+(BAM). We provide a simple function that makes use of the \texttt{Rsamtools} 
+package to obtain the alignment positions of reads. The result object of the
+function can directly be used as input for \cnmops. The author can provide 
+functions for input formats other than BAM upon request: 
+\email{cn.mops@bioinf.jku.at}.
+
+<<>>=
+BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam",
+		full.names=TRUE)
+bamDataRanges <- getReadCountsFromBAM(BAMFiles,
+		sampleNames=paste("Sample",1:3))
+@
+
+In \verb+bamDataRanges+ you have now stored the genomic segments (left of the 
+$\mid$'s) and the read counts (right of the $\mid$'s):
+<<>>=
+(bamDataRanges)
+@
+
+
+\section{Copy number estimation with cn.mops}
+\label{s:cn.mops}
 To get a first impression, we use a data set, where CNVs have been
-artificially introduced. The simulated data set was generated using
+artificially implanted. The simulated data set was generated using
 distributions of read counts as they appear in real sequencing experiments. 
 CNVs were implanted under the assumption that the expected read count is linear
-dependent on the copy number (e.g. in a certain genomic we expect $\lambda$
-reads for copy number 2, then we expect $2\lambda$ reads for copy number 4).
-The linear relationship has been reported by \citet{Alkan:09}, \citet{Chiang:09}
-and \citet{Quackenbush:11}.
+dependent on the copy number. For example in a certain genomic we expect
+$\lambda$ reads for copy number 2, then we expect $2\lambda$ reads for 
+copy number 4.
+The linear relationship was confirmed in different studies, like 
+\citet{Alkan:09}, \citet{Chiang:09} and \citet{Quackenbush:11}.
+ 
+\subsection{Running cn.mops}
  The read counts are stored in the objects \verb+X+ and
 \verb+XRanges+, which are the two basic input types that \cnmops\ allows:
 <<echo=TRUE>>=
 data(cn.mops)
 ls()
-head(XRanges[,1:3])
-dim(X)
-head(X[,1:3])
 @
 
-The regions where the CNVs were implanted (see above) are stored in the
- object \verb+CNVRanges+.
+The same data is stored in a \verb+GRanges+ object, in which we see the
+genomic coordinates, as well as the read counts (values):
+<<>>=
+head(XRanges[,1:3])
+@
+We are now ready to run \cnmops\ on the \verb+GRanges+ object:
+<<>>=
+resCNMOPS <- cn.mops(XRanges)
+@
+
+
+
+Alternatively, it is possible to use an integer matrix, where the genomic
+coordinates can be stored as \verb+rownames+ and the entries are the read counts. 
+For example the data from above represented by an integer matrix \verb+X+:
+<<>>=
+head(X[,1:3])
+@
+We are now ready to run \cnmops\ on the integer matrix:
+<<eval=FALSE>>=
+resCNMOPSX <- cn.mops(X)
+@
+
+all(individualCall(resCNMOPS)X==individualCall(resCNMOPS))
+
+Note that the two results \verb+resCNMOPS+ and \verb+resCNMOPSRanges+ identify
+the same CNVs: 
+<<eval=FALSE>>=
+all(individualCall(resCNMOPSX)==individualCall(resCNMOPS))
+@
+
+\subsection{The result object}
+To get a summary of the CNV detection result, just enter the name of the
+object (which implicitly calls \verb+show+):
+<<eval=FALSE>>=
+(resCNMOPS)
+@
+
+The CNVs per individual are stored in the slot \verb+cnvs+:
+<<>>=
+cnvs(resCNMOPS)[1:5]
+@
+
+Segments, in which individual CNVs accumulate, are called CNV regions and can be
+accessed by \verb+cnvr+:
+<<>>=
+cnvr(resCNMOPS)[1:5]
+@
+
+We now want to check, whether \cnmops\ found the implanted CNVs. 
+We have stored the implanted CNVs (see beginning of Section \label{s:cn.mops}) 
+in the object \verb+CNVRanges+.
 <<echo=TRUE>>=
 head(CNVRanges[,1:3])
 @
 
-We are now ready to run \cnmops:
+Next we identify overlaps between CNVs that were detected by \cnmops\ and
+CNVs that were implanted. Towards this end we use the functions 
+of the \texttt{GenomicRanges} package.
 <<>>=
-resCNMOPS <- cn.mops(XRanges[1:200,1:5])
-@
-The simplest thing we can do with the output is to enter the name of the
-object (which implicitly calls \verb+show+) to get a summary of the
-CNV detection result:
-<<>>=
-resCNMOPS
-@
-
-By using the functions of the \texttt{GenomicRanges} package we can check for
-overlap with the known CNV regions:
-
-<<>>=
-ranges(cnvr(resCNMOPS))
+ranges(cnvr(resCNMOPS))[1:2]
 ranges(cnvr(resCNMOPS)) %in% ranges(CNVRanges)
 @ 
 
-The function \verb+cn.mops+ creates an object belonging to the S4
+The function \verb+cn.mops+ creates an instance of the S4
 class \verb+CNVDetectionResult+ that is defined by the present package. To get
 detailed information on which data are stored in such objects, enter
 <<eval=FALSE>>=
 help(CNVDetectionResult)
 @
 
-\cnmops\ allows for plotting the detected CNV regions:
-\begin{center}
+\section{Visualization of the result}
+\subsection{Chromosome plots} %!!!!
+\cnmops\ allows for plotting the detected segments of an individual at one 
+chromosome by a plot similar to the ones produced by \texttt{DNAcopy}:
 
+\begin{center}
+<<eval=FALSE>>=
+segplot(resCNMOPS,sampleIdx=13)
+@
+
+<<fig=FALSE,echo=FALSE,results=hide>>=
+pdf("002.pdf")
+segplot(resCNMOPS,sampleIdx=13)
+dev.off()
+@
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[angle=0,width= \columnwidth]{002}
+\caption{The x-axis represents the genomic position and on the y-axis we 
+see the log ratio of the read counts (green) and the copy number call
+of each segment (red).}
+\end{center}
+\end{figure} 
+\end{center}
+
+
+
+\subsection{CNV region plots} %!!!!
+\cnmops\ allows for plotting the detected CNV regions:
+
+\begin{center}
 <<eval=FALSE>>=
 plot(resCNMOPS,which=1)
 @
@@ -210,44 +366,30 @@ dev.off()
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[angle=0,width= 0.75\columnwidth]{001}
+\includegraphics[angle=0,width= \columnwidth]{001}
+\caption{The x-axis represents the genomic position and on the y-axis we 
+see the read counts (left), the call of the local model (middle) and the
+CNV call produced by the segmentation algorithm. Blue lines mark samples having
+ a copy number loss.}
 \end{center}
 \end{figure} 
-
-
-
 \end{center}
 
-In the left plot we see the read counts, where one line corresponds to the read
-counts of one sample along the genomic region displayed below in the subtitle.
-In the middle plot the local assessments (signed individual I/NI calls)
-before applying the segmentation algorithm are displayed and on the right the
-final CNV call is shown. Blue lines mark samples having a CNV loss and red
-lines samples having a gain CNV.
-
-\section{Using BAM files as input}
-The most widely used file format for aligned short reads is the Sequence 
-Alignment/Map (SAM) format or in the compressed form the Binary Alignment Map 
-(BAM). We provide a simple function that makes use of the \texttt{Rsamtools} 
-package to obtain the alignment positions of reads. The result object of the
-function can directly be used as input for \cnmops. The author can provide 
-functions for input formats other than BAM upon request: 
-\email{cn.mops@bioinf.jku.at}.
+%In the left plot we see the read counts, where one line corresponds to the read
+%counts of one sample along the genomic region displayed below in the subtitle.
+%In the middle plot the local assessments (signed individual I/NI calls)
+%before applying the segmentation algorithm are displayed and on the right the
+%final CNV call is shown. 
 
 
 
-<<>>=
-BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam",
-		full.names=TRUE)
-bamDataRanges <- getReadCountsFromBAM(BAMFiles,
-		sampleNames=paste("Sample",1:3),WL=5000)
-@
 
-\section{Improving your results}
+\section{Adjusting sensitivity, specificity and resolution for specific
+applications}
 The default parameters of both the local models of \cnmops and the segmentation
-algorithm were optimized on a wide ranged of different data sets. However, if
-you are not satisfied with your result, the following parameters should be
-changed:
+algorithm were optimized on a wide ranged of different data sets. However, you 
+might want to adjust sensitivity and specificity or resolution to your specific
+needs.
 
 \begin{itemize}
 \item[\tt upperThreshold] The calling threshold for copy number 

@@ -105,14 +105,14 @@
 #' length of the "classes" parameter vector. For human copy number polymorphisms 
 #' we suggest to use the default I = c(0.05,0.5,1,1.5,2,2.5,3,3.5,4).
 #' @param classes Vector of characters of the same length as the parameter
-#' vector "I". One vector element must be names "CN2". The names reflect the 
+#' vector "I". One vector element must be named "CN2". The names reflect the 
 #' labels of the copy number classes. 
 #' Default = c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8").
 #' @param priorImpact Positive real value that reflects how strong the prior
 #' assumption affects the result. The higher the value the more samples will
-#' be assumed to have copy number 2. Default = 1.0.
+#' be assumed to have copy number 2. Default = 0.1.
 #' @param cyc Positive integer that sets the number of cycles for the algorithm.
-#' Usually after less than 15 cycles convergence is reached. Default = 15.
+#' Usually after less than 15 cycles convergence is reached. Default = 20.
 #' @param parallel How many cores are used for the computation. If set to zero
 #' than no parallelization is applied. The package "snow" has to be installed
 #' for this option. Default = 0.
@@ -137,9 +137,9 @@
 #' of segments a CNV should span. Default = 4.
 #' @param segAlgorithm Which segmentation algorithm should be used. If set to
 #' "DNAcopy" circular binary segmentation is performed. Any other value will
-#' initiate the use of our fast segmentation algorithm.
+#' initiate the use of our fast segmentation algorithm. Default = "fast".
 #' @param ... Additional parameters will be passed to the "DNAcopy"
-#' or the standart segmentation algorithm.
+#' or the standard segmentation algorithm.
 #' @examples 
 #' data(cn.mops)
 #' cn.mops(XRanges)
@@ -177,6 +177,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		if (nrow(input)> 1){
 			inputType <- "DataMatrix"
 			X <- input
+			colnames(X) <- colnames(input)
 			X <- matrix(as.numeric(X),nrow=nrow(X))
 			chr <- rep("undef",nrow(X))
 			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
