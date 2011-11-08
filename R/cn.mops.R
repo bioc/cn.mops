@@ -3,7 +3,7 @@
 
 .cn.mopsC <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
-		priorimpact = 1,cyc = 15) {
+		priorimpact = 0.1,cyc = 20) {
 	
 	version <- "0.99"
 	
@@ -22,14 +22,14 @@
 	alpha.prior[idxCN2] <- 1
 	alpha.prior <- alpha.prior*priorimpact
 	
-	if (all(x<=10)) {
+	if (all(x<=1)) {
 		lambda.est <- rep(0,n)
 		alpha.est <- rep(0,n)
 		alpha.est[idxCN2] <- 1
 		expCN <- rep(classes[idxCN2],N)
 		ini <- 0
 		ExpLogFoldChange <- rep(0,N)
-		post.ik <- matrix(0,nrow=N,ncol=n)
+		post.ik <- matrix(0,nrow=n,ncol=N)
 		post.ik[idxCN2, ] <- 1
 		
 		
@@ -211,7 +211,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	n <- length(I)
 	
 	if (is.null(colnames(X))){
-		colnames(X) <- as.character(1:N)
+		colnames(X) <- paste("Sample",1:N,sep="_")
 	}
 	
 	
@@ -249,9 +249,13 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	} 
 	
 	res <- list()
+	Xchr <- list()
 	for (chrom in unique(chr)){
 		message(paste("Reference sequence: ",chrom))
 		chrIdx <- which(chr==chrom)
+		if (norm) {Xchr[[chrom]] <- X.norm[chrIdx, ]} else {
+			Xchr[[chrom]] <- X[chrIdx, ]
+		}
 		
 		if(m > 1 & !norm){
 			cov <- colSums(X[chrIdx, ])
@@ -330,6 +334,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		message("Starting segmentation algorithm...")
 		
 		if (segAlgorithm=="DNAcopy"){
+			message("Using \"DNAcopy\" for segmentation.")
 			library(DNAcopy)
 			if (!exists("eta")){eta <- 0.05}
 			if (!exists("nperm")){nperm <- 10000}
@@ -365,19 +370,13 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 						} else{
 							sIdx2 <- sIdx
 						}
-						if (norm){
-							CN <- .cn.mopsC(colSums(X.norm[sIdx2, ,drop=FALSE]),
-									I=I,
-									classes=classes,
-									cov=cov,priorimpact=priorImpact,
-									cyc=cyc)$expectedCN
-						}	else {
-							CN <- .cn.mopsC(colSums(X.norm[sIdx2, ,drop=FALSE]), 
-									I=I,
-									classes=classes,
-									cov=rep(1,N),priorimpact=priorImpact,
-									cyc=cyc)$expectedCN
-						}
+						CN <- .cn.mopsC(apply(Xchr[[x["chr"]]][sIdx2, 
+												,drop=FALSE],2,
+										median),
+								I=I,
+								classes=classes,
+								cov=cov,priorimpact=priorImpact,
+								cyc=cyc)$expectedCN
 						
 						#Median
 						#segValue <- quantile(sINI[sIdx,x["sample"]],probs=0.5,
@@ -385,29 +384,35 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 						
 						#Mean
 						segValue <- mean(sINI[sIdx,x["sample"]],na.rm=TRUE)
+						segValue2 <- median(sINI[sIdx,x["sample"]],na.rm=TRUE)
 						
 						return(data.frame(CN[which(x["sample"]==colnames(X))],
-										segValue,length(sIdx),
+										segValue,segValue2,length(sIdx),
 										stringsAsFactors=FALSE))
 						
 					})
 			
 			value <- sapply(segCN,.subset2,2)
+			value2 <- sapply(segCN,.subset2,3)
 			
-			callsS <- matrix(rep(value,sapply(segCN,.subset2,3)),ncol=N)
+			callsS <- matrix(rep(value,sapply(segCN,.subset2,4)),ncol=N)
 			colnames(callsS) <- colnames(X)
 			
 			segDf <- data.frame(segDf,"CN"=sapply(segCN,.subset2,1),
-					"value"=value,
+					"mean"=value,"median"=value2,
 					stringsAsFactors=FALSE)
+			#browser()
 			
+			segDfSubset <- segDf[which(
+							segDf$mean >= upperThreshold |
+									segDf$mean <= lowerThreshold), ]
+			segDfSubset <- segDfSubset[which(
+							(segDfSubset$to-segDfSubset$from+1) >= minWidth), ]
 			
-			segDf <- segDf[which(segDf$value >= upperThreshold
-									| segDf$value <= lowerThreshold), ]
-			segDf <- segDf[which((segDf$to-segDf$from+1) >= minWidth), ]
 			
 			
 		} else {
+			message("Using \"fastseg\" for segmentation.")
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
 			if (!exists("segMedianT")){
@@ -451,23 +456,20 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			segCN <- apply(segDf[,c("chr","start","end","sample")],1,
 					function(x){
+						
 						sIdx <- as.integer(x["start"]):as.integer(x["end"])
 						if (length(sIdx)>=3){
 							sIdx <- sIdx[-c(1,length(sIdx))]
 						}
-						if (norm){
-							CN <- .cn.mopsC(colSums(X.norm[sIdx, ,drop=FALSE]),
-									I=I,
-									classes=classes,
-									cov=cov,priorimpact=priorImpact,
-									cyc=cyc)$expectedCN
-						}	else {
-							CN <- .cn.mopsC(colSums(X.norm[sIdx, ,drop=FALSE]), 
-									I=I,
-									classes=classes,
-									cov=rep(1,N),priorimpact=priorImpact,
-									cyc=cyc)$expectedCN
-						}
+						
+						CN <- .cn.mopsC(apply(Xchr[[x["chr"]]][sIdx,
+												,drop=FALSE],2,
+										median),
+								I=I,
+								classes=classes,
+								cov=cov,priorimpact=priorImpact,
+								cyc=cyc)$expectedCN
+						
 #						cnProbs <- post[sIdx , , x["sample"]]
 #						if (length(sIdx)>1){
 #							cnProbs <- colSums(-log(cnProbs))
@@ -497,9 +499,9 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			callsS <- matrix(rep(segDf$mean,segDf$to-segDf$from+1),ncol=N)
 			colnames(callsS) <- colnames(X)
 			
-			#median for the table
-			segDfSubset <- segDf[which(segDf$median >= upperThreshold
-									| segDf$median <= lowerThreshold), ]
+			#mean for the table
+			segDfSubset <- segDf[which(segDf$mean >= upperThreshold
+									| segDf$mean <= lowerThreshold), ]
 			
 			
 			#segDf$value <- segDf$value2
@@ -509,6 +511,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 					segDfSubset[which((segDfSubset$to-segDfSubset$from+1)
 											>= minWidth), ]
 			
+			
+			
 		}
 		
 		#browser()
@@ -517,22 +521,66 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		
 		if (nrow(segDfSubset)>0){
 			#browser()
+			
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
+			#browser()
+			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
+							IRanges(segDfSubset$from,segDfSubset$to)))
+			cnvrCN <- matrix(NA,ncol=N,nrow=length(cnvrR))
+			for (jj in 1:length(cnvrR)){
+				sIdx3 <- (start(cnvrR)[jj]:end(cnvrR)[jj])
+				chrIdx2 <- as.character(seqnames(cnvrR))[jj]
+				if (length(sIdx3) >= 3){sIdx3 <- sIdx3[2:(length(sIdx3)-1)]}
+				cnvrCN[jj, ] <- .cn.mopsC(apply(Xchr[[chrIdx2]][sIdx3,
+										,drop=FALSE],
+								2,median),
+						I=I,
+						classes=classes,
+						cov=cov,priorimpact=priorImpact,
+						cyc=cyc)$expectedCN
+				
+				
+			}
+			colnames(cnvrCN) <- colnames(X) 
 			
 			sampleNames <- segDfSubset$sample
 			
 			if (inputType=="GRanges"){
-				ir <- IRanges(start(input)[segDfSubset$from],
-						end(input)[segDfSubset$to])
+				ir <- IRanges()
+				irCNVR <- IRanges()
+				for (chrom in unique(chr)){
+					inputChr <- input[which(as.character(
+											seqnames(input))==chrom)]
+					segDfSubsetChr <- subset(segDfSubset,chr==chrom)
+					cnvrRChr <- cnvrR[which(as.character(
+											seqnames(cnvrR))==chrom)]
+					if (nrow(segDfSubsetChr) >0){
+						ir <- c(ir,IRanges(start(inputChr)[
+												segDfSubsetChr$from],
+										end(inputChr)[segDfSubsetChr$to]))
+						
+						irCNVR <- c(irCNVR,IRanges(start(inputChr)[
+												start(cnvrRChr)],
+										end(inputChr)[end(cnvrRChr)]))
+					}
+				}
 			} else if (inputType=="DataMatrix"){
 				ir <- IRanges(start=segDfSubset$from,end=segDfSubset$to)
+				irCNVR <- IRanges(start=start(cnvrR),end=end(cnvrR))
 			}
+			
+			
 			rd <- GRanges(seqnames=segDfSubset$chr,ir,"sampleName"=sampleNames,
 					"median"=segDfSubset$median,"mean"=segDfSubset$mean,
 					"CN"=segDfSubset$CN)
 			
-			cnvr <- reduce(GRanges(seqnames=segDfSubset$chr,ir))
+			#cnvr <- reduce(rd)
+			
+			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,CN=cnvrCN)
+			#values(cnvrR) <- cnvrCN
+			#colnames(elementMetadata(cnvrR)) <- colnames(X)
+			
 			
 			r@normalizedData    <- GRanges(seqnames=chr,irAllRegions,
 					normalizedData=X.norm)
@@ -549,8 +597,19 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			
 			if (inputType=="GRanges"){
+				irS <- IRanges()
+				for (chrom in unique(chr)){
+					inputChr <- input[which(as.character(
+											seqnames(input))==chrom)]
+					
+					segDfChr <- subset(segDf,chr==chrom)
+					if (nrow(segDfChr) >0 ){
+						irS <- c(irS,IRanges(start(inputChr)[segDfChr$from],
+										end(inputChr)[segDfChr$to]))
+					}
+				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						IRanges(start(input)[segDf$from],end(input)[segDf$to]),
+						irS,
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			} else if (inputType=="DataMatrix"){
@@ -571,8 +630,20 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
 			if (inputType=="GRanges"){
+				#browser()
+				irS <- IRanges()
+				for (chrom in unique(chr)){
+					inputChr <- input[which(as.character(
+											seqnames(input))==chrom)]
+					
+					segDfChr <- subset(segDf,chr==chrom)
+					if (nrow(segDfChr) >0 ){
+						irS <- c(irS,IRanges(start(inputChr)[segDfChr$from],
+										end(inputChr)[segDfChr$to]))
+					}
+				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						IRanges(start(input)[segDf$from],end(input)[segDf$to]),
+						irS,
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			} else if (inputType=="DataMatrix"){

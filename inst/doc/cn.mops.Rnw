@@ -160,13 +160,21 @@ the result objects and visualization see Section \ref{s:cn.mops}.
 plot(res,which=1)
 @
 
+
+<<fig=FALSE,echo=FALSE,results=hide>>=
+data(cn.mops)
+resCNMOPS <- cn.mops(XRanges)
+pdf("003.pdf")
+plot(resCNMOPS,which=7,toFile=TRUE)
+dev.off()
+@
+
 \begin{figure}[H]
 \begin{center}
-\includegraphics[angle=0,width= 0.75\columnwidth]{cnvrP.pdf}
+\includegraphics[angle=0,width= 0.9\columnwidth]{003.pdf}
 \end{center}
 \end{figure} 
 \end{enumerate}
-
 
 \section{Input of cn.mops: BAM files, GRanges objects, or numeric matrices} %!!!!!
 \label{s:input}
@@ -257,7 +265,7 @@ genomic coordinates, as well as the read counts (values):
 head(XRanges[,1:3])
 @
 We are now ready to run \cnmops\ on the \verb+GRanges+ object:
-<<>>=
+<<eval=FALSE>>=
 resCNMOPS <- cn.mops(XRanges)
 @
 
@@ -297,14 +305,14 @@ cnvs(resCNMOPS)[1:5]
 Segments, in which individual CNVs accumulate, are called CNV regions and can be
 accessed by \verb+cnvr+:
 <<>>=
-cnvr(resCNMOPS)[1:5]
+cnvr(resCNMOPS)[1,1:5]
 @
 
 We now want to check, whether \cnmops\ found the implanted CNVs. 
 We have stored the implanted CNVs (see beginning of Section \label{s:cn.mops}) 
 in the object \verb+CNVRanges+.
 <<echo=TRUE>>=
-head(CNVRanges[,1:3])
+(CNVRanges[15,1:5])
 @
 
 Next we identify overlaps between CNVs that were detected by \cnmops\ and

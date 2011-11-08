@@ -139,17 +139,30 @@ setMethod("segplot",
 			}
 			genomdat <-	do.call("cbind",values(X)@listData)
 			if (is.null(colnames(X))){colnames(genomdat) <- as.character(
-						paste("S",1:ncol(
+						paste("Sample",1:ncol(
 										genomdat),sep="_"))} else {
-				colnames(genomdat) <- paste("S",colnames(X),sep="_")
+				colnames(genomdat) <- paste("Sample",colnames(X),sep="_")
 			}
 			if (missing(sampleIdx)){
 				sampleIdx <- 1
 				message(paste("Missing \"sampleIdx\" argument. Selecting",
 								sampleIdx,".\n"))
 			}
-			genomdat <- log2(genomdat/rowMedians(genomdat))
-			genomdat[which(!is.finite(genomdat))] <- 0
+			
+			if (!is.null(r@params$lambda)){
+				genomdat <- (genomdat/r@params$lambda[,"CN2"])
+				cat("lambda.\n")
+			} else {
+				genomdat <- (genomdat/rowMedians(genomdat))	
+			}
+			genomdat[which(is.na(genomdat))] <- 1
+			genomdat[which(genomdat==Inf)] <- max(
+					genomdat[which(is.finite(genomdat))])
+			genomdat[which(genomdat==-Inf)] <- min(
+					genomdat[which(is.finite(genomdat))])
+			genomdat <- log2(genomdat)
+			genomdat <- pmax(genomdat,min(
+							genomdat[which(is.finite(genomdat))]))
 			genomdat <- genomdat[,sampleIdx,drop=FALSE]
 			
 			#colnames(genomdat) <- sampleNames
@@ -169,8 +182,8 @@ setMethod("segplot",
 			class(zzz) <- c("CNA", "data.frame")
 			
 			segDataTmp <- IRanges::as.data.frame(segmentation(r),as.is=TRUE)
-			segDataTmp$sampleName <- paste("S",
-					as.character(segDataTmp$sampleName),sep="_")
+			## segDataTmp$sampleName <- paste("S",
+			##         as.character(segDataTmp$sampleName),sep="_")
 			segDataTmp <- segDataTmp[which(segDataTmp$sampleName==
 									colnames(genomdat)), ]
 			segDataTmp$sampleName <- as.character(segDataTmp$sampleName)
