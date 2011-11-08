@@ -25,18 +25,18 @@ NGS data.}
 
   \item{classes}{Vector of characters of the same length as
   the parameter vector "I". One vector element must be
-  names "CN2". The names reflect the labels of the copy
+  named "CN2". The names reflect the labels of the copy
   number classes. Default =
   c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8").}
 
   \item{priorImpact}{Positive real value that reflects how
   strong the prior assumption affects the result. The
   higher the value the more samples will be assumed to have
-  copy number 2. Default = 1.0.}
+  copy number 2. Default = 0.1.}
 
   \item{cyc}{Positive integer that sets the number of
   cycles for the algorithm. Usually after less than 15
-  cycles convergence is reached. Default = 15.}
+  cycles convergence is reached. Default = 20.}
 
   \item{parallel}{How many cores are used for the
   computation. If set to zero than no parallelization is
@@ -76,7 +76,7 @@ NGS data.}
   \item{segAlgorithm}{Which segmentation algorithm should
   be used. If set to "DNAcopy" circular binary segmentation
   is performed. Any other value will initiate the use of
-  our fast segmentation algorithm.}
+  our fast segmentation algorithm. Default = "fast".}
 
   \item{...}{Additional parameters will be passed to the
   "DNAcopy" or the standart segmentation algorithm.}
