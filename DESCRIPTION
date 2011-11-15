@@ -28,13 +28,16 @@ Date: 2011-11-02
 URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
 Depends:
     R (>= 2.13),
+    BiocGenerics (>= 0.1.0),
     Biobase,
     IRanges,
     GenomicRanges
 Imports:
-    Rsamtools,
     methods,
-    graphics
+    graphics,
+    BiocGenerics,
+    IRanges,
+    Rsamtools,
 Suggests:
     snow,
     DNAcopy

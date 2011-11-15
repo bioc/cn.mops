@@ -176,7 +176,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	
 	if(class(input)=="GRanges"){
 		inputType <- "GRanges"
-		input <- IRanges::sort(input)
+		input <- sort(input)
 		#X <- (do.call("cbind",(values(input)@unlistData@listData)))
 		X <- do.call("cbind",values(input)@listData)
 		X <- matrix(as.numeric(X),nrow=nrow(X))

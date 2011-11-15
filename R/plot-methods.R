@@ -29,10 +29,10 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				which <- 1
 			}
 			
-			MMstart <- IRanges::match(GRanges(seqnames(r@cnvr),
+			MMstart <- match(GRanges(seqnames(r@cnvr),
 							IRanges(start(r@cnvr),
 									start(r@cnvr))), r@normalizedData )
-			MMend <- IRanges::match(GRanges(seqnames(r@cnvr),
+			MMend <- match(GRanges(seqnames(r@cnvr),
 							IRanges(end(r@cnvr),
 									end(r@cnvr))),r@normalizedData )
 			
@@ -128,12 +128,12 @@ setMethod("segplot",
 			
 			library(DNAcopy)
 			X <- r@normalizedData
-			if (all(IRanges::width(IRanges::ranges(X))==1) ){
+			if (all(width(ranges(X))==1) ){
 				# idx mode
 				WL <- 1
 			} else {
-				WL <- width(IRanges::ranges(X))[1]
-				if (!all(IRanges::width(IRanges::ranges(X))==WL)){
+				WL <- width(ranges(X))[1]
+				if (!all(width(ranges(X))==WL)){
 					stop("Plot function only for equally spaced segments.")
 				}
 			}
@@ -181,7 +181,7 @@ setMethod("segplot",
 			attr(zzz, "data.type") <- data.type
 			class(zzz) <- c("CNA", "data.frame")
 			
-			segDataTmp <- IRanges::as.data.frame(segmentation(r),as.is=TRUE)
+			segDataTmp <- as.data.frame(segmentation(r),as.is=TRUE)
 			## segDataTmp$sampleName <- paste("S",
 			##         as.character(segDataTmp$sampleName),sep="_")
 			segDataTmp <- segDataTmp[which(segDataTmp$sampleName==

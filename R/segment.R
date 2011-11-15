@@ -104,13 +104,12 @@ segment <- function(x, alpha=.05, segMedianT, minSeg=3,
 	if (all(segMedianT==0)) {
 		
 		#message("No merging of segments.")
-		ir <- IRanges::IRanges(df$start, df$end)
+		ir <- IRanges(df$start, df$end)
 		ir <- ir[which(ir@width>=minSeg)]
 		
 		
-		irAll <- IRanges::IRanges(1, length(x))
-		segsFinal <- IRanges::as.data.frame(IRanges::sort(
-						c(ir, IRanges::setdiff(irAll, ir))))
+		irAll <- IRanges(1, length(x))
+		segsFinal <- as.data.frame(sort(c(ir, setdiff(irAll, ir))))
 		
 		if (segPlot) plot(x, pch=15, cex=0.5, ...)
 		nbrOfSegs <- nrow(segsFinal)
@@ -136,21 +135,21 @@ segment <- function(x, alpha=.05, segMedianT, minSeg=3,
 		
 	} else {
 		dfAmp <- df[which(df$median > segMedianT[1]), ]
-		irAmp <- IRanges::IRanges(dfAmp$start, dfAmp$end)
-		irAmp <- IRanges::reduce(irAmp)
+		irAmp <- IRanges(dfAmp$start, dfAmp$end)
+		irAmp <- reduce(irAmp)
 		
 		dfLoss <- df[which(df$median < segMedianT[2]), ]
-		irLoss <- IRanges::IRanges(dfLoss$start, dfLoss$end)
-		irLoss <- IRanges::reduce(irLoss)
+		irLoss <- IRanges(dfLoss$start, dfLoss$end)
+		irLoss <- reduce(irLoss)
 		
-		ir <- IRanges::sort(c(irAmp, irLoss))
+		ir <- sort(c(irAmp, irLoss))
 		ir <- ir[which(ir@width>=minSeg)]
 		
 		rm(irAmp, irLoss, dfAmp, dfLoss)    
 		
-		irAll <- IRanges::IRanges(1, length(x))
-		segsFinal <- IRanges::as.data.frame(IRanges::sort(
-						c(ir, IRanges::setdiff(irAll, ir))))
+		irAll <- IRanges(1, length(x))
+		segsFinal <- as.data.frame(sort(
+						c(ir, setdiff(irAll, ir))))
 		
 		if (segPlot) plot(x, pch=15, cex=0.5, ...)
 		nbrOfSegs <- nrow(segsFinal)

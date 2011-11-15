@@ -8,7 +8,7 @@
 						isFirstMateRead=TRUE,
 						isProperPair=TRUE),
 				what=c("rname","pos","mpos"))
-				#which=IRanges::RangesList(refSeqName))
+				#which=RangesList(refSeqName))
 		readPos <-Rsamtools::scanBam(bamFile,param=param)[[1]]
 		readPosIdx <- (readPos$rname==refSeqName)
 		readPos$pos <- readPos$pos[readPosIdx]
@@ -23,7 +23,7 @@
 		param <- Rsamtools::ScanBamParam(Rsamtools::scanBamFlag(
 						isPaired = FALSE),
 				what=c("rname","pos"))
-				#which=IRanges::RangesList(refSeqName))
+				#which=RangesList(refSeqName))
 		readPos <- Rsamtools::scanBam(bamFile,param=param)[[1]]
 		readPosIdx <- (readPos$rname==refSeqName)
 		readPos$pos <- readPos$pos[readPosIdx] 
@@ -171,7 +171,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	rownames(X) <- paste(refSeqName,"_",brkpts[1:(nSegm-1)],"_",
 			brkpts[2:(nSegm)]-1,sep="")
 	
-	ir <- IRanges::IRanges(start=brkpts[1:(nSegm-1)],
+	ir <- IRanges(start=brkpts[1:(nSegm-1)],
 			end=brkpts[2:(nSegm)]-1)
 	
 	
