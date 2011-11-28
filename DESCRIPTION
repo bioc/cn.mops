@@ -31,7 +31,7 @@ Depends:
     BiocGenerics (>= 0.1.0),
     Biobase,
     IRanges,
-    GenomicRanges
+    GenomicRanges (>= 1.7.8)
 Imports:
     methods,
     graphics,
