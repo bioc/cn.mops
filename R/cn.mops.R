@@ -5,7 +5,7 @@
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
 		priorimpact = 0.1,cyc = 20) {
 	
-	version <- "0.99"
+	version <- packageDescription("cn.mops")$Version
 	
 	N <- length(x)
 	n <- length(I)
@@ -171,7 +171,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		upperThreshold=0.5,lowerThreshold=-0.9,
 		minWidth=3,segAlgorithm="fast",...){
 	
-	version <- "0.99"
+	version <- packageDescription("cn.mops")$Version
 	
 	
 	if(class(input)=="GRanges"){
@@ -452,7 +452,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
 			if (!exists("segMedianT")){
-				segMedianT <- 0.05
+				segMedianT <- 0.01
 			} else {
 				stop(paste("Use \"upper-\" and \"lowerThreshold\" parameters",
 								"instead of segMedianT."))

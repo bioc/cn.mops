@@ -3,7 +3,7 @@ Maintainer: Guenter Klambauer <cn.mops@bioinf.jku.at>
 Author: Guenter Klambauer
 License: LGPL (>= 2.0)
 Type: Package
-Title: cn.mops - Mixture of Poisson for CNV detection in
+Title: cn.mops - Mixture of Poissons for CNV detection in
     NGS data
 Description: cn.mops (Copy Number estimation by a Mixture
     Of PoissonS) is a data processing pipeline for copy
@@ -18,12 +18,12 @@ Description: cn.mops (Copy Number estimation by a Mixture
     decomposes read variations across samples into integer
     copy numbers and noise by its mixture components and
     Poisson distributions, respectively. cn.mops guarantees
-    a low FDR because wrong detections are indicated high
+    a low FDR because wrong detections are indicated by high
     noise and filtered out. cn.mops is very fast and
     written in C++.
 biocViews: HighThroughputSequencing, Sequencing,
     Bioinformatics, CopyNumberVariants
-Version: 1.0.2
+Version: 1.0.3
 Date: 2011-11-02
 URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
 Depends:

@@ -3,8 +3,8 @@
 \title{Performs a fast segmentation algorithm based on the cyber t test
 and the t statistics.}
 \usage{
-  segment(x, alpha = 0.05, segMedianT, minSeg = 3, eps = 0,
-  delta = 5, maxInt = 40, squashing = 0, cyberWeight = 5,
+  segment(x, alpha = 0.05, segMedianT = 0, minSeg = 3, eps = 0,
+  delta = 20, maxInt = 40, squashing = 0, cyberWeight = 50,
   segPlot = TRUE, ...)
 }
 \arguments{
