@@ -3,12 +3,13 @@
 \title{Performs the cn.mops algorithm for copy number detection in
 NGS data.}
 \usage{
-  cn.mops(input, I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5,
-  4), classes = c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5",
-  "CN6", "CN7", "CN8"), priorImpact = 1, cyc = 20,
-  parallel = 0, normType = "poisson", normQu = 0.25, norm =
-  TRUE, upperThreshold = 0.5, lowerThreshold = -0.9,
-  minWidth = 3, segAlgorithm = "fast", ...)
+  cn.mops(input,
+    I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4),
+    classes = c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6", "CN7", "CN8"),
+    priorImpact = 1, cyc = 20, parallel = 0,
+    normType = "poisson", normQu = 0.25, norm = TRUE,
+    upperThreshold = 0.5, lowerThreshold = -0.9,
+    minWidth = 3, segAlgorithm = "fast", ...)
 }
 \arguments{
   \item{input}{Either an instance of "GRanges" or a raw
@@ -79,7 +80,7 @@ NGS data.}
   our fast segmentation algorithm. Default = "fast".}
 
   \item{...}{Additional parameters will be passed to the
-  "DNAcopy" or the standart segmentation algorithm.}
+  "DNAcopy" or the standard segmentation algorithm.}
 }
 \value{
   An instance of "CNVDetectionResult".

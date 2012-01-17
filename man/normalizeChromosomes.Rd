@@ -4,8 +4,8 @@
 samples. Scales each samples' reads such that the coverage is even for
 all samples after normalization.}
 \usage{
-  normalizeChromosomes(X, chr, normType = "poisson", qu =
-  0.25)
+  normalizeChromosomes(X, chr, normType = "poisson",
+    qu = 0.25)
 }
 \arguments{
   \item{X}{Matrix of positive real values, where columns

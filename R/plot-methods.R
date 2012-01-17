@@ -132,8 +132,10 @@ setMethod("segplot",
 				# idx mode
 				WL <- 1
 			} else {
-				WL <- width(IRanges::ranges(X))[1]
-				if (!all(IRanges::width(IRanges::ranges(X))==WL)){
+				wir <- width(IRanges::ranges(X))
+				WL <- wir[1]
+				wir <- wir[-length(wir)]
+				if (!all(wir==WL)){
 					stop("Plot function only for equally spaced segments.")
 				}
 			}
@@ -151,7 +153,7 @@ setMethod("segplot",
 			
 			if (!is.null(r@params$lambda)){
 				genomdat <- (genomdat/r@params$lambda[,"CN2"])
-				cat("lambda.\n")
+				#cat("lambda.\n")
 			} else {
 				genomdat <- (genomdat/rowMedians(genomdat))	
 			}
@@ -168,7 +170,8 @@ setMethod("segplot",
 			#colnames(genomdat) <- sampleNames
 			if (missing(seqname)){
 				seqname <- rep(X@seqnames@values,X@seqnames@lengths)[1]
-				message(paste("Missing \"chr\" argument. Selecting",seqname,".\n"))
+				message(paste("Missing \"seqname\" argument. Selecting"
+								,seqname,".\n"))
 			}
 			#browser()
 			chrIdx <- which(rep(X@seqnames@values,X@seqnames@lengths)==seqname)
@@ -205,5 +208,4 @@ setMethod("segplot",
 			plot(segres,xmaploc=TRUE)
 			#plot(segres,xmaploc=FALSE)
 		})
-		
-		
+

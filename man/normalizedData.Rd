@@ -1,7 +1,7 @@
 \name{normalizedData}
 \alias{normalizedData}
 \title{These generic function returns the normalized data
-of a CNV detection method stored in an instance of
+ of a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
   \item{object}{An instance of "CNVDetectionResult".}

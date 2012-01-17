@@ -2,10 +2,13 @@
 \alias{getReadCountsFromBAM}
 \title{Generates the read counts from BAM Files.
 These counts are necessary for CNV detection methods based
-on depth of coverage information.}
+on depth of coverage information.
+Note that the function is much faster, if the BAM files have an index file.
+The index file is assumed to be in the same folder and have an identical
+file name except that ".bai" is appended.}
 \usage{
   getReadCountsFromBAM(BAMFiles, sampleNames, refSeqName,
-  WL, mode = "unpaired")
+    WL, mode = "unpaired")
 }
 \arguments{
   \item{BAMFiles}{BAMFiles}
@@ -38,13 +41,16 @@ on depth of coverage information.}
 \description{
   Generates the read counts from BAM Files. These counts
   are necessary for CNV detection methods based on depth of
-  coverage information.
+  coverage information. Note that the function is much
+  faster, if the BAM files have an index file. The index
+  file is assumed to be in the same folder and have an
+  identical file name except that ".bai" is appended.
 }
 \examples{
 BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam",
-full.names=TRUE)
+	full.names=TRUE)
 bamDataRanges <- getReadCountsFromBAM(BAMFiles,
-sampleNames=paste("Sample",1:3),WL=5000)
+					sampleNames=paste("Sample",1:3),WL=5000)
 }
 \author{
   Guenter Klambauer \email{klambauer@bioinf.jku.at}

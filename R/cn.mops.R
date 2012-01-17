@@ -180,6 +180,9 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		#X <- (do.call("cbind",(values(input)@unlistData@listData)))
 		X <- do.call("cbind",values(input)@listData)
 		X <- matrix(as.numeric(X),nrow=nrow(X))
+		if (ncol(X)==1){
+			stop("It is not possible to run cn.mops on only ONE sample.\n")
+		}
 		chr <- as.character(seqnames(input))
 		start <- start(input)
 		end <- end(input)

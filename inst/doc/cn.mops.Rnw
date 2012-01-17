@@ -282,7 +282,6 @@ We are now ready to run \cnmops\ on the integer matrix:
 resCNMOPSX <- cn.mops(X)
 @
 
-all(individualCall(resCNMOPS)X==individualCall(resCNMOPS))
 
 Note that the two results \verb+resCNMOPS+ and \verb+resCNMOPSRanges+ identify
 the same CNVs: 
