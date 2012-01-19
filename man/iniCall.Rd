@@ -1,9 +1,9 @@
 \name{iniCall}
 \alias{iniCall}
 \title{These generic function returns the informative/non-informative call of
-a CNV detection method stored in an instance of
+ a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.
-The I/NI call is a measure for a genomic
+ The I/NI call is a measure for a genomic
 segment across all samples, whether this segment is a CNV region
 (informative) or a normal genomic region (non-informative).}
 \arguments{
@@ -17,7 +17,7 @@ segment across all samples, whether this segment is a CNV region
   These generic function returns the
   informative/non-informative call of a CNV detection
   method stored in an instance of
-  \code{\link{CNVDetectionResult-class}}. The I/NI call is
+  \code{\link{CNVDetectionResult-class}}.  The I/NI call is
   a measure for a genomic segment across all samples,
   whether this segment is a CNV region (informative) or a
   normal genomic region (non-informative).

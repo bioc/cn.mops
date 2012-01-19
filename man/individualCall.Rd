@@ -1,7 +1,7 @@
 \name{individualCall}
 \alias{individualCall}
 \title{These generic function returns the individual calls of
-a CNV detection method stored in an instance of
+ a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
   \item{object}{An instance of "CNVDetectionResult"}

@@ -1,7 +1,7 @@
 \name{segmentation}
 \alias{segmentation}
 \title{These generic function returns segmentation of
-a CNV detection method stored in an instance of
+ a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
   \item{object}{An instance of "CNVDetectionResult"}

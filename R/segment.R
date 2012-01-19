@@ -7,25 +7,26 @@
 #' @param x Values to be segmented.
 #' @param alpha Real value between 0 and 1 is interpreted as the percentage of
 #' total points that are considered as initial breakpoints. An integer greater 
-#' than 1 is interpreted as number of initial breakpoints.
+#' than 1 is interpreted as number of initial breakpoints. Default = 0.05.
 #' @param segMedianT Vector of length 2. Thresholds on the segment's median. 
 #' Segments' medians above the first element are considered as gains and below
 #' the second value as losses.
-#' @param minSeg Minimum length of segments.
+#' @param minSeg Minimum length of segments. Default = 3.
 #' @param eps Real value greater or equal zero. A breakpoint is only possible 
 #' between to consecutive values of x that have a distance of at least "eps".
+#' Default = 0.
 #' @param delta Positive integer. A parameter to make the segmentation more 
 #' efficient. If the statistics of a breakpoint lowers while extending the 
 #' window, the algorithm extends the windows by "delta" more points until it 
-#' stops.
+#' stops. Default = 20.
 #' @param maxInt The maximum length of a segment left of the breakpoint and
-#' right of the breakpoint that is considered. 
+#' right of the breakpoint that is considered. Default = 40.
 #' @param squashing An experimental parameter that squashes the values "x" 
 #' before segmentation. Should be left to zero, which means that squashing is 
-#' not performed.
-#' @param cyberWeight The "nu" parameter of the cyber t-test. 
+#' not performed. Default = 0.
+#' @param cyberWeight The "nu" parameter of the cyber t-test. Default = 50.
 #' @param segPlot Logical indicating whether the result of the segmentation a
-#' algorithm should be plotted.
+#' algorithm should be plotted. Default = TRUE.
 #' @param ... additional parameters passed to the plotting function.
 #' @examples 
 #' x <- rnorm(n=500,sd=0.5)
@@ -33,12 +34,15 @@
 #' segment(x)
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @return A data frame containing the segments.
+#' @importFrom IRanges sort
+#' @importFrom IRanges as.data.frame
+#' @importFrom BiocGenerics setdiff
 #' @export
 #' @useDynLib cn.mops
 
 
-segment <- function(x, alpha=.05, segMedianT, minSeg=3, 
-		eps=0, delta=5, maxInt=40, squashing=0, cyberWeight=5,
+segment <- function(x, alpha=.05, segMedianT=0, minSeg=3, 
+		eps=0, delta=20, maxInt=40, squashing=0, cyberWeight=50,
 		segPlot=TRUE, ...){
 	
 	if (missing("segMedianT")) {
@@ -51,6 +55,7 @@ segment <- function(x, alpha=.05, segMedianT, minSeg=3,
 			segMedianT <- c(abs(segMedianT), -abs(segMedianT))
 		}
 	}
+	
 	if (any(is.na(x))){
 		message("NA values detected. Replacing with median.")
 		x[is.na(x)] <- median(x, na.rm=TRUE)
@@ -67,7 +72,7 @@ segment <- function(x, alpha=.05, segMedianT, minSeg=3,
 	
 	#message("Finished C function.")
 	
-	if (alpha > 1){
+	if (alpha >= 1){
 		alpha <- as.integer(alpha)
 		#message(paste("Number of initial breakpoints: ",alpha))
 		brkptsInit <- sort(order(res$stat,decreasing=TRUE)[1:alpha])
@@ -99,6 +104,8 @@ segment <- function(x, alpha=.05, segMedianT, minSeg=3,
 		#   lines(c(start[i], end[i]), c(med[i], med[i]), lwd=5, col="green")
 	}
 	
+	#browser()
+	
 	df <- data.frame("start"=start, "end"=end, "mean"=m, "median"=med)
 	
 	if (all(segMedianT==0)) {
@@ -109,7 +116,7 @@ segment <- function(x, alpha=.05, segMedianT, minSeg=3,
 		
 		
 		irAll <- IRanges(1, length(x))
-		segsFinal <- as.data.frame(sort(c(ir, setdiff(irAll, ir))))
+		segsFinal <- as.data.frame(sort(c(ir, BiocGenerics::setdiff(irAll, ir))))
 		
 		if (segPlot) plot(x, pch=15, cex=0.5, ...)
 		nbrOfSegs <- nrow(segsFinal)
@@ -135,21 +142,21 @@ segment <- function(x, alpha=.05, segMedianT, minSeg=3,
 		
 	} else {
 		dfAmp <- df[which(df$median > segMedianT[1]), ]
-		irAmp <- IRanges(dfAmp$start, dfAmp$end)
-		irAmp <- reduce(irAmp)
+		irAmp <- IRanges::IRanges(dfAmp$start, dfAmp$end)
+		irAmp <- IRanges::reduce(irAmp)
 		
 		dfLoss <- df[which(df$median < segMedianT[2]), ]
-		irLoss <- IRanges(dfLoss$start, dfLoss$end)
-		irLoss <- reduce(irLoss)
+		irLoss <- IRanges::IRanges(dfLoss$start, dfLoss$end)
+		irLoss <- IRanges::reduce(irLoss)
 		
-		ir <- sort(c(irAmp, irLoss))
+		ir <- IRanges::sort(c(irAmp, irLoss))
 		ir <- ir[which(ir@width>=minSeg)]
 		
 		rm(irAmp, irLoss, dfAmp, dfLoss)    
 		
 		irAll <- IRanges(1, length(x))
 		segsFinal <- as.data.frame(sort(
-						c(ir, setdiff(irAll, ir))))
+						c(ir, BiocGenerics::setdiff(irAll, ir))))
 		
 		if (segPlot) plot(x, pch=15, cex=0.5, ...)
 		nbrOfSegs <- nrow(segsFinal)

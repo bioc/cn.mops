@@ -1,7 +1,7 @@
 \name{posteriorProbs}
 \alias{posteriorProbs}
 \title{These generic function returns the posterior probabilities of
-a CNV detection method stored in an instance of
+ a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.
 The posterior probabilities are represented
 as a three dimensional array, where the three dimensions are segment,

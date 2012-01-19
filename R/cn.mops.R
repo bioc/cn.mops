@@ -5,7 +5,7 @@
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
 		priorimpact = 0.1,cyc = 20) {
 	
-	version <- "0.99"
+	version <- packageDescription("cn.mops")$Version
 	
 	N <- length(x)
 	n <- length(I)
@@ -124,7 +124,7 @@
 #' Default = c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8").
 #' @param priorImpact Positive real value that reflects how strong the prior
 #' assumption affects the result. The higher the value the more samples will
-#' be assumed to have copy number 2. Default = 0.1.
+#' be assumed to have copy number 2. Default = 1.
 #' @param cyc Positive integer that sets the number of cycles for the algorithm.
 #' Usually after less than 15 cycles convergence is reached. Default = 20.
 #' @param parallel How many cores are used for the computation. If set to zero
@@ -166,20 +166,23 @@
 
 cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"),
-		priorImpact = 0.1,cyc = 20,parallel=0,
+		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=TRUE,
 		upperThreshold=0.5,lowerThreshold=-0.9,
 		minWidth=3,segAlgorithm="fast",...){
 	
-	version <- "0.99"
+	version <- packageDescription("cn.mops")$Version
 	
 	
 	if(class(input)=="GRanges"){
 		inputType <- "GRanges"
-		input <- sort(input)
+		input <- IRanges::sort(input)
 		#X <- (do.call("cbind",(values(input)@unlistData@listData)))
 		X <- do.call("cbind",values(input)@listData)
 		X <- matrix(as.numeric(X),nrow=nrow(X))
+		if (ncol(X)==1){
+			stop("It is not possible to run cn.mops on only ONE sample.\n")
+		}
 		chr <- as.character(seqnames(input))
 		start <- start(input)
 		end <- end(input)
@@ -452,7 +455,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
 			if (!exists("segMedianT")){
-				segMedianT <- 0.05
+				segMedianT <- 0.01
 			} else {
 				stop(paste("Use \"upper-\" and \"lowerThreshold\" parameters",
 								"instead of segMedianT."))

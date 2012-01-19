@@ -29,10 +29,10 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				which <- 1
 			}
 			
-			MMstart <- match(GRanges(seqnames(r@cnvr),
+			MMstart <- IRanges::match(GRanges(seqnames(r@cnvr),
 							IRanges(start(r@cnvr),
 									start(r@cnvr))), r@normalizedData )
-			MMend <- match(GRanges(seqnames(r@cnvr),
+			MMend <- IRanges::match(GRanges(seqnames(r@cnvr),
 							IRanges(end(r@cnvr),
 									end(r@cnvr))),r@normalizedData )
 			
@@ -128,12 +128,14 @@ setMethod("segplot",
 			
 			library(DNAcopy)
 			X <- r@normalizedData
-			if (all(width(ranges(X))==1) ){
+			if (all(IRanges::width(IRanges::ranges(X))==1) ){
 				# idx mode
 				WL <- 1
 			} else {
-				WL <- width(ranges(X))[1]
-				if (!all(width(ranges(X))==WL)){
+				wir <- width(IRanges::ranges(X))
+				WL <- wir[1]
+				wir <- wir[-length(wir)]
+				if (!all(wir==WL)){
 					stop("Plot function only for equally spaced segments.")
 				}
 			}
@@ -151,7 +153,7 @@ setMethod("segplot",
 			
 			if (!is.null(r@params$lambda)){
 				genomdat <- (genomdat/r@params$lambda[,"CN2"])
-				cat("lambda.\n")
+				#cat("lambda.\n")
 			} else {
 				genomdat <- (genomdat/rowMedians(genomdat))	
 			}
@@ -168,7 +170,8 @@ setMethod("segplot",
 			#colnames(genomdat) <- sampleNames
 			if (missing(seqname)){
 				seqname <- rep(X@seqnames@values,X@seqnames@lengths)[1]
-				message(paste("Missing \"chr\" argument. Selecting",seqname,".\n"))
+				message(paste("Missing \"seqname\" argument. Selecting"
+								,seqname,".\n"))
 			}
 			#browser()
 			chrIdx <- which(rep(X@seqnames@values,X@seqnames@lengths)==seqname)
@@ -181,7 +184,7 @@ setMethod("segplot",
 			attr(zzz, "data.type") <- data.type
 			class(zzz) <- c("CNA", "data.frame")
 			
-			segDataTmp <- as.data.frame(segmentation(r),as.is=TRUE)
+			segDataTmp <- IRanges::as.data.frame(segmentation(r),as.is=TRUE)
 			## segDataTmp$sampleName <- paste("S",
 			##         as.character(segDataTmp$sampleName),sep="_")
 			segDataTmp <- segDataTmp[which(segDataTmp$sampleName==
@@ -205,5 +208,4 @@ setMethod("segplot",
 			plot(segres,xmaploc=TRUE)
 			#plot(segres,xmaploc=FALSE)
 		})
-		
-		
+
