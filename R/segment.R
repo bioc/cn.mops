@@ -42,8 +42,15 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		eps=0, delta=20, maxInt=40, squashing=0, cyberWeight=50,
 		segPlot=TRUE, ...){
 	
-	if (length(segMedianT)==1){
-		segMedianT <- c(abs(segMedianT), -abs(segMedianT))
+	if (missing("segMedianT")) {
+		segMedianT <- c()
+		segMedianT[1] <- mean(x, na.rm=TRUE)+2*sd(x, na.rm=TRUE)
+		segMedianT[2] <- mean(x, na.rm=TRUE)-2*sd(x, na.rm=TRUE)
+		
+	} else {
+		if (length(segMedianT)==1){
+			segMedianT <- c(abs(segMedianT), -abs(segMedianT))
+		}
 	}
 	
 	if (any(is.na(x))){

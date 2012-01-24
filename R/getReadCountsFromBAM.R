@@ -146,7 +146,6 @@
 	return(x)
 }
 
-#system.time(X2 <- getReadCountsFromBAM("NA06986.mapped.ILLUMINA.bwa.CEU.low_coverage.20101123.bam",WL=5000,refSeqName=c("19","20") ))
 
 
 #' Generates the read counts from BAM Files. 
@@ -169,7 +168,7 @@
 #' @param mode Possible values are "paired" and "unpaired", whether the mapping 
 #' algorithm was using a "paired" or "unpaired" strategy. Default = "unpaired".
 #' @examples 
-#' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam",
+#' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 #' 	full.names=TRUE)
 #' bamDataRanges <- getReadCountsFromBAM(BAMFiles,
 #' 					sampleNames=paste("Sample",1:3),WL=5000)
