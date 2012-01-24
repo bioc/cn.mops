@@ -435,7 +435,6 @@ A possible processing script could look like the following:
 BAMFiles <- list.files(pattern=".bam$")
 segments <- read.table("targetRegions.bed",sep="\t",as.is=TRUE)
 gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
-gr <- flank(gr,30)
 X <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr)
 resCNMOPS <- cn.mops(X)
 @
