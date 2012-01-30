@@ -439,12 +439,29 @@ X <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr)
 resCNMOPS <- cn.mops(X)
 @
 
-%\section{Heterosomes and CNVs of tumor samples}
-%The underlying assumptions of the normalization procedure is that the ploidy
-%of each sample is the same. If the default normalization procedure
-%is applied to heterosomes or tumor samples, \cnmops\ will not produce the expected
-%results. A normalization step that takes into account these ploidies per
-%chromosome is under development.
+\section{Heterosomes and CNVs of tumor samples}
+With the default settings the normalization procedure assumes that the ploidy
+of each sample is the same. However, it is possible to account for different karyotypes. 
+When analyzing CNVs on the X or Y chromosome one possibility is to treat males and 
+females separately or to provide the normalization function with the information
+about the gender, that is different ploidy states of the X and Y chromosome. 
+This can be handled by the {\tt ploidy} parameter of the normalization function.
+In the following we show the normalization for the X chromosome, 
+if the first 10 individuals are males ({\tt ploidy} set to 1) and the next
+30 individuals are females ({\tt ploidy} set to 2):
+
+<<>>=
+XchrX <- normalizeChromosomes(X[1:500, ],ploidy=c(rep(1,10),rep(2,30)))
+cnvr(cn.mops(XchrX,norm=FALSE))
+@
+
+Karyotype information can also improve results of CNV detection in tumor 
+samples. The best results can be reached, if for each chromosome the number of
+appearances in the cell is known. In this case normalization should be applied 
+to each chromosome separately. 
+
+
+
 
 \section{How to cite this package}
 

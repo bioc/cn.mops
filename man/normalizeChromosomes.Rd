@@ -5,7 +5,7 @@ samples. Scales each samples' reads such that the coverage is even for
 all samples after normalization.}
 \usage{
   normalizeChromosomes(X, chr, normType = "poisson",
-    qu = 0.25)
+    qu = 0.25, ploidy)
 }
 \arguments{
   \item{X}{Matrix of positive real values, where columns
@@ -34,6 +34,10 @@ all samples after normalization.}
   Default = "poisson".}
 
   \item{qu}{Real value between 0 and 1. Default = 0.25.}
+
+  \item{ploidy}{An integer value for each sample or each
+  column in the read count matrix. At least two samples
+  must have a ploidy of 2. Default = "missing".}
 }
 \value{
   A data matrix of normalized read counts with the same

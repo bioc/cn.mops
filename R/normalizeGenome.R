@@ -22,6 +22,8 @@
 #' Possible values are "mean","min","median","quant","poisson, and "mode". 
 #' Default = "poisson".
 #' @param qu Real value between 0 and 1. Default = 0.25.
+#' @param ploidy An integer value for each sample or each column in the read
+#' count matrix. At least two samples must have a ploidy of 2. Default = "missing".
 #' @examples 
 #' data(cn.mops)
 #' X.norm <- normalizeGenome(X)
@@ -32,10 +34,9 @@
 
 
 
-normalizeGenome <- function(X,normType="quant",qu=0.25){
-	
+normalizeGenome <- function(X,normType="poisson",qu=0.25,ploidy){
 	YY <- normalizeChromosomes(X,chr=rep("undef",nrow(X)),
-			normType=normType,qu=qu)
+			normType=normType,qu=qu,ploidy=ploidy)
 	
 	return(YY)
 }
