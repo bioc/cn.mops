@@ -135,9 +135,9 @@ setMethod("segplot",
 				wir <- width(IRanges::ranges(X))
 				WL <- wir[1]
 				wir <- wir[-length(wir)]
-				if (!all(wir==WL)){
-					stop("Plot function only for equally spaced segments.")
-				}
+				#if (!all(wir==WL)){
+					#stop("Plot function only for equally spaced segments.")
+				#}
 			}
 			genomdat <-	do.call("cbind",values(X)@listData)
 			if (is.null(colnames(X))){colnames(genomdat) <- as.character(
@@ -187,12 +187,18 @@ setMethod("segplot",
 			segDataTmp <- IRanges::as.data.frame(segmentation(r),as.is=TRUE)
 			## segDataTmp$sampleName <- paste("S",
 			##         as.character(segDataTmp$sampleName),sep="_")
-			segDataTmp <- segDataTmp[which(segDataTmp$sampleName==
-									colnames(genomdat)), ]
+			rowIdx <- (segDataTmp$sampleName==
+							colnames(genomdat))
+			segDataTmp <- segDataTmp[rowIdx, ]
+			
+			segDataTmp$width <- as.vector(table(matchMatrix(
+							findOverlaps(segmentation(r)[rowIdx],
+									localAssessments(r))  )[,1]))
+			
 			segDataTmp$sampleName <- as.character(segDataTmp$sampleName)
 			colnames(segDataTmp) <- c("chrom", "loc.start", "loc.end",
 					"num.mark","strand","ID","seg.median","seg.mean","CN")
-			segDataTmp$num.mark <- segDataTmp$num.mark/WL
+			#segDataTmp$num.mark <- segDataTmp$num.mark/WL
 			segDataTmp$chrom <- as.character(segDataTmp$chrom)
 			#segDataTmp$ID <- as.character(colnames(genomdat)[1])
 			

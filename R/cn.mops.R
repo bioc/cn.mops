@@ -255,8 +255,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		message("Normalizing...")
 		X.norm <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)
 	} else {
-		# Normalization only for visualization purposes
-		X.norm <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)
+		#X.norm <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)
+		X.norm <- X
 	}
 	message("Starting local modeling, please be patient...  ")
 	
@@ -275,22 +275,23 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			Xchr[[chrom]] <- X[chrIdx, ]
 		}
 		
-		if(m > 1 & !norm){
-			cov <- colSums(X[chrIdx, ])
-			if (median(cov) > 0){
-				cov <- cov/median(cov)
-			} else {
-				stop(paste("Median of total reads is zero.",
-								"Too many samples with zero reads."))
-			}
-		} else {
-			#X.norm <- X
-			cov <- rep(1,N)
-		}
-		
+#		if(m > 1 & !norm){
+#			cov <- colSums(X[chrIdx, ])
+#			if (median(cov) > 0){
+#				cov <- cov/median(cov)
+#			} else {
+#				stop(paste("Median of total reads is zero.",
+#								"Too many samples with zero reads."))
+#			}
+#		} else {
+#			#X.norm <- X
+#			cov <- rep(1,N)
+#		}
+		cov <- rep(1,N)
+	
 		#cat("Coverage: ",cov ," Norm: ",norm)
 		
-		cov[which(cov < 1e-15)] <- 1e-15
+		#cov[which(cov < 1e-15)] <- 1e-15
 		
 		if (norm & m > 1){
 			if (parallel==0){

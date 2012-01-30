@@ -5,13 +5,13 @@
 	if (na.rm){
 		z <- table(as.vector(x[!is.na(x)]))
 		r <- names(z)[z == max(z)]
-		return(as.numeric(r))
+		return(as.numeric(r)[1])
 	} else {
 		if (any(is.na(x))){return(NA)
 		} else {
 			z <- table(as.vector(x[!is.na(x)]))
 			r <- names(z)[z == max(z)]
-			return(as.numeric(r))
+			return(as.numeric(r)[1])
 		}
 	}
 } 
@@ -39,6 +39,8 @@
 #' Possible values are "mean","min","median","quant","poisson, and "mode". 
 #' Default = "poisson".
 #' @param qu Real value between 0 and 1. Default = 0.25.
+#' @param ploidy An integer value for each sample or each column in the read
+#' count matrix. At least two samples must have a ploidy of 2. Default = "missing".
 #' @examples 
 #' data(cn.mops)
 #' X.norm <- normalizeChromosomes(X)
@@ -49,7 +51,7 @@
 
 
 normalizeChromosomes <-
-		function(X,chr,normType="poisson",qu=0.25){
+		function(X,chr,normType="poisson",qu=0.25,ploidy){
 	if (!(normType %in% c("mean","min","median","quant","mode","poisson"))){
 		stop(paste("Set TO of normalization to \"mean\"",
 						"\"min\", \"median\", \"quant\" or \"mode\"."))
@@ -59,67 +61,130 @@ normalizeChromosomes <-
 	if (missing(chr)){
 		chr <- rep("undef",nrow(X))
 	}
+	if (missing(ploidy)){
+		ploidy <- rep(2,ncol(X))
+	}
+	if (any(ploidy!=as.integer(ploidy))){
+		stop("Ploidy values must be integers!")
+	}
+	if (length(ploidy)!=ncol(X)){
+		stop("Length of the ploidy vector does not match the number of", 
+				"columns of the read count matrix!")
+	}
+	ploidy <- as.integer(ploidy)
+	if (!length(which(ploidy>=2))){
+		stop("At least two diploid samples must be contained in the data.")
+	}
+	ploidy[ploidy==0] <- 0.05
+	Xorig <- X
+	
 	# Sequencing data matrix
 	# vector of chromosome - length equal to rows of X
 	if (length(chr)!=nrow(X)){
 		stop("Length of \"chr\" must be equal to number of rows of \"X\".")}
 	chr <- (as.character(chr))
-	Y <- matrix(0,nrow=nrow(X),ncol=ncol(X))
 	
-	for (l in (unique(chr))){
-		chrIdx <- which(chr==l)
-		Ytmp <- X[chrIdx, ,drop=FALSE]
-		idxSG <- apply(Ytmp,1,function(x) all(x<1))
-		Ytmp[idxSG, ] <- NA
-		
-		if (nrow(Ytmp) > 1){
+	YY <- matrix(0,nrow=nrow(Xorig),ncol=ncol(Xorig))
+	
+	ploidy2flag <- FALSE
+	ploidy2median <- c()
+	
+	for (pp in unique(c(2,ploidy))){
+		X <- Xorig[,ploidy==pp,drop=FALSE]
+		if (ncol(X)==1){
+			Y <- X
 			
-			mappedreads <- colSums(Ytmp,na.rm=TRUE)
-			if (any(mappedreads==0)){
-				warning(paste("There exists a reference sequence with zero reads"
-								,"for some samples."))
-				mappedreads <- pmax(mappedreads, 1)
+		} else {
+			
+			Y <- matrix(0,nrow=nrow(X),ncol=ncol(X))
+			for (l in (unique(chr))){
+				chrIdx <- which(chr==l)
+				Ytmp <- X[chrIdx, ,drop=FALSE]
+				idxSG <- apply(Ytmp,1,function(x) all(x<1))
+				Ytmp[idxSG, ] <- NA
+				
+				if (nrow(Ytmp) > 1){
+					
+					mappedreads <- colSums(Ytmp,na.rm=TRUE)
+					if (any(mappedreads==0)){
+						warning(paste("There exists a reference sequence with zero reads"
+										,"for some samples."))
+						mappedreads <- pmax(mappedreads, 1)
+					}
+					
+					if (normType == "min"){
+						correctwiththis <-  min(mappedreads,na.rm=TRUE)/mappedreads
+						
+					} else if (normType=="mean"){
+						correctwiththis <-  mean(mappedreads,na.rm=TRUE)/mappedreads
+					} else if (normType=="median"){
+						cat("normalizing to median \n")
+						correctwiththis <-  median(mappedreads,na.rm=TRUE)/mappedreads
+					} else if (normType=="quant"){
+						correctwiththis <-  quantile(mappedreads,probs=qu,
+								na.rm=TRUE)/mappedreads
+					} else if (normType=="mode"){
+						ssm <- apply(Ytmp,2,function(x) .statmod(x[x!=0],na.rm=TRUE) )
+						asm <- .statmod(Ytmp[Ytmp!=0],na.rm=TRUE)
+						correctwiththis <- asm/ssm
+						
+					} else if (normType=="poisson"){
+						
+						correctwiththis <-  median(mappedreads,na.rm=TRUE)/mappedreads
+						YYtmp <- t(t(Ytmp)*correctwiththis)
+						v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
+						mv2m <- median(v2m,na.rm=TRUE)
+						if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
+					} else {
+						stop("normType not known.")
+					}
+					if (any(!is.finite(correctwiththis))){
+						warning(paste("Normalization for reference sequence ",l,"not", 
+										"applicable, because at least one sample has zero",
+										"reads."))
+						correctwiththis <- rep(1,ncol(X))
+					}
+					Ytmp <- t(t(Ytmp)*correctwiththis)
+					Ytmp[idxSG, ] <- 0
+				}
+				
+				Y[chrIdx, ] <- Ytmp
+				
+			
+			} # over chr
+			
+			if (!ploidy2flag){
+				ploidy2flag <- TRUE
+				ploidy2median <- median(Y,na.rm=TRUE)
 			}
 			
-			if (normType == "min"){
-				correctwiththis <-  min(mappedreads,na.rm=TRUE)/mappedreads
-				
-			} else if (normType=="mean"){
-				correctwiththis <-  mean(mappedreads,na.rm=TRUE)/mappedreads
-			} else if (normType=="median"){
-				cat("normalizing to median \n")
-				correctwiththis <-  median(mappedreads,na.rm=TRUE)/mappedreads
-			} else if (normType=="quant"){
-				correctwiththis <-  quantile(mappedreads,probs=qu,
-						na.rm=TRUE)/mappedreads
-			} else if (normType=="mode"){
-				correctwiththis <-  .statmod(as.vector(Ytmp),na.rm=TRUE)/
-						apply(Ytmp,2,.statmod,na.rm=TRUE)
-			} else if (normType=="poisson"){
-				
-				correctwiththis <-  median(mappedreads,na.rm=TRUE)/mappedreads
-				YYtmp <- t(t(Ytmp)*correctwiththis)
-				v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
-				mv2m <- median(v2m,na.rm=TRUE)
-				if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
-			} else {
-				stop("normType not known.")
-			}
-			if (any(!is.finite(correctwiththis))){
-				warning(paste("Normalization for reference sequence ",l,"not", 
-								"applicable, because at least one sample has zero",
-								"reads."))
-				correctwiththis <- rep(1,ncol(X))
-			}
-			Ytmp <- t(t(Ytmp)*correctwiththis)
-			Ytmp[idxSG, ] <- 0
 		}
+		#browser()
 		
-		Y[chrIdx, ] <- Ytmp
-		
+		YY[,ploidy==pp] <- Y*ploidy2median/median(Y,na.rm=TRUE)*pp/2
 	}
-	rownames(Y) <- rownames(X)
-	colnames(Y) <- colnames(X)
-	return(Y)	
+	
+	rownames(YY) <- rownames(Xorig)
+	colnames(YY) <- colnames(Xorig)
+	
+	
+	return(YY)	
 }
+
+##normalizeChromosomes(X[,1:2],ploidy=c(1,2))
+##Y <- normalizeChromosomes(X[,1:5],ploidy=c(1,2,2,2,2))
+##Y <- normalizeChromosomes(X,ploidy=c(0,rep(1,14),rep(2,25)))
+##apply(Y,2,median)
+##Y <- normalizeChromosomes(X,ploidy=c(0,rep(1,14),rep(2,25)))
+#chrIdx <- sample(c(1,2),nrow(X),replace=TRUE)
+#
+#
+#Y <- normalizeChromosomes(X,ploidy=c(0,rep(1,14),rep(2,25)),chr=chrIdx)
+#apply((Y[chrIdx==1, ]),2,median)
+#apply((Y[chrIdx==2, ]),2,median)
+#
+#
+#Y <- normalizeChromosomes(X[1:500, ],ploidy=c(rep(1,10),rep(2,30)),normType="mode")
+#r <- cn.mops(Y,norm=FALSE)
+
 

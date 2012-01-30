@@ -44,7 +44,7 @@ file name except that ".bai" is appended.}
   coverage information. Note that the function is much
   faster, if the BAM files have an index file. The index
   file is assumed to be in the same folder and have an
-  identical file name except that "bai" is appended.
+  identical file name except that ".bai" is appended.
 }
 \examples{
 BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
