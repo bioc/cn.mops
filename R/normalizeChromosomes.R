@@ -67,6 +67,10 @@ normalizeChromosomes <-
 	if (any(ploidy!=as.integer(ploidy))){
 		stop("Ploidy values must be integers!")
 	}
+	if (length(ploidy)!=ncol(X)){
+		stop("Length of the ploidy vector does not match the number of", 
+				"columns of the read count matrix!")
+	}
 	ploidy <- as.integer(ploidy)
 	if (!length(which(ploidy>=2))){
 		stop("At least two diploid samples must be contained in the data.")
