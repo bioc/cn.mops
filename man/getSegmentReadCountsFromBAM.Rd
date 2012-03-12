@@ -10,7 +10,7 @@ The index file is assumed to be in the same folder and have an identical
 file name except that ".bai" is appended.}
 \usage{
   getSegmentReadCountsFromBAM(BAMFiles, GR, sampleNames,
-    mode = "unpaired")
+    mode)
 }
 \arguments{
   \item{BAMFiles}{BAMFiles}
@@ -46,7 +46,7 @@ file name except that ".bai" is appended.}
 BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 	full.names=TRUE)
 gr <- GRanges(c("20","20"),IRanges(c(60000,70000),c(70000,80000)))
-bamDataRanges <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr)
+bamDataRanges <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr,mode="unpaired")
 }
 \author{
   Guenter Klambauer \email{klambauer@bioinf.jku.at}

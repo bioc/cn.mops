@@ -328,9 +328,11 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	L <- t(sapply(res,.subset2,1))
 	rownames(L) <- rownames(X)
 	colnames(L) <- classes
+	params$L <- L
 	A <- t(sapply(res,.subset2,2))
 	rownames(A) <- rownames(X)
 	colnames(A) <- classes
+	params$A <- A
 	CN <- t(sapply(res,.subset2,3))
 	rownames(CN) <- rownames(X)
 	colnames(CN) <- colnames(X)

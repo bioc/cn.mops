@@ -191,8 +191,8 @@ setMethod("segplot",
 							colnames(genomdat))
 			segDataTmp <- segDataTmp[rowIdx, ]
 			
-			segDataTmp$width <- as.vector(table(matchMatrix(
-							findOverlaps(segmentation(r)[rowIdx],
+			segDataTmp$width <- as.vector(table(IRanges::as.data.frame(
+							IRanges::findOverlaps(segmentation(r)[rowIdx],
 									localAssessments(r))  )[,1]))
 			
 			segDataTmp$sampleName <- as.character(segDataTmp$sampleName)

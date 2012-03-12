@@ -8,7 +8,7 @@ The index file is assumed to be in the same folder and have an identical
 file name except that ".bai" is appended.}
 \usage{
   getReadCountsFromBAM(BAMFiles, sampleNames, refSeqName,
-    WL, mode = "unpaired")
+    WL, mode)
 }
 \arguments{
   \item{BAMFiles}{BAMFiles}
@@ -50,7 +50,7 @@ file name except that ".bai" is appended.}
 BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 	full.names=TRUE)
 bamDataRanges <- getReadCountsFromBAM(BAMFiles,
-					sampleNames=paste("Sample",1:3),WL=5000)
+					sampleNames=paste("Sample",1:3),WL=5000,mode="unpaired")
 }
 \author{
   Guenter Klambauer \email{klambauer@bioinf.jku.at}

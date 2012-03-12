@@ -171,7 +171,7 @@
 #' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 #' 	full.names=TRUE)
 #' bamDataRanges <- getReadCountsFromBAM(BAMFiles,
-#' 					sampleNames=paste("Sample",1:3),WL=5000)
+#' 					sampleNames=paste("Sample",1:3),WL=5000,mode="unpaired")
 #' @return An instance of "GRanges", that contains the breakpoints of the 
 #' initial segments and the raw read counts that were extracted from the BAM
 #' files. This object can be used as input for cn.mops and other CNV detection
@@ -185,11 +185,16 @@
 
 
 getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
-		mode="unpaired"){
+		mode){
 	
-	if (!(mode %in% c("paired","unpaired"))){
+	if (missing(mode)){
+		stop("Parameter \"mode\" must be \"paired\" or \"unpaired\"!")
+	}
+	
+	if ((!(mode %in% c("paired","unpaired"))) ){
 		stop("Mode parameter must be \"paired\" or \"unpaired\"!")
 	}
+	
 	if (missing(sampleNames)){
 		sampleNames <- as.character(BAMFiles)	
 	}
