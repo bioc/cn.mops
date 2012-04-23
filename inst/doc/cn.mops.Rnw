@@ -16,7 +16,7 @@
 
 \hypersetup{colorlinks=false,
    pdfborder=0 0 0,
-   pdftitle={cn.mops - Mixture of Poisson for CNV detection in NGS data},
+   pdftitle={cn.mops - Mixture of Poissons for CNV detection in NGS data},
    pdfauthor={G\"unter Klambauer}}
 
 \title{cn.mops - Mixture of Poisson for CNV detection in NGS data}
@@ -443,8 +443,8 @@ resCNMOPS <- cn.mops(X)
 With the default settings the normalization procedure assumes that the ploidy
 of each sample is the same. However, it is possible to account for different karyotypes. 
 When analyzing CNVs on the X or Y chromosome one possibility is to treat males and 
-females separately or to provide the normalization function with the information
-about the gender, that is different ploidy states of the X and Y chromosome. 
+females separately. The second option is to provide the normalization function 
+with the information about the gender, that is different ploidy states of the X and Y chromosome. 
 This can be handled by the {\tt ploidy} parameter of the normalization function.
 In the following we show the normalization for the X chromosome, 
 if the first 10 individuals are males ({\tt ploidy} set to 1) and the next
@@ -459,6 +459,17 @@ Karyotype information can also improve results of CNV detection in tumor
 samples. The best results can be reached, if for each chromosome the number of
 appearances in the cell is known. In this case normalization should be applied 
 to each chromosome separately. 
+
+
+\section{cn.MOPS for haploid genomes}
+For haploid genomes the prior assumption is that all samples have copy number 1.
+The function {\tt haplocn.mops} implements the cn.MOPS algorithm adjusted to
+haploid genomes. 
+
+<<eval=FALSE>>=
+resHaplo <- haplocn.mops(X)
+@
+
 
 
 
