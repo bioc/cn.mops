@@ -56,6 +56,7 @@ normalizeChromosomes <-
 		stop(paste("Set TO of normalization to \"mean\"",
 						"\"min\", \"median\", \"quant\" or \"mode\"."))
 	}
+	#browser()
 	if (is.vector(X)){X <- matrix(X,nrow=1)}
 	
 	if (missing(chr)){
@@ -155,13 +156,13 @@ normalizeChromosomes <-
 			
 			if (!ploidy2flag){
 				ploidy2flag <- TRUE
-				ploidy2median <- median(Y,na.rm=TRUE)
+				ploidy2median <- median(Y[!idxSG, ],na.rm=TRUE)
 			}
 			
 		}
 		#browser()
 		
-		YY[,ploidy==pp] <- Y*ploidy2median/median(Y,na.rm=TRUE)*pp/2
+		YY[,ploidy==pp] <- Y*ploidy2median/median(Y[!idxSG, ],na.rm=TRUE)*pp/2
 	}
 	
 	rownames(YY) <- rownames(Xorig)
