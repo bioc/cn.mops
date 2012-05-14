@@ -111,6 +111,8 @@ setGeneric("segplot",
 #' plotted.
 #' @param sampleIdx The index of the sample as it appears in the read count
 #' matrix.
+#' @param mainCN The name of the main copy number. That is "CN2" for diploid
+#' individuals. For haplocn.mops this should be set to "CN1".
 #' @examples
 #' data(cn.mops)
 #' r <- cn.mops(X[1:200, ])
@@ -121,38 +123,53 @@ setGeneric("segplot",
 
 setMethod("segplot",
 		signature(r="CNVDetectionResult"),
-		function(r, seqname, sampleIdx) {
+		function(r, seqname, sampleIdx, mainCN="CN2") {
 			if (!"DNAcopy" %in% rownames(installed.packages())){
 				stop("DNAcopy must be installed for these plot types.")
 			}
 			
+			
 			library(DNAcopy)
 			X <- r@normalizedData
-			if (all(IRanges::width(IRanges::ranges(X))==1) ){
-				# idx mode
-				WL <- 1
-			} else {
-				wir <- width(IRanges::ranges(X))
-				WL <- wir[1]
-				wir <- wir[-length(wir)]
-				#if (!all(wir==WL)){
-					#stop("Plot function only for equally spaced segments.")
-				#}
-			}
-			genomdat <-	do.call("cbind",values(X)@listData)
-			if (is.null(colnames(X))){colnames(genomdat) <- as.character(
+			
+#			
+#			if (all(IRanges::width(IRanges::ranges(X))==1) ){
+#				# idx mode
+#				WL <- 1
+#			} else {
+#				wir <- width(IRanges::ranges(X))
+#				WL <- wir[1]
+#				wir <- wir[-length(wir)]
+#				#if (!all(wir==WL)){
+#					#stop("Plot function only for equally spaced segments.")
+#				#}
+#			}
+#			
+			
+			#genomdat <-	do.call("cbind",values(X)@listData)
+			genomdat <- IRanges::as.matrix(IRanges::values(X))
+			
+			sampleNames <- 
+			strsplit(colnames(values(r@normalizedData)),"normalizedData\\.")
+			sampleNames <- sapply(sampleNames,.subset2,2)		
+	
+			if (is.null(sampleNames) | length(sampleNames)!=ncol(values(X))){
+						colnames(genomdat) <- as.character(
 						paste("Sample",1:ncol(
-										genomdat),sep="_"))} else {
-				colnames(genomdat) <- paste("Sample",colnames(X),sep="_")
+										genomdat),sep="_"))
+			} else {
+				colnames(genomdat) <- sampleNames
 			}
+			
+			
 			if (missing(sampleIdx)){
 				sampleIdx <- 1
 				message(paste("Missing \"sampleIdx\" argument. Selecting",
 								sampleIdx,".\n"))
 			}
 			
-			if (!is.null(r@params$lambda)){
-				genomdat <- (genomdat/r@params$lambda[,"CN2"])
+			if (!is.null(r@params$L[,mainCN])){
+				genomdat <- (genomdat/r@params$L[,mainCN])
 				#cat("lambda.\n")
 			} else {
 				genomdat <- (genomdat/rowMedians(genomdat))	
@@ -168,32 +185,40 @@ setMethod("segplot",
 			genomdat <- genomdat[,sampleIdx,drop=FALSE]
 			
 			#colnames(genomdat) <- sampleNames
+			
 			if (missing(seqname)){
 				seqname <- rep(X@seqnames@values,X@seqnames@lengths)[1]
 				message(paste("Missing \"seqname\" argument. Selecting"
 								,seqname,".\n"))
 			}
-			#browser()
-			chrIdx <- which(rep(X@seqnames@values,X@seqnames@lengths)==seqname)
+			if (length(seqname)>1){
+				stop("Please use only one \"seqname\" for segmentation plot!")
+			}
+			
+			chrIdx <- IRanges::which(GenomicRanges::seqnames(X)==seqname)
 			maploc <- as.integer(
 					(start(ranges(X[chrIdx]))+end(ranges(X[chrIdx])))/2)
 			
 			data.type <- "logratio"
 			zzz <- data.frame(chrom=as.character(seqname), maploc=maploc, 
-					genomdat[chrIdx, ,drop=FALSE])
+					genomdat[chrIdx, ,drop=FALSE],stringsAsFactors=FALSE)
 			attr(zzz, "data.type") <- data.type
 			class(zzz) <- c("CNA", "data.frame")
 			
-			segDataTmp <- IRanges::as.data.frame(segmentation(r),as.is=TRUE)
+			segDataTmp <- IRanges::as.data.frame(segmentation(r),as.is=TRUE,
+					stringsAsFactors=FALSE)
 			## segDataTmp$sampleName <- paste("S",
 			##         as.character(segDataTmp$sampleName),sep="_")
-			rowIdx <- (segDataTmp$sampleName==
+			rowIdx <- which(segDataTmp$sampleName %in%
 							colnames(genomdat))
 			segDataTmp <- segDataTmp[rowIdx, ]
 			
-			segDataTmp$width <- as.vector(table(IRanges::as.data.frame(
-							IRanges::findOverlaps(segmentation(r)[rowIdx],
-									localAssessments(r))  )[,1]))
+					
+			
+			
+			olaps <- IRanges::findOverlaps(segmentation(r)[rowIdx],
+					localAssessments(r))
+			segDataTmp$width <- table(IRanges::queryHits(olaps))
 			
 			segDataTmp$sampleName <- as.character(segDataTmp$sampleName)
 			colnames(segDataTmp) <- c("chrom", "loc.start", "loc.end",
@@ -202,7 +227,9 @@ setMethod("segplot",
 			segDataTmp$chrom <- as.character(segDataTmp$chrom)
 			#segDataTmp$ID <- as.character(colnames(genomdat)[1])
 			
+			segDataTmp <- subset(segDataTmp,chrom==seqname)			
 			
+
 			segres <- list()
 			segres$data <- zzz
 			segres$output <- segDataTmp[,c("ID","chrom","loc.start","loc.end",

@@ -10,6 +10,10 @@ one sample on one reference sequence.}
 
   \item{sampleIdx}{The index of the sample as it appears in
   the read count matrix.}
+
+  \item{mainCN}{The name of the main copy number. That is
+  "CN2" for diploid individuals. For haplocn.mops this
+  should be set to "CN1".}
 }
 \value{
   Generates a segmentation plot.

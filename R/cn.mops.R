@@ -44,7 +44,8 @@
 		lambda.est <- median(x*1/cov,na.rm=TRUE)
 		if (lambda.est < 1e-10){lambda.est <- max(mean(x*1/cov,na.rm=TRUE),1.0)}
 		lambda.init <- I*lambda.est
-		ret=.Call("cnmops", x, I,cov, as.integer(cyc), alpha.init, lambda.init,
+		ret=.Call("cnmops", as.numeric(x), I,cov, 
+				as.integer(cyc), alpha.init, lambda.init,
 				alpha.prior)
 		alpha.ik=ret$alpha.ik
 		alpha.i=ret$alpha.i
@@ -93,13 +94,13 @@
 	
 	names(segDf) <- c("sample","chr","from","to","idx","value")
 	
-	#browser()
+	#
 	
 #	bpt <- cumsum(segDf$idx)
 #	segDf$from <- c(0,bpt[-length(bpt)])+1
 #	bpt[length(bpt)] <- bpt[length(bpt)]
 #	segDf$to <- c(bpt)
-#	browser()
+#	
 	
 	
 	return(segDf[,c("chr","from","to","value")])
@@ -178,8 +179,10 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		inputType <- "GRanges"
 		input <- IRanges::sort(input)
 		#X <- (do.call("cbind",(values(input)@unlistData@listData)))
-		X <- do.call("cbind",values(input)@listData)
-		X <- matrix(as.numeric(X),nrow=nrow(X))
+		#X <- do.call("cbind",values(input)@listData)
+		#X <- matrix(as.numeric(X),nrow=nrow(X))
+		X <- IRanges::as.matrix(IRanges::values(input))
+		
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")
 		}
@@ -288,7 +291,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 #			cov <- rep(1,N)
 #		}
 		cov <- rep(1,N)
-	
+		
 		#cat("Coverage: ",cov ," Norm: ",norm)
 		
 		#cov[which(cov < 1e-15)] <- 1e-15
@@ -368,6 +371,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			DNAcopyBdry <- DNAcopy::getbdry(eta=eta,nperm=nperm,tol=alpha,
 					max.ones=floor(nperm*alpha)+1)
 			
+			
 			if (parallel==0){
 				resSegm <- apply(sINI,2,.segmentation,
 						chr=chr,minWidth=minWidth,DNAcopyBdry=DNAcopyBdry,...)
@@ -379,16 +383,21 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				stopCluster(cl)
 			}
 			
-			#browser()
+			#
 			
-			
+			# 		
+	
 			segDf <- cbind(do.call(rbind,resSegm),
 					rep(colnames(X),sapply(resSegm,nrow)))
 			rm("resSegm")
 			
+			segDf <- data.frame("chr"=as.character(segDf[,1]),"from"=segDf[,2],
+					"to"=segDf[,3],"value"=segDf[,4],"sample"=segDf[,5],
+					stringsAsFactors=FALSE)
+			segDf <- segDf[order(segDf$chr,segDf$sample,segDf$from), ]
 			
-			colnames(segDf) <- c("chr","from","to","value","sample")
-			segDf$chr <- as.character(segDf$chr)
+			#colnames(segDf) <- c("chr","from","to","value","sample")
+			#segDf$chr <- as.character(segDf$chr)
 			
 			segCN <- apply(segDf,1,function(x){
 						sIdx <- as.integer(x["from"]):as.integer(x["to"])
@@ -414,7 +423,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 						#segValue2 <- median(sINI[sIdx,x["sample"]],na.rm=TRUE)
 						#segValue <- x["value"]
 						#segValue2 <- x["value"]
-			
+						
 						return(CN[match(x["sample"],colnames(X))])
 						
 					})
@@ -450,8 +459,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 									segDf$mean <= lowerThreshold), ]
 			segDfSubset <- segDfSubset[which(
 							(segDfSubset$to-segDfSubset$from+1) >= minWidth), ]
-			
-			#browser()
+		
+			#
 			
 		} else {
 			message("Using \"fastseg\" for segmentation.")
@@ -471,7 +480,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				chrIdx <- which(chr==chrom)
 				
 				if (parallel==0){
-					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,segment,
+					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
+							cn.mops:::segment,
 							minSeg=minWidth,segMedianT=segMedianT,
 							segPlot=FALSE,...)
 				} else {
@@ -488,20 +498,20 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 								sapply(resSegmList[[chrom]],nrow)))
 				segDfTmp$chr <- chrom
 				
-				#browser()
+				#
 				callsS[chrIdx, ] <- 
 						matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
 								ncol=N)
 				
 				segDf <- rbind(segDf,segDfTmp)
 			}
-			#browser()
+			#
 			
 			#segDf <- segDf[,c("chr","start","end","sample")]
 			#colnames(segDf) <- c("chr","from","to","sample")
 			
 			message("Calculating integer copy numbers...")
-			#browser()
+			#
 			
 			segCN <- apply(segDf[,c("chr","start","end","sample")],1,
 					function(x){
@@ -532,8 +542,9 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 					})
 			
 			segDf <- data.frame(segDf,"CN"=segCN,stringsAsFactors=FALSE)
-			#browser()
-			
+			#
+# 
+
 			colnames(segDf) <- c("from","to","mean","median","sample",
 					"chr","CN")
 			
@@ -545,7 +556,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			#						| segDf$value <= lowerThreshold), ]
 			
 			#mean for AUC
-			#browser()
+			#
 			
 			
 			#mean for the table
@@ -564,16 +575,17 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 		}
 		
-		#browser()
+		#
 		
+		 
 		
 		
 		if (nrow(segDfSubset)>0){
-			#browser()
+			#
 			
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
-			#browser()
+			#
 			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
 							IRanges(segDfSubset$from,segDfSubset$to)))
 			cnvrCN <- matrix(NA,ncol=N,nrow=length(cnvrR))
@@ -645,6 +657,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			r@cnvr				<- cnvr
 			
 			
+			
 			if (inputType=="GRanges"){
 				irS <- IRanges()
 				for (chrom in unique(chr)){
@@ -679,7 +692,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
 			if (inputType=="GRanges"){
-				#browser()
+				#
 				irS <- IRanges()
 				for (chrom in unique(chr)){
 					inputChr <- input[which(as.character(
