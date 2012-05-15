@@ -56,7 +56,6 @@ normalizeChromosomes <-
 		stop(paste("Set TO of normalization to \"mean\"",
 						"\"min\", \"median\", \"quant\" or \"mode\"."))
 	}
-	#browser()
 	if (is.vector(X)){X <- matrix(X,nrow=1)}
 	
 	if (missing(chr)){
@@ -172,20 +171,5 @@ normalizeChromosomes <-
 	return(YY)	
 }
 
-##normalizeChromosomes(X[,1:2],ploidy=c(1,2))
-##Y <- normalizeChromosomes(X[,1:5],ploidy=c(1,2,2,2,2))
-##Y <- normalizeChromosomes(X,ploidy=c(0,rep(1,14),rep(2,25)))
-##apply(Y,2,median)
-##Y <- normalizeChromosomes(X,ploidy=c(0,rep(1,14),rep(2,25)))
-#chrIdx <- sample(c(1,2),nrow(X),replace=TRUE)
-#
-#
-#Y <- normalizeChromosomes(X,ploidy=c(0,rep(1,14),rep(2,25)),chr=chrIdx)
-#apply((Y[chrIdx==1, ]),2,median)
-#apply((Y[chrIdx==2, ]),2,median)
-#
-#
-#Y <- normalizeChromosomes(X[1:500, ],ploidy=c(rep(1,10),rep(2,30)),normType="mode")
-#r <- cn.mops(Y,norm=FALSE)
 
 

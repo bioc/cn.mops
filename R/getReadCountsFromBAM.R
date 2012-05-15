@@ -196,7 +196,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	}
 	
 	if (missing(sampleNames)){
-		sampleNames <- as.character(BAMFiles)	
+		sampleNames <- sapply(strsplit(BAMFiles,"/"),function(x) x[length(x)])	
 	}
 	
 	headerInfo <- Rsamtools::scanBamHeader(BAMFiles)
@@ -295,11 +295,16 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	}
 	rownames(X) <- rn
 	
-	gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir)
+	#browser()
 	mode(X) <- "integer"
-	values(gr) <- X
+
+	#gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir,sampleNames=X)
+	gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir)
+	
+	colnames(X) <- sampleNames
+	IRanges::values(gr) <- X
 	#names(gr@elementMetadata@listData) <- sampleNames
-	colnames(elementMetadata(gr)) <- sampleNames
+	#IRanges::colnames(IRanges::elementMetadata(gr)) <- sampleNames
 	
 	
 	return(gr)

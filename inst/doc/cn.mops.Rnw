@@ -19,7 +19,7 @@
    pdftitle={cn.mops - Mixture of Poissons for CNV detection in NGS data},
    pdfauthor={G\"unter Klambauer}}
 
-\title{cn.mops - Mixture of Poisson for CNV detection in NGS data}
+\title{cn.mops - Mixture of Poissons for CNV detection in NGS data}
 \author{G\"unter Klambauer}
 \affiliation{Institute of Bioinformatics, Johannes Kepler University
 Linz\\Altenberger Str. 69, 4040 Linz, Austria\\

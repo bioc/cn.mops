@@ -41,7 +41,7 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 	}
 	
 	if (missing(sampleNames)){
-		sampleNames <- as.character(BAMFiles)	
+		sampleNames <- sapply(strsplit(BAMFiles,"/"),function(x) x[length(x)])	
 	}
 	
 	if (missing(GR) | !inherits(GR,"GRanges")){
@@ -76,10 +76,13 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 	colnames(X) <- BAMFiles
 		
 	mode(X) <- "integer"
-	values(GR) <- X
-	#names(gr@elementMetadata@listData) <- sampleNames
-	colnames(elementMetadata(GR)) <- sampleNames
+	colnames(X) <- sampleNames
 	
+	IRanges::values(GR) <- X
+	#names(gr@elementMetadata@listData) <- sampleNames
+	#IRanges::colnames(IRanges::elementMetadata(GR)) <- sampleNames
+	#gr <- GRanges(GenomicRanges::seqnames(GR),IRanges::ranges(GR),
+	#		sampleNames=X)
 	
 	return(GR)
 }
