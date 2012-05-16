@@ -196,7 +196,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	}
 	
 	if (missing(sampleNames)){
-		sampleNames <- as.character(BAMFiles)	
+		sampleNames <- basename(BAMFiles)	
 	}
 	
 	headerInfo <- Rsamtools::scanBamHeader(BAMFiles)

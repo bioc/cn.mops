@@ -41,7 +41,7 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 	}
 	
 	if (missing(sampleNames)){
-		sampleNames <- as.character(BAMFiles)	
+		sampleNames <- basename(BAMFiles)	
 	}
 	
 	if (missing(GR) | !inherits(GR,"GRanges")){
