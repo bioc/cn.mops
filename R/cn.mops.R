@@ -198,8 +198,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		if (nrow(input)> 1){
 			inputType <- "DataMatrix"
 			X <- input
-			colnames(X) <- colnames(input)
 			X <- matrix(as.numeric(X),nrow=nrow(X))
+			colnames(X) <- colnames(input)	
 			chr <- rep("undef",nrow(X))
 			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
 		} else{

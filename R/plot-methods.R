@@ -99,7 +99,7 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 
 #setMethod("segPlot", signature(r="CNVDetectionResult"),
 setGeneric("segplot",
-		function(r, seqname, sampleIdx, ...) {
+		function(r, seqname, sampleIdx, mainCN="CN2", ...) {
 			standardGeneric("segplot")
 		})
 
@@ -123,7 +123,7 @@ setGeneric("segplot",
 
 setMethod("segplot",
 		signature(r="CNVDetectionResult"),
-		function(r, seqname, sampleIdx, mainCN="CN2") {
+		function(r, seqname, sampleIdx, mainCN="CN2", ...) {
 			if (!"DNAcopy" %in% rownames(installed.packages())){
 				stop("DNAcopy must be installed for these plot types.")
 			}
@@ -238,7 +238,7 @@ setMethod("segplot",
 			segres$segRows <- segDataTmp[, 2:3]
 			segres$call <- "unknown"    
 			class(segres) <- "DNAcopy"
-			plot(segres,xmaploc=TRUE)
+			DNAcopy:::plot.DNAcopy(segres,xmaploc=TRUE,...)
 			#plot(segres,xmaploc=FALSE)
 		})
 
