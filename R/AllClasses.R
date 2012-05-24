@@ -17,7 +17,8 @@ setClass("CNVDetectionResult",
 				cnvr				= "GRanges",
 				segmentation		= "GRanges",
 				integerCopyNumber	= "GRanges",
-				params				= "list"
+				params				= "list",
+				sampleNames			= "character"
 		),
 		prototype = prototype
 				(
@@ -30,6 +31,7 @@ setClass("CNVDetectionResult",
 				cnvr				= GRanges(),
 				segmentation		= GRanges(),
 				integerCopyNumber	= GRanges(),
-				params				= list()
+				params				= list(),
+				sampleNames			= vector("character",1)
 				)
 )

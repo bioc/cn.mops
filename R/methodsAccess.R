@@ -205,6 +205,25 @@ setMethod("params", signature = "CNVDetectionResult",
 
 
 
+#'  These generic function returns the sample names of
+#'  a CNV detection method stored in an instance of 
+#' \code{\link{CNVDetectionResult-class}}. 
+#' 
+#' @param object An instance of "CNVDetectionResult" 
+#' @examples
+#' data(cn.mops)
+#' r <- cn.mops(X[1:100,1:5])
+#' sampleNames(r)
+#' @return \code{sampleNames} returns a  eturns a "GRanges" object containing
+#' the parameters.
+#' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
+#' @export
+
+setMethod("sampleNames", signature = "CNVDetectionResult", 
+		definition = function(object) object@sampleNames)
+
+
+
 
 
 

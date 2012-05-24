@@ -1,6 +1,52 @@
 # Copyright (C) 2011 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
 
+.convertToFastSegRes <- function(mopsres){
+	ol <- IRanges::findOverlaps(segmentation(mopsres),
+			normalizedData(mopsres))
+	ID <- as.character(values(segmentation(mopsres))$sampleName)
+	seg.mean <- values(segmentation(mopsres))$mean
+	T <- table(queryHits(ol))
+	nn <- length(normalizedData(mopsres))
+	cs <- cumsum(T)%%nn
+	num.mark <- as.integer(T)
+	
+	startRow <- c(1,(cs+1)[-length(cs)])
+	endRow <- cs
+	endRow[which(endRow==0)] <- nn
+	grRet <- segmentation(mopsres)
+	values(grRet) <- data.frame(ID=ID,num.mark=num.mark,seg.mean=seg.mean,
+			startRow=startRow,endRow=endRow,stringsAsFactors=FALSE)
+	
+	return(grRet)
+}
+
+.makeLogRatios <- function(mopsres,mainCN="CN2"){
+	X <- IRanges::as.matrix(IRanges::values(normalizedData(mopsres)))
+	
+	if (!is.null(mopsres@params$L[,mainCN])){
+		r <- mopsres@params$L[,mainCN]
+		#cat("lambda.\n")
+	} else {
+		r <- rowMedians(X)
+	}
+	
+	R <- X/r
+	R[which(is.na(R))] <- 1
+	
+	R[which(R==Inf)] <- max(R[which(is.finite(R))],na.rm=TRUE)
+	
+	R[which(R==0)] <- min(R[which(R>0)],na.rm=TRUE)
+	R <- log2(R)
+	gr <- normalizedData(mopsres)
+	colnames(R) <-  unique(as.character(
+					IRanges::values(segmentation(mopsres))$sampleName))
+	values(gr) <- R
+	return(gr)
+}
+
+
+
 #' Plots read counts, call values and CNV calls in an identified CNV region.
 #' 
 #' @param x An instance of "CNVDetectionResult" 
@@ -99,20 +145,53 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 
 #setMethod("segPlot", signature(r="CNVDetectionResult"),
 setGeneric("segplot",
-		function(r, seqname, sampleIdx, ...) {
+		function(r,mainCN="CN2", sampleIdx, plot.type="chrombysample", 
+				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
+				cbys.layout, include.means=TRUE, zeroline=TRUE,
+				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),segcol, 
+				zlcol="grey", ylim, lwd=3, ...) {
 			standardGeneric("segplot")
 		})
 
-#' Plots the log normalized read counts and the detected segments for 
-#' one sample on one reference sequence.
+#' Plots the log normalized read counts and the detected segments as a 
+#' segmentation plot.
 #' 
 #' @param r An instance of "CNVDetectionResult" 
-#' @param seqname The name of the reference sequence or chromosome to be
-#' plotted.
-#' @param sampleIdx The index of the sample as it appears in the read count
-#' matrix.
 #' @param mainCN The name of the main copy number. That is "CN2" for diploid
 #' individuals. For haplocn.mops this should be set to "CN1".
+#' @param plot.type the type of plot. (Default = "s").
+#' @param altcol logical flag to indicate if chromosomes should be
+#'   plotted in alternating colors in the whole genome plot. (Default = TRUE).
+#' @param sbyc.layout \code{layout} settings for the multifigure grid layout
+#'    for the `samplebychrom' type.  It should be specified as a vector of
+#'    two integers which are the number of rows and columns.  The default
+#'    values are chosen based on the number of chromosomes to produce a
+#'    near square graph.   For normal genome it is 4x6 (24 chromosomes)
+#'    plotted by rows. (Default = NULL).
+#' @param cbys.layout \code{layout} settings for the multifigure grid layout
+#'   for the `chrombysample' type.  As above it should be specified as
+#'    number of rows and columns and the default chosen based on the
+#'    number of samples. (Default = NULL).
+#' @param cbys.nchrom the number of chromosomes per page in the layout.
+#'(Default = 1).
+#' @param include.means logical flag to indicate whether segment means
+#'   are to be drawn. (Default = TRUE).
+#' @param zeroline logical flag to indicate whether a horizontal line at
+#'    y=0 is to be drawn. (Default = TRUE).
+#' @param pt.pch the plotting character used for plotting the log-ratio
+#'    values. (Default = ".")
+#' @param pt.cex the size of plotting character used for the log-ratio
+#'    values (Default = 3).
+#' @param pt.cols the color list for the points. The colors alternate
+#'    between chromosomes. (Default = c("green","black").)
+#' @param segcol the color of the lines indicating the segment means.
+#' (Default = "red").
+#' @param zlcol the color of the zeroline. (Default = "grey").
+#' @param ylim this argument is present to override the default limits
+#'    which is the range of symmetrized log-ratios. (Default = NULL).
+#' @param lwd line weight of lines for segment mean and zeroline. (Default = 3).
+#' @param ... other arguments which will be passed to \code{plot}
+#'   commands.
 #' @examples
 #' data(cn.mops)
 #' r <- cn.mops(X[1:200, ])
@@ -121,124 +200,37 @@ setGeneric("segplot",
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
+
 setMethod("segplot",
 		signature(r="CNVDetectionResult"),
-		function(r, seqname, sampleIdx, mainCN="CN2") {
-			if (!"DNAcopy" %in% rownames(installed.packages())){
-				stop("DNAcopy must be installed for these plot types.")
-			}
+		function(r, mainCN="CN2",sampleIdx, plot.type="chrombysample", 
+				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
+				cbys.layout, include.means=TRUE, zeroline=TRUE,
+				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),segcol, 
+				zlcol="grey", ylim, lwd=3, ...) {
 			
+			if (!missing(sampleIdx)){
+				sn <- sampleNames(r)
+				idx <- which(as.character(
+								values(segmentation(r))
+										$sampleName)==sn[sampleIdx])
+				
+				r@segmentation <- segmentation(r)[idx]
+				nd <- normalizedData(r)
+				IRanges::values(nd) <- IRanges::values(nd)[,sampleIdx]
+				IRanges::colnames(IRanges::values(nd)) <- sn[sampleIdx]
+				r@normalizedData <- nd
+				
+				
+			} 
 			
-			library(DNAcopy)
-			X <- r@normalizedData
+			.segPlot(x=cn.mops:::.makeLogRatios(r,mainCN),
+					res=cn.mops:::.convertToFastSegRes(r),
+					plot.type=plot.type, 
+					altcol=altcol, 
+					cbys.nchrom=cbys.nchrom,
+					include.means=include.means,zeroline=zeroline, 
+					pt.pch=pt.pch,pt.cex=pt.cex, pt.cols=pt.cols,
+					zlcol=zlcol, ylim=ylim, lwd=lwd, ...)
 			
-#			
-#			if (all(IRanges::width(IRanges::ranges(X))==1) ){
-#				# idx mode
-#				WL <- 1
-#			} else {
-#				wir <- width(IRanges::ranges(X))
-#				WL <- wir[1]
-#				wir <- wir[-length(wir)]
-#				#if (!all(wir==WL)){
-#					#stop("Plot function only for equally spaced segments.")
-#				#}
-#			}
-#			
-			
-			#genomdat <-	do.call("cbind",values(X)@listData)
-			genomdat <- IRanges::as.matrix(IRanges::values(X))
-			
-			sampleNames <- 
-			strsplit(colnames(values(r@normalizedData)),"normalizedData\\.")
-			sampleNames <- sapply(sampleNames,.subset2,2)		
-	
-			if (is.null(sampleNames) | length(sampleNames)!=ncol(values(X))){
-						colnames(genomdat) <- as.character(
-						paste("Sample",1:ncol(
-										genomdat),sep="_"))
-			} else {
-				colnames(genomdat) <- sampleNames
-			}
-			
-			
-			if (missing(sampleIdx)){
-				sampleIdx <- 1
-				message(paste("Missing \"sampleIdx\" argument. Selecting",
-								sampleIdx,".\n"))
-			}
-			
-			if (!is.null(r@params$L[,mainCN])){
-				genomdat <- (genomdat/r@params$L[,mainCN])
-				#cat("lambda.\n")
-			} else {
-				genomdat <- (genomdat/rowMedians(genomdat))	
-			}
-			genomdat[which(is.na(genomdat))] <- 1
-			genomdat[which(genomdat==Inf)] <- max(
-					genomdat[which(is.finite(genomdat))])
-			genomdat[which(genomdat==-Inf)] <- min(
-					genomdat[which(is.finite(genomdat))])
-			genomdat <- log2(genomdat)
-			genomdat <- pmax(genomdat,min(
-							genomdat[which(is.finite(genomdat))]))
-			genomdat <- genomdat[,sampleIdx,drop=FALSE]
-			
-			#colnames(genomdat) <- sampleNames
-			
-			if (missing(seqname)){
-				seqname <- rep(X@seqnames@values,X@seqnames@lengths)[1]
-				message(paste("Missing \"seqname\" argument. Selecting"
-								,seqname,".\n"))
-			}
-			if (length(seqname)>1){
-				stop("Please use only one \"seqname\" for segmentation plot!")
-			}
-			
-			chrIdx <- IRanges::which(GenomicRanges::seqnames(X)==seqname)
-			maploc <- as.integer(
-					(start(ranges(X[chrIdx]))+end(ranges(X[chrIdx])))/2)
-			
-			data.type <- "logratio"
-			zzz <- data.frame(chrom=as.character(seqname), maploc=maploc, 
-					genomdat[chrIdx, ,drop=FALSE],stringsAsFactors=FALSE)
-			attr(zzz, "data.type") <- data.type
-			class(zzz) <- c("CNA", "data.frame")
-			
-			segDataTmp <- IRanges::as.data.frame(segmentation(r),as.is=TRUE,
-					stringsAsFactors=FALSE)
-			## segDataTmp$sampleName <- paste("S",
-			##         as.character(segDataTmp$sampleName),sep="_")
-			rowIdx <- which(segDataTmp$sampleName %in%
-							colnames(genomdat))
-			segDataTmp <- segDataTmp[rowIdx, ]
-			
-					
-			
-			
-			olaps <- IRanges::findOverlaps(segmentation(r)[rowIdx],
-					localAssessments(r))
-			segDataTmp$width <- table(IRanges::queryHits(olaps))
-			
-			segDataTmp$sampleName <- as.character(segDataTmp$sampleName)
-			colnames(segDataTmp) <- c("chrom", "loc.start", "loc.end",
-					"num.mark","strand","ID","seg.median","seg.mean","CN")
-			#segDataTmp$num.mark <- segDataTmp$num.mark/WL
-			segDataTmp$chrom <- as.character(segDataTmp$chrom)
-			#segDataTmp$ID <- as.character(colnames(genomdat)[1])
-			
-			segDataTmp <- subset(segDataTmp,chrom==seqname)			
-			
-
-			segres <- list()
-			segres$data <- zzz
-			segres$output <- segDataTmp[,c("ID","chrom","loc.start","loc.end",
-							"num.mark","seg.mean")]
-			#segres$segRows <- segDataTmp[, 9:10]
-			segres$segRows <- segDataTmp[, 2:3]
-			segres$call <- "unknown"    
-			class(segres) <- "DNAcopy"
-			plot(segres,xmaploc=TRUE)
-			#plot(segres,xmaploc=FALSE)
 		})
-

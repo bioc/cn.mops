@@ -198,8 +198,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		if (nrow(input)> 1){
 			inputType <- "DataMatrix"
 			X <- input
-			colnames(X) <- colnames(input)
 			X <- matrix(as.numeric(X),nrow=nrow(X))
+			colnames(X) <- colnames(input)	
 			chr <- rep("undef",nrow(X))
 			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
 		} else{
@@ -386,7 +386,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			#
 			
 			# 		
-	
+			#browser()
+			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$from), ])
 			segDf <- cbind(do.call(rbind,resSegm),
 					rep(colnames(X),sapply(resSegm,nrow)))
 			rm("resSegm")
@@ -394,7 +395,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			segDf <- data.frame("chr"=as.character(segDf[,1]),"from"=segDf[,2],
 					"to"=segDf[,3],"value"=segDf[,4],"sample"=segDf[,5],
 					stringsAsFactors=FALSE)
-			segDf <- segDf[order(segDf$chr,segDf$sample,segDf$from), ]
+			#segDf <- segDf[order(segDf$chr,segDf$sample,segDf$from), ]
 			
 			#colnames(segDf) <- c("chr","from","to","value","sample")
 			#segDf$chr <- as.character(segDf$chr)
@@ -685,6 +686,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			r@params			<- params
 			r@integerCopyNumber	<- GRanges(seqnames=chr,irAllRegions,
 					integerCopyNumber=CN)
+			r@sampleNames		<- colnames(X)
+			
 			return(r)	
 		} else {
 			message(paste("No CNVs detected. Try changing \"normalization\",", 
@@ -728,7 +731,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			r@params			<- params
 			r@integerCopyNumber	<- GRanges(seqnames=chr,irAllRegions,
 					integerCopyNumber=CN)
-			
+			r@sampleNames		<- colnames(X)
 			return(r)	
 		}
 		
@@ -750,6 +753,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		
 		r@integerCopyNumber	<- GRanges(seqnames=chr,irAllRegions,
 				integerCopyNumber=CN)
+		r@sampleNames		<- colnames(X)
+		
 		
 		return(r)	
 		
