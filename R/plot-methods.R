@@ -214,10 +214,11 @@ setMethod("segplot",
 				zlcol="grey", ylim, lwd=3, ...) {
 			
 			if (!missing(sampleIdx)){
+				
 				sn <- sampleNames(r)
 				idx <- which(as.character(
 								values(segmentation(r))
-										$sampleName)==sn[sampleIdx])
+										$sampleName) %in% sn[sampleIdx])
 				
 				r@segmentation <- segmentation(r)[idx]
 				nd <- normalizedData(r)
