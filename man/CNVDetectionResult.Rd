@@ -17,6 +17,7 @@
 \alias{posteriorProbs,CNVDetectionResult-method}
 \alias{segmentation,CNVDetectionResult-method}
 \alias{segplot,CNVDetectionResult-method}
+\alias{sampleNames,CNVDetectionResult-method}
 
 \title{Class "CNVDetectionResult"}
 \description{S4 class for storing results of a CNV detection method.}
@@ -35,6 +36,7 @@ The following slots are defined for \link{CNVDetectionResult} objects:
   \item{cnvr}{The detected CNV regions.}
   \item{segmentation}{The segmentation of the reference sequence (sample-wise).}
   \item{integerCopyNumber}{The most probable integer copy number.}
+  \item{sampleNames}{The sample names.}
   \item{params}{The parameters with which the method was run.}
   }
 }  
@@ -50,6 +52,7 @@ The following slots are defined for \link{CNVDetectionResult} objects:
     \item{params}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{plot}{\code{signature(x = "CNVDetectionResult", y = "missing")}: ... }
     \item{posteriorProbs}{\code{signature(object = "CNVDetectionResult")}: ... }
+    \item{sampleNames}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{segmentation}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{segplot}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{show}{\code{signature(object = "CNVDetectionResult")}: ... }

@@ -9,6 +9,12 @@ segmentation plot.}
   "CN2" for diploid individuals. For haplocn.mops this
   should be set to "CN1".}
 
+  \item{sampleIdx}{The index of the samples to be plotted.
+  (Default = missing)}
+
+  \item{seqnames}{The names of the reference sequence
+  (chromosomes) to be plotted. (Default = missing)}
+
   \item{plot.type}{the type of plot. (Default = "s").}
 
   \item{altcol}{logical flag to indicate if chromosomes

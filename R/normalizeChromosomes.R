@@ -171,5 +171,3 @@ normalizeChromosomes <-
 	return(YY)	
 }
 
-
-

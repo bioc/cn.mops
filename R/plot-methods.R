@@ -145,7 +145,7 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 
 #setMethod("segPlot", signature(r="CNVDetectionResult"),
 setGeneric("segplot",
-		function(r,mainCN="CN2", sampleIdx, plot.type="chrombysample", 
+		function(r,mainCN="CN2", sampleIdx, seqnames, plot.type="chrombysample", 
 				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
 				cbys.layout, include.means=TRUE, zeroline=TRUE,
 				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),segcol, 
@@ -159,6 +159,9 @@ setGeneric("segplot",
 #' @param r An instance of "CNVDetectionResult" 
 #' @param mainCN The name of the main copy number. That is "CN2" for diploid
 #' individuals. For haplocn.mops this should be set to "CN1".
+#' @param sampleIdx The index of the samples to be plotted. (Default = missing)
+#' @param seqnames The names of the reference sequence (chromosomes) to
+#' be plotted. (Default = missing)
 #' @param plot.type the type of plot. (Default = "s").
 #' @param altcol logical flag to indicate if chromosomes should be
 #'   plotted in alternating colors in the whole genome plot. (Default = TRUE).
@@ -203,7 +206,8 @@ setGeneric("segplot",
 
 setMethod("segplot",
 		signature(r="CNVDetectionResult"),
-		function(r, mainCN="CN2",sampleIdx, plot.type="chrombysample", 
+		function(r, mainCN="CN2",sampleIdx, seqnames, 
+				plot.type="chrombysample", 
 				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
 				cbys.layout, include.means=TRUE, zeroline=TRUE,
 				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),segcol, 
@@ -223,6 +227,27 @@ setMethod("segplot",
 				
 				
 			} 
+			
+			if (!missing(seqnames)){
+				#browser()
+				r@segmentation <- segmentation(r)[which(seqnames(
+										segmentation(r)) %in% seqnames)]
+				nd <- normalizedData(r)
+				idx2 <- which(seqnames(nd) %in% seqnames)
+				if (length(idx2)==0){
+					stop(paste("Given \"seqnames\" do not appear in result",
+					"object. Try to exchange \"chr1\" <--> \"1\"."))
+				}
+				nd <- nd[idx2]
+				
+				r@normalizedData <- nd
+				if (!is.null(r@params$L)){
+					r@params$L <- r@params$L[idx2, ]
+				}
+				
+				
+			} 
+
 			
 			.segPlot(x=cn.mops:::.makeLogRatios(r,mainCN),
 					res=cn.mops:::.convertToFastSegRes(r),
