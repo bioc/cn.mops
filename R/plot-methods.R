@@ -207,7 +207,7 @@ setGeneric("segplot",
 setMethod("segplot",
 		signature(r="CNVDetectionResult"),
 		function(r, mainCN="CN2",sampleIdx, seqnames, 
-				plot.type="chrombysample", 
+				plot.type="s", 
 				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
 				cbys.layout, include.means=TRUE, zeroline=TRUE,
 				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),segcol, 
@@ -231,10 +231,13 @@ setMethod("segplot",
 			
 			if (!missing(seqnames)){
 				#browser()
-				r@segmentation <- segmentation(r)[which(seqnames(
-										segmentation(r)) %in% seqnames)]
+				idx <- which(as.character(GenomicRanges::seqnames(
+								segmentation(r))) %in% seqnames)
+				r@segmentation <- segmentation(r)[idx]
+				
 				nd <- normalizedData(r)
-				idx2 <- which(seqnames(nd) %in% seqnames)
+				idx2 <- which(as.character(GenomicRanges::seqnames(nd))
+								%in% seqnames)
 				if (length(idx2)==0){
 					stop(paste("Given \"seqnames\" do not appear in result",
 					"object. Try to exchange \"chr1\" <--> \"1\"."))

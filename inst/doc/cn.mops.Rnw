@@ -341,7 +341,7 @@ segplot(resCNMOPS,sampleIdx=13)
 
 <<fig=FALSE,echo=FALSE,results=hide>>=
 pdf("002.pdf")
-segplot(resCNMOPS,sampleIdx=13)
+segplot(resCNMOPS,sampleIdx=13,seqnames="chrA")
 dev.off()
 @
 
