@@ -251,6 +251,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	if (missing(WL)){
 		message(paste("Missing \"WL\"! cn.mops will suggest an",
 						"appropiate value for the window length."))
+		sampleNames <- sampleNames[order(file.info(BAMFiles)$size)]
 		BAMFiles <- BAMFiles[order(file.info(BAMFiles)$size)]
 		xs <- sum(.countBAM(BAMFiles[1],sl=sl,WL=min(sl),mode=mode,
 						refSeqName=refSeqName,quiet=TRUE))
@@ -295,11 +296,16 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	}
 	rownames(X) <- rn
 	
-	gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir)
+	#browser()
 	mode(X) <- "integer"
-	values(gr) <- X
+
+	#gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir,sampleNames=X)
+	gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir)
+	
+	colnames(X) <- sampleNames
+	IRanges::values(gr) <- X
 	#names(gr@elementMetadata@listData) <- sampleNames
-	colnames(elementMetadata(gr)) <- sampleNames
+	#colnames(elementMetadata(gr)) <- sampleNames
 	
 	
 	return(gr)

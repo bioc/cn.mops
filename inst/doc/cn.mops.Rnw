@@ -432,12 +432,32 @@ The resulting read count matrix can directly be used as input for \cnmops.
 A possible processing script could look like the following:
 
 <<eval=FALSE>>=
+library(cn.mops)
 BAMFiles <- list.files(pattern=".bam$")
 segments <- read.table("targetRegions.bed",sep="\t",as.is=TRUE)
 gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
 X <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr,mode="unpaired")
 resCNMOPS <- cn.mops(X)
 @
+
+\paragraph{Possible issues and notes}
+A problem can occur, if the names of the reference sequences, e.s. chromosomes,
+are inconsistent between the bed file and the bam file. For example "chr1", 
+"chr2",...,"chrX","chrY" and "1","2",...,"X","Y".This can easily be solved by
+replacing the seqlevels of the GRanges object:
+<<eval=FALSE>>=
+#the following removes the "chr" from reference sequence names
+seqlevels(gr) <- gsub("chr","",seqlevels(gr))
+@
+
+Results can also be improved if you extend your target regions by a small 
+amount of bases to the left and to the right (in the following case it is
+30bp):
+<<eval=FALSE>>=
+gr <- GRanges(segments[,1],IRanges(segments[,2]-30,segments[,3]+30))
+gr <- reduce(gr)
+@
+
 
 \section{Heterosomes and CNVs of tumor samples}
 With the default settings the normalization procedure assumes that the ploidy
