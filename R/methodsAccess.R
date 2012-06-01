@@ -1,5 +1,22 @@
 # Copyright (C) 2011 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
+#'  These generic function returns the genomic ranges
+#'  of a CNV detection method stored in an instance of 
+#' \code{\link{CNVDetectionResult-class}}.
+#' 
+#' @param object An instance of "CNVDetectionResult".
+#' @examples
+#' data(cn.mops)
+#' r <- cn.mops(X[1:100,1:5])
+#' gr(r)
+#' @return \code{normalizedData} returns a "GRanges" object containing
+#' the normalized data.
+#' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
+#' @export
+
+setMethod("gr", signature = "CNVDetectionResult", 
+		definition = function(object) object@gr)
+
 
 
 #'  These generic function returns the normalized data
@@ -17,7 +34,12 @@
 #' @export
 
 setMethod("normalizedData", signature = "CNVDetectionResult", 
-		definition = function(object) object@normalizedData)
+		definition = function(object){
+			xx <- object@gr
+			values(xx) <- object@normalizedData
+			return(xx)
+		}
+)
 
 
 
@@ -38,7 +60,12 @@ setMethod("normalizedData", signature = "CNVDetectionResult",
 #' @export
 
 setMethod("localAssessments", signature = "CNVDetectionResult", 
-		definition = function(object) object@localAssessments)
+		definition = function(object){
+			xx <- object@gr
+			values(xx) <- object@localAssessments
+			return(xx)
+		}
+)
 
 
 
@@ -58,7 +85,13 @@ setMethod("localAssessments", signature = "CNVDetectionResult",
 #' @export
 
 setMethod("individualCall", signature = "CNVDetectionResult", 
-		definition = function(object) object@individualCall)
+		definition = function(object){
+			xx <- object@gr
+			values(xx) <- object@individualCall
+			return(xx)
+		}
+)
+
 
 
 
@@ -79,9 +112,14 @@ setMethod("individualCall", signature = "CNVDetectionResult",
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
-setMethod("iniCall", signature = "CNVDetectionResult", 
-		definition = function(object) object@iniCall)
 
+setMethod("iniCall", signature = "CNVDetectionResult", 
+		definition = function(object){
+			xx <- object@gr
+			values(xx) <- object@iniCall
+			return(xx)
+		}
+)
 
 
 #'  These generic function returns the posterior probabilities of
@@ -104,7 +142,7 @@ setMethod("posteriorProbs", signature = "CNVDetectionResult",
 		definition = function(object) object@posteriorProbs)
 
 
- 
+
 #'  These generic function returns CNVs of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
@@ -179,9 +217,15 @@ setMethod("segmentation", signature = "CNVDetectionResult",
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
-setMethod("integerCopyNumber", signature = "CNVDetectionResult", 
-		definition = function(object) object@integerCopyNumber)
 
+
+setMethod("integerCopyNumber", signature = "CNVDetectionResult", 
+		definition = function(object){
+			xx <- object@gr
+			values(xx) <- object@integerCopyNumber
+			return(xx)
+		}
+)
 
 
 

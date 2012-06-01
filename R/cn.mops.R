@@ -219,6 +219,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		stop("GRanges object or read count matrix needed as input.")
 	}
 	
+	
 	if (any(X<0) | any(!is.finite(X))){
 		stop("All values must be greater or equal zero and finite.\n")
 	}	
@@ -383,10 +384,9 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				stopCluster(cl)
 			}
 			
-			#
 			
-			# 		
-			#browser()
+			
+			
 			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$from), ])
 			segDf <- cbind(do.call(rbind,resSegm),
 					rep(colnames(X),sapply(resSegm,nrow)))
@@ -461,7 +461,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			segDfSubset <- segDfSubset[which(
 							(segDfSubset$to-segDfSubset$from+1) >= minWidth), ]
 		
-			#
+		
 			
 		} else {
 			message("Using \"fastseg\" for segmentation.")
@@ -499,14 +499,14 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 								sapply(resSegmList[[chrom]],nrow)))
 				segDfTmp$chr <- chrom
 				
-				#
+				
 				callsS[chrIdx, ] <- 
 						matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
 								ncol=N)
 				
 				segDf <- rbind(segDf,segDfTmp)
 			}
-			#
+			
 			
 			#segDf <- segDf[,c("chr","start","end","sample")]
 			#colnames(segDf) <- c("chr","from","to","sample")
@@ -543,8 +543,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 					})
 			
 			segDf <- data.frame(segDf,"CN"=segCN,stringsAsFactors=FALSE)
-			#
-# 
+			
 
 			colnames(segDf) <- c("from","to","mean","median","sample",
 					"chr","CN")
@@ -557,7 +556,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			#						| segDf$value <= lowerThreshold), ]
 			
 			#mean for AUC
-			#
+			
 			
 			
 			#mean for the table
@@ -576,17 +575,13 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 		}
 		
-		#
 		
-		 
 		
 		
 		if (nrow(segDfSubset)>0){
-			#
 			
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
-			#
 			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
 							IRanges(segDfSubset$from,segDfSubset$to)))
 			cnvrCN <- matrix(NA,ncol=N,nrow=length(cnvrR))
@@ -644,16 +639,12 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			#colnames(elementMetadata(cnvrR)) <- colnames(X)
 			
 			
-			r@normalizedData    <- GRanges(seqnames=chr,irAllRegions,
-					normalizedData=X.norm)
-			r@localAssessments  <- GRanges(seqnames=chr,irAllRegions,
-					localAssessments=sINI)
+			r@normalizedData    <- X.norm
+			r@localAssessments  <- sINI
 			#write.table(sINI,file="sINIafter.txt")
 			
-			r@individualCall   	<- GRanges(seqnames=chr,irAllRegions,
-					individualCall=callsS)
-			r@iniCall        	<- GRanges(seqnames=chr,irAllRegions,
-					iniCall=INI)
+			r@individualCall   	<- callsS
+			r@iniCall        	<- INI
 			r@cnvs				<- rd
 			r@cnvr				<- cnvr
 			
@@ -682,10 +673,10 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			}
 			
+			r@gr <- GRanges(seqnames=chr,irAllRegions)
 			r@posteriorProbs 	<- post
 			r@params			<- params
-			r@integerCopyNumber	<- GRanges(seqnames=chr,irAllRegions,
-					integerCopyNumber=CN)
+			r@integerCopyNumber	<- CN
 			r@sampleNames		<- colnames(X)
 			
 			return(r)	
@@ -695,7 +686,6 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
 			if (inputType=="GRanges"){
-				#
 				irS <- IRanges()
 				for (chrom in unique(chr)){
 					inputChr <- input[which(as.character(
@@ -718,19 +708,15 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			}
 			
-			r@normalizedData    <- GRanges(seqnames=chr,irAllRegions,
-					normalizedData=X.norm)
-			r@localAssessments  <- GRanges(seqnames=chr,irAllRegions,
-					localAssessments=sINI)
-			
-			r@individualCall   	<- GRanges(seqnames=chr,irAllRegions,
-					individualCall=callsS)
-			r@iniCall        	<- GRanges(seqnames=chr,irAllRegions,
-					iniCall=INI)
+			r@gr <- GRanges(seqnames=chr,irAllRegions)
+			r@normalizedData    <- X.norm
+			r@localAssessments  <- sINI
+			r@gr <- GRanges(seqnames=chr,irAllRegions)
+			r@individualCall   	<- callsS
+			r@iniCall        	<- INI
 			r@posteriorProbs 	<- post
 			r@params			<- params
-			r@integerCopyNumber	<- GRanges(seqnames=chr,irAllRegions,
-					integerCopyNumber=CN)
+			r@integerCopyNumber	<- CN
 			r@sampleNames		<- colnames(X)
 			return(r)	
 		}
@@ -742,17 +728,14 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		# Assembly of result object
 		r <- new("CNVDetectionResult")	#
 		
-		r@normalizedData    <- GRanges(seqnames=chr,irAllRegions,
-				normalizedData=X.norm)
-		r@localAssessments  <- GRanges(seqnames=chr,irAllRegions,
-				localAssessments=sINI)
-		r@individualCall   	<- GRanges(seqnames=chr,irAllRegions,
-				individualCall=sINI)
+		r@gr <- GRanges(seqnames=chr,irAllRegions)
+		r@normalizedData    <- X.norm
+		r@localAssessments  <- sINI
+		r@individualCall   	<- sINI
 		
 		r@params			<- params
 		
-		r@integerCopyNumber	<- GRanges(seqnames=chr,irAllRegions,
-				integerCopyNumber=CN)
+		r@integerCopyNumber	<- CN
 		r@sampleNames		<- colnames(X)
 		
 		

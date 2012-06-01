@@ -8,29 +8,31 @@
 setClass("CNVDetectionResult",
 		representation = representation
 				(
-				normalizedData     	= "GRanges",
-				localAssessments    = "GRanges",
-				individualCall      = "GRanges",
-				iniCall        		= "GRanges",
+				gr					= "GRanges",
+				normalizedData     	= "matrix",
+				localAssessments    = "matrix",
+				individualCall      = "matrix",
+				iniCall        		= "numeric",
 				posteriorProbs		= "array",
 				cnvs				= "GRanges",
 				cnvr				= "GRanges",
 				segmentation		= "GRanges",
-				integerCopyNumber	= "GRanges",
+				integerCopyNumber	= "matrix",
 				params				= "list",
 				sampleNames			= "character"
 		),
 		prototype = prototype
 				(
-				normalizedData     	= GRanges(),
-				localAssessments     = GRanges(),
-				individualCall      = GRanges(),
-				iniCall        		= GRanges(),
+				gr					= GRanges(),
+				normalizedData     	= matrix(),
+				localAssessments    = matrix(),
+				individualCall      = matrix(),
+				iniCall        		= vector("numeric",1),
 				posteriorProbs		= array(NA,dim=c(1,1,1)),
 				cnvs				= GRanges(),
 				cnvr				= GRanges(),
 				segmentation		= GRanges(),
-				integerCopyNumber	= GRanges(),
+				integerCopyNumber	= matrix(),
 				params				= list(),
 				sampleNames			= vector("character",1)
 				)

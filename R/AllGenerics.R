@@ -1,3 +1,5 @@
+setGeneric("gr", function(object) 
+			standardGeneric("gr"))
 setGeneric("normalizedData", function(object) 
 			standardGeneric("normalizedData"))
 setGeneric("localAssessments", function(object) 

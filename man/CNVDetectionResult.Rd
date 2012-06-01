@@ -6,6 +6,7 @@
 \alias{cnvdetectionresult}
 \alias{CnvDetectionResult}
 \alias{CNVDetectionResult-class}
+\alias{gr,CNVDetectionResult-method}
 \alias{cnvr,CNVDetectionResult-method}
 \alias{cnvs,CNVDetectionResult-method}
 \alias{individualCall,CNVDetectionResult-method}
@@ -24,6 +25,7 @@
 \section{Slots}{
 The following slots are defined for \link{CNVDetectionResult} objects:
 \describe{
+  \item{gr}{The segments in which the reads are counted. GRanges object.}
   \item{normalizedData}{The normalized data.}
   \item{localAssessments}{The data to which the
   segmentation algorithm is applied. These can be z-Scores,
@@ -42,6 +44,7 @@ The following slots are defined for \link{CNVDetectionResult} objects:
 }  
 \section{Methods}{
   \describe{
+    \item{gr}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{cnvr}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{cnvs}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{individualCall}{\code{signature(object = "CNVDetectionResult")}: ... }

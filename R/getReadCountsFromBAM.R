@@ -251,6 +251,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	if (missing(WL)){
 		message(paste("Missing \"WL\"! cn.mops will suggest an",
 						"appropiate value for the window length."))
+		sampleNames <- sampleNames[order(file.info(BAMFiles)$size)]
 		BAMFiles <- BAMFiles[order(file.info(BAMFiles)$size)]
 		xs <- sum(.countBAM(BAMFiles[1],sl=sl,WL=min(sl),mode=mode,
 						refSeqName=refSeqName,quiet=TRUE))

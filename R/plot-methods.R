@@ -3,11 +3,11 @@
 
 .convertToFastSegRes <- function(mopsres){
 	ol <- IRanges::findOverlaps(segmentation(mopsres),
-			normalizedData(mopsres))
+			gr(mopsres))
 	ID <- as.character(values(segmentation(mopsres))$sampleName)
 	seg.mean <- values(segmentation(mopsres))$mean
 	T <- table(queryHits(ol))
-	nn <- length(normalizedData(mopsres))
+	nn <- length(gr(mopsres))
 	cs <- cumsum(T)%%nn
 	num.mark <- as.integer(T)
 	
@@ -22,7 +22,7 @@
 }
 
 .makeLogRatios <- function(mopsres,mainCN="CN2"){
-	X <- IRanges::as.matrix(IRanges::values(normalizedData(mopsres)))
+	X <- mopsres@normalizedData
 	
 	if (!is.null(mopsres@params$L[,mainCN])){
 		r <- mopsres@params$L[,mainCN]
@@ -77,10 +77,10 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 			
 			MMstart <- IRanges::match(GRanges(seqnames(r@cnvr),
 							IRanges(start(r@cnvr),
-									start(r@cnvr))), r@normalizedData )
+									start(r@cnvr))), normalizedData(r) )
 			MMend <- IRanges::match(GRanges(seqnames(r@cnvr),
 							IRanges(end(r@cnvr),
-									end(r@cnvr))),r@normalizedData )
+									end(r@cnvr))),normalizedData(r) )
 			
 			for (select in which){
 				if (!toFile){
@@ -98,22 +98,19 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				if (plotEnd==plotStart){plotStart <- plotStart-1}
 				#plot.new()
 				layout(matrix(1:3,nrow=1))
-				ND <- (do.call("cbind",
-									(values(r@normalizedData)@listData)))
-				LA <- (do.call("cbind",
-									(values(r@localAssessments)@listData)))
-				IC <- (do.call("cbind",
-									(values(r@individualCall)@listData)))
+				ND <- r@normalizedData
+				LA <- r@localAssessments
+				IC <- r@individualCall
 				
-				rn <- paste(start(r@normalizedData),
-						end(r@normalizedData),sep=" - ")
+				rn <- paste(start(normalizedData(r)),
+						end(normalizedData(r)),sep=" - ")
 				
 				rownames(ND) <- rownames(LA) <- rownames(IC) <- rn
 				
 				refSeqName <- unique(as.character(seqnames(r@cnvr)))
 				xlab <- paste(refSeq,": ",
-						unlist(start(r@normalizedData))[plotStart],
-						" - ",unlist(end(r@normalizedData))[plotEnd],sep="")
+						unlist(start(normalizedData(r)))[plotStart],
+						" - ",unlist(end(normalizedData(r)))[plotEnd],sep="")
 				
 				lt <- r@params$lowerThreshold
 				ut <- r@params$upperThreshold
@@ -210,8 +207,8 @@ setMethod("segplot",
 				plot.type="s", 
 				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
 				cbys.layout, include.means=TRUE, zeroline=TRUE,
-				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),segcol, 
-				zlcol="grey", ylim, lwd=3, ...) {
+				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),
+				segcol="red", zlcol="grey", ylim, lwd=3, ...) {
 			
 			if (!missing(sampleIdx)){
 				
@@ -221,10 +218,10 @@ setMethod("segplot",
 										$sampleName) %in% sn[sampleIdx])
 				
 				r@segmentation <- segmentation(r)[idx]
-				nd <- normalizedData(r)
-				IRanges::values(nd) <- IRanges::values(nd)[,sampleIdx]
-				IRanges::colnames(IRanges::values(nd)) <- sn[sampleIdx]
-				r@normalizedData <- nd
+				#nd <- normalizedData(r)
+				#IRanges::values(nd) <- IRanges::values(nd)[,sampleIdx]
+				#IRanges::colnames(IRanges::values(nd)) <- sn[sampleIdx]
+				r@normalizedData <- r@normalizedData[ ,sampleIdx,drop=FALSE]
 				
 				
 			} 
@@ -242,9 +239,9 @@ setMethod("segplot",
 					stop(paste("Given \"seqnames\" do not appear in result",
 					"object. Try to exchange \"chr1\" <--> \"1\"."))
 				}
-				nd <- nd[idx2]
+				#nd <- nd[idx2]
 				
-				r@normalizedData <- nd
+				r@normalizedData <- r@normalizedData[idx2, ,drop=FALSE]
 				if (!is.null(r@params$L)){
 					r@params$L <- r@params$L[idx2, ]
 				}
@@ -259,7 +256,7 @@ setMethod("segplot",
 					altcol=altcol, 
 					cbys.nchrom=cbys.nchrom,
 					include.means=include.means,zeroline=zeroline, 
-					pt.pch=pt.pch,pt.cex=pt.cex, pt.cols=pt.cols,
+					pt.pch=pt.pch,pt.cex=pt.cex, pt.cols=pt.cols,segcol=segcol,
 					zlcol=zlcol, ylim=ylim, lwd=lwd, ...)
 			
 		})
