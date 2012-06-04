@@ -11,7 +11,7 @@
 	cs <- cumsum(T)%%nn
 	num.mark <- as.integer(T)
 	
-	startRow <- c(1,(cs+1)[-length(cs)])
+	startseqRow <- c(1,(cs+1)[-length(cs)])
 	endRow <- cs
 	endRow[which(endRow==0)] <- nn
 	grRet <- segmentation(mopsres)
@@ -235,12 +235,15 @@ setMethod("segplot",
 				nd <- normalizedData(r)
 				idx2 <- which(as.character(GenomicRanges::seqnames(nd))
 								%in% seqnames)
+				
+				
 				if (length(idx2)==0){
 					stop(paste("Given \"seqnames\" do not appear in result",
 					"object. Try to exchange \"chr1\" <--> \"1\"."))
 				}
 				#nd <- nd[idx2]
 				
+				r@gr <- r@gr[idx2]
 				r@normalizedData <- r@normalizedData[idx2, ,drop=FALSE]
 				if (!is.null(r@params$L)){
 					r@params$L <- r@params$L[idx2, ]

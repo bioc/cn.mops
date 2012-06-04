@@ -80,7 +80,8 @@
 		if(length(uchrom)>1 & max(maploc0[chrom0==uchrom[1]]) > min(maploc0[chrom0==uchrom[2]])) {
 			plen <- max(maploc0[chrom0==uchrom[1]])
 			for(i in 2:nchrom) {
-				maploc0[chrom0==uchrom[i]] <- plen + maploc0[chrom0==uchrom[i]]
+				#maploc0[chrom0==uchrom[i]] <- plen + maploc0[chrom0==uchrom[i]]
+				maploc0[chrom0==uchrom[i]] <- maploc0[chrom0==uchrom[i]]
 				plen <- max(maploc0[chrom0==uchrom[i]])
 			}
 		}
