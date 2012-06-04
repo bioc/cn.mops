@@ -11,7 +11,7 @@
 	cs <- cumsum(T)%%nn
 	num.mark <- as.integer(T)
 	
-	startseqRow <- c(1,(cs+1)[-length(cs)])
+	startRow <- c(1,(cs+1)[-length(cs)])
 	endRow <- cs
 	endRow[which(endRow==0)] <- nn
 	grRet <- segmentation(mopsres)
