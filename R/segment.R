@@ -45,6 +45,8 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		eps=0, delta=20, maxInt=40, squashing=0, cyberWeight=50,
 		segPlot=TRUE, ...){
 	
+	library(IRanges)
+	
 	if (missing("segMedianT")) {
 		segMedianT <- c()
 		segMedianT[1] <- mean(x, na.rm=TRUE)+2*sd(x, na.rm=TRUE)
