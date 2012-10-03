@@ -3,7 +3,7 @@
 
 .cn.mopsC <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
-		priorimpact = 0.1,cyc = 20) {
+		priorimpact = 1,cyc = 20) {
 	
 	version <- packageDescription("cn.mops")$Version
 	
