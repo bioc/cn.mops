@@ -97,10 +97,13 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				
 				if (plotEnd==plotStart){plotStart <- plotStart-1}
 				#plot.new()
-				layout(matrix(1:3,nrow=1))
+				layout(matrix(1:4,nrow=2))
 				ND <- r@normalizedData
 				LA <- r@localAssessments
 				IC <- r@individualCall
+				#ratios
+				RA <- (ND[plotStart:plotEnd, ]+0.1)/
+						rowMedians(ND[plotStart:plotEnd, ]+0.1)
 				
 				rn <- paste(start(normalizedData(r)),
 						end(normalizedData(r)),sep=" - ")
@@ -121,21 +124,33 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				}
 				
 				lty <- sample(2:6,replace=TRUE,size=ncol(ND))
+				
 				matplot(ND[plotStart:plotEnd, ],type="l",lty=lty,lwd=2,
 						main="Normalized Read Counts",ylab="Read Count",
 						xlab=xlab,xaxt="n",col=col)
 				axis(1,at=1:length(plotStart:plotEnd),
 						labels=FALSE)
+				
 				matplot(LA[plotStart:plotEnd, ],type="l",lty=lty,lwd=2,
 						main="Local Assessments",ylab="Local Assessment Score",
 						xlab=xlab,xaxt="n",col=col)
 				axis(1,at=1:length(plotStart:plotEnd),
 						labels=FALSE)
+				
+				
+				matplot(RA,type="l",lty=lty,lwd=2,
+						main="Read Count Ratios",ylab="Ratio",
+						xlab=xlab,xaxt="n",col=col)
+				axis(1,at=1:length(plotStart:plotEnd),
+						labels=FALSE)
+					
 				matplot(IC[plotStart:plotEnd, ],type="l",lty=lty,lwd=2,
 						main="CNV Call",ylab="CNV Call Value",
 						xlab=xlab,xaxt="n",col=col)
 				axis(1,at=1:length(plotStart:plotEnd),
 						labels=FALSE)
+			
+				
 			}
 		})
 

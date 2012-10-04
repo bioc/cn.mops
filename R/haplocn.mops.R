@@ -1,9 +1,9 @@
 # Copyright (C) 2011 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
 
-haplocn.mopsC <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
+haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
-		priorimpact = 1,cyc = 20) {
+		priorimpact = 1,cyc = 20, minReadCount=1) {
 	
 	version <- packageDescription("cn.mops")$Version
 	
@@ -22,7 +22,7 @@ haplocn.mopsC <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	alpha.prior[idxCN1] <- 1
 	alpha.prior <- alpha.prior*priorimpact
 	
-	if (all(x<=1)) {
+	if (all(x<=minReadCount)) {
 		lambda.est <- rep(0,n)
 		alpha.est <- rep(0,n)
 		alpha.est[idxCN1] <- 1
@@ -119,6 +119,9 @@ haplocn.mopsC <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 #' @param segAlgorithm Which segmentation algorithm should be used. If set to
 #' "DNAcopy" circular binary segmentation is performed. Any other value will
 #' initiate the use of our fast segmentation algorithm. Default = "fast".
+#' @param minReadCount If all samples are below this value the algorithm will
+#' return the prior knowledge. This prevents that the algorithm from being 
+#' applied to segments with very low coverage.
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
 #' @examples 
@@ -135,8 +138,8 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"),
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=TRUE,
-		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",...){
+		upperThreshold=0.6,lowerThreshold=-0.9,
+		minWidth=3,segAlgorithm="fast",minReadCount=1,...){
 	
 	version <- packageDescription("cn.mops")$Version
 	
@@ -233,7 +236,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	if (parallel > 0){
 		library(snow)
 		cl <- makeCluster(as.integer(parallel),type="SOCK")
-		clusterEvalQ(cl,".cn.mopsC")
+		clusterEvalQ(cl,"haplocn.mopsC")
 	} 
 	
 	res <- list()
@@ -265,23 +268,27 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		
 		if (norm & m > 1){
 			if (parallel==0){
-				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsC, I=I,
+				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsC, I=I,
 						classes=classes,
-						cov=cov,priorimpact=priorImpact,cyc=cyc)
+						cov=cov,priorimpact=priorImpact,cyc=cyc,
+						minReadCount=minReadCount)
 			} else {
-				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsC, 
+				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsC, 
 						I=I,classes=classes,cov=cov,priorimpact=priorImpact,
-						cyc=cyc)				
+						cyc=cyc,
+						minReadCount=minReadCount)				
 			}
 		} else {
 			if (parallel==0){
-				resChr <-apply(X[chrIdx, ,drop=FALSE],1,.cn.mopsC, I=I,
+				resChr <-apply(X[chrIdx, ,drop=FALSE],1,haplocn.mopsC, I=I,
 						classes=classes,
-						cov=cov,priorimpact=priorImpact,cyc=cyc)
+						cov=cov,priorimpact=priorImpact,cyc=cyc,
+						minReadCount=minReadCount)
 			} else {
-				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,.cn.mopsC, 
+				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,haplocn.mopsC, 
 						I=I,classes=classes,cov=cov,priorimpact=priorImpact,
-						cyc=cyc)				
+						cyc=cyc,
+						minReadCount=minReadCount)				
 			}
 		}
 		
@@ -372,13 +379,14 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 						} else{
 							sIdx2 <- sIdx
 						}
-						CN <- .cn.mopsC(apply(Xchr[[x["chr"]]][sIdx2,
+						CN <- haplocn.mopsC(apply(Xchr[[x["chr"]]][sIdx2,
 												,drop=FALSE],2,
 										median),
 								I=I,
 								classes=classes,
 								cov=cov,priorimpact=priorImpact,
-								cyc=cyc)$expectedCN
+								cyc=cyc,
+								minReadCount=minReadCount)$expectedCN
 						
 						#Median
 						#segValue <- quantile(sINI[sIdx,x["sample"]],probs=0.5,
@@ -487,13 +495,14 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 							sIdx <- sIdx[-c(1,length(sIdx))]
 						}
 						
-						CN <- .cn.mopsC(apply(Xchr[[x["chr"]]][sIdx,
+						CN <- haplocn.mopsC(apply(Xchr[[x["chr"]]][sIdx,
 												,drop=FALSE],2,
 										median),
 								I=I,
 								classes=classes,
 								cov=cov,priorimpact=priorImpact,
-								cyc=cyc)$expectedCN
+								cyc=cyc,
+								minReadCount=minReadCount)$expectedCN
 						
 #						cnProbs <- post[sIdx , , x["sample"]]
 #						if (length(sIdx)>1){
@@ -554,13 +563,14 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 				sIdx3 <- (start(cnvrR)[jj]:end(cnvrR)[jj])
 				chrIdx2 <- as.character(seqnames(cnvrR))[jj]
 				if (length(sIdx3) >= 3){sIdx3 <- sIdx3[2:(length(sIdx3)-1)]}
-				cnvrCN[jj, ] <- .cn.mopsC(apply(Xchr[[chrIdx2]][sIdx3,
+				cnvrCN[jj, ] <- haplocn.mopsC(apply(Xchr[[chrIdx2]][sIdx3,
 										,drop=FALSE],
 								2,median),
 						I=I,
 						classes=classes,
 						cov=cov,priorimpact=priorImpact,
-						cyc=cyc)$expectedCN
+						cyc=cyc,
+						minReadCount=minReadCount)$expectedCN
 				
 				
 			}

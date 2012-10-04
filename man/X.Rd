@@ -1,3 +1,4 @@
+
 \name{X}
 \docType{data}
 \alias{X}
@@ -18,7 +19,9 @@ dependent on the copy number (e.g. in a certain genomic we expect
 \usage{X}
 \format{A data matrix of 5000 rows and 40 columns.}
 \source{http://www.bioinf.jku.at/software/cnmops/cnmops.html.}
-\references{
-Klambauer et al., cn.mops, \emph{Unpublished method.}, 2011
-      }
+\references{Guenter Klambauer, Karin Schwarzbauer, Andreas Mayr, Djork-Arne Clevert, 
+Andreas Mitterecker, Ulrich Bodenhofer, Sepp Hochreiter. 
+\emph{cn.MOPS: mixture of Poissons for discovering copy number variations in next 
+generation sequencing data with a low false discovery rate.}
+Nucleic Acids Research 2012 40(9); doi:10.1093/nar/gks003.}
 \keyword{datasets}

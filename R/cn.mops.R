@@ -3,7 +3,7 @@
 
 .cn.mopsC <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
-		priorimpact = 0.1,cyc = 20) {
+		priorimpact = 1,cyc = 20,minReadCount=1) {
 	
 	version <- packageDescription("cn.mops")$Version
 	
@@ -22,7 +22,7 @@
 	alpha.prior[idxCN2] <- 1
 	alpha.prior <- alpha.prior*priorimpact
 	
-	if (all(x<=1)) {
+	if (all(x<=minReadCount)) {
 		lambda.est <- rep(0,n)
 		alpha.est <- rep(0,n)
 		alpha.est[idxCN2] <- 1
@@ -149,10 +149,13 @@
 #' for copy number 1 or 0. Default = -0.9.
 #' @param minWidth Positive integer that is exactly the parameter "min.width"
 #' of the "segment" function of "DNAcopy". minWidth is the minimum number 
-#' of segments a CNV should span. Default = 4.
+#' of segments a CNV should span. Default = 3.
 #' @param segAlgorithm Which segmentation algorithm should be used. If set to
 #' "DNAcopy" circular binary segmentation is performed. Any other value will
 #' initiate the use of our fast segmentation algorithm. Default = "fast".
+#' @param minReadCount If all samples are below this value the algorithm will
+#' return the prior knowledge. This prevents that the algorithm from being 
+#' applied to segments with very low coverage. Default=1. 
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
 #' @examples 
@@ -164,13 +167,12 @@
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
-
 cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"),
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=TRUE,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",...){
+		minWidth=3,segAlgorithm="fast",minReadCount=1,...){
 	
 	version <- packageDescription("cn.mops")$Version
 	
@@ -301,21 +303,25 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			if (parallel==0){
 				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsC, I=I,
 						classes=classes,
-						cov=cov,priorimpact=priorImpact,cyc=cyc)
+						cov=cov,priorimpact=priorImpact,cyc=cyc,
+						minReadCount=minReadCount)
 			} else {
 				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsC, 
 						I=I,classes=classes,cov=cov,priorimpact=priorImpact,
-						cyc=cyc)				
+						cyc=cyc,
+						minReadCount=minReadCount)				
 			}
 		} else {
 			if (parallel==0){
 				resChr <-apply(X[chrIdx, ,drop=FALSE],1,.cn.mopsC, I=I,
 						classes=classes,
-						cov=cov,priorimpact=priorImpact,cyc=cyc)
+						cov=cov,priorimpact=priorImpact,cyc=cyc,
+						minReadCount=minReadCount)
 			} else {
 				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,.cn.mopsC, 
 						I=I,classes=classes,cov=cov,priorimpact=priorImpact,
-						cyc=cyc)				
+						cyc=cyc,
+						minReadCount=minReadCount)				
 			}
 		}
 		
@@ -413,7 +419,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 								I=I,
 								classes=classes,
 								cov=cov,priorimpact=priorImpact,
-								cyc=cyc)$expectedCN
+								cyc=cyc,
+								minReadCount=minReadCount)$expectedCN
 						
 						#Median
 						#segValue <- quantile(sINI[sIdx,x["sample"]],probs=0.5,
@@ -528,7 +535,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 								I=I,
 								classes=classes,
 								cov=cov,priorimpact=priorImpact,
-								cyc=cyc)$expectedCN
+								cyc=cyc,
+								minReadCount=minReadCount)$expectedCN
 						
 #						cnProbs <- post[sIdx , , x["sample"]]
 #						if (length(sIdx)>1){
@@ -595,7 +603,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 						I=I,
 						classes=classes,
 						cov=cov,priorimpact=priorImpact,
-						cyc=cyc)$expectedCN
+						cyc=cyc,
+						minReadCount=minReadCount)$expectedCN
 				
 				
 			}

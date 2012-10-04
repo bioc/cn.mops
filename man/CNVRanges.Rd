@@ -8,7 +8,9 @@
 \usage{CNVRanges}
 \format{A GRanges object with 20 rows and 40 value columns across 1 space.}
 \source{http://www.bioinf.jku.at/cnmops/cnmops.html.}
-\references{
-Klambauer et al., cn.mops, \emph{Unpublished method.}, 2011
-      }
+\references{Guenter Klambauer, Karin Schwarzbauer, Andreas Mayr, Djork-Arne Clevert, 
+Andreas Mitterecker, Ulrich Bodenhofer, Sepp Hochreiter. 
+\emph{cn.MOPS: mixture of Poissons for discovering copy number variations in next 
+generation sequencing data with a low false discovery rate.}
+Nucleic Acids Research 2012 40(9); doi:10.1093/nar/gks003.}
 \keyword{datasets}
