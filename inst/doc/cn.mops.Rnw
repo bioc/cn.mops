@@ -515,6 +515,7 @@ resHaplo <- haplocn.mops(X)
 @
 
 
+
 \section{How to cite this package}
 
 If you use this package for research that is published later, you are kindly
