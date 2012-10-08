@@ -11,7 +11,8 @@ all samples after normalization.}
   \item{X}{Matrix of positive real values, where columns
   are interpreted as samples and rows as genomic regions.
   An entry is the read count of a sample in the genomic
-  region.}
+  region.  Alternatively this can be a GRanges object
+  containing the read counts as values.}
 
   \item{normType}{normType Type of the normalization
   technique. Each samples' read counts are scaled such that

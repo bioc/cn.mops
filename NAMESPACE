@@ -1,5 +1,6 @@
 exportClasses(CNVDetectionResult)
 export(cn.mops)
+export(exomecn.mops)
 export(getReadCountsFromBAM)
 export(getSegmentReadCountsFromBAM)
 export(haplocn.mops)

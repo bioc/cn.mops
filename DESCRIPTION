@@ -57,3 +57,4 @@ Collate:
     'getSegmentReadCountsFromBAM.R'
     'haplocn.mops.R'
     'segPlot.R'
+    'exomecn.mops.R'

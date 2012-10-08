@@ -16,10 +16,10 @@
 #' @importFrom methods show
 
 setMethod("show", "CNVDetectionResult",function(object){
-			cat("\nIndividual CNVs: \n")
-			show(object@cnvs)
 			cat("\nCNV regions: \n")
 			show(object@cnvr)
+			cat("\nIndividual CNVs: \n")
+			show(object@cnvs)
 			
 		})
 

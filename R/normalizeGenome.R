@@ -7,7 +7,8 @@
 #' all samples after normalization. 
 #' @param X Matrix of positive real values, where
 #' columns are interpreted as samples and rows as genomic regions. An entry is
-#' the read count of a sample in the genomic region. 
+#' the read count of a sample in the genomic region.  Alternatively this can be
+#' a GRanges object containing the read counts as values.
 #' @param normType normType Type of the normalization technique.
 #' Each samples' read counts
 #' are scaled such that the total number of reads is equal after normlization.
@@ -35,8 +36,6 @@
 
 
 normalizeGenome <- function(X,normType="poisson",qu=0.25,ploidy){
-	YY <- normalizeChromosomes(X,chr=rep("undef",nrow(X)),
-			normType=normType,qu=qu,ploidy=ploidy)
-	
+	YY <- normalizeChromosomes(X,normType=normType,qu=qu,ploidy=ploidy)
 	return(YY)
 }

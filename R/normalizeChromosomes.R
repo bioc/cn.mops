@@ -22,7 +22,8 @@
 #' all samples after normalization. 
 #' @param X Matrix of positive real values, where
 #' columns are interpreted as samples and rows as genomic regions. An entry is
-#' the read count of a sample in the genomic region. 
+#' the read count of a sample in the genomic region. Alternatively this can be
+#' a GRanges object containing the read counts as values.
 #' @param chr Character vector that has as many elements as "X" has rows. The
 #' vector assigns each genomic segment to a reference sequence (chromosome).
 #' @param normType Type of the normalization technique. Each samples'
@@ -56,6 +57,12 @@ normalizeChromosomes <-
 		stop(paste("Set TO of normalization to \"mean\"",
 						"\"min\", \"median\", \"quant\" or \"mode\"."))
 	}
+	input <- X
+	returnGRanges <- FALSE
+	if(class(X)=="GRanges"){
+		returnGRanges <- TRUE
+		X <- IRanges::as.matrix(IRanges::values(X)) 	
+	}	
 	if (is.vector(X)){X <- matrix(X,nrow=1)}
 	
 	if (missing(chr)){
@@ -150,7 +157,7 @@ normalizeChromosomes <-
 				
 				Y[chrIdx, ] <- Ytmp
 				
-			
+				
 			} # over chr
 			
 			if (!ploidy2flag){
@@ -167,7 +174,11 @@ normalizeChromosomes <-
 	rownames(YY) <- rownames(Xorig)
 	colnames(YY) <- colnames(Xorig)
 	
-	
-	return(YY)	
+	if (returnGRanges){
+		values(input) <- YY
+		return(input)
+	} else {
+		return(YY)
+	}
 }
 

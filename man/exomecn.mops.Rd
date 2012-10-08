@@ -1,15 +1,15 @@
-\name{cn.mops}
-\alias{cn.mops}
+\name{exomecn.mops}
+\alias{exomecn.mops}
 \title{Performs the cn.mops algorithm for copy number detection in
-NGS data.}
+NGS data with parameters adjusted to exome sequencing data.}
 \usage{
-  cn.mops(input,
+  exomecn.mops(input,
     I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4),
     classes = c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6", "CN7", "CN8"),
-    priorImpact = 1, cyc = 20, parallel = 0,
+    priorImpact = 10, cyc = 20, parallel = 0,
     normType = "poisson", normQu = 0.25, norm = TRUE,
-    upperThreshold = 0.5, lowerThreshold = -0.9,
-    minWidth = 3, segAlgorithm = "fast", minReadCount = 1,
+    upperThreshold = 0.5, lowerThreshold = -0.8,
+    minWidth = 5, segAlgorithm = "fast", minReadCount = 1,
     ...)
 }
 \arguments{
@@ -34,7 +34,7 @@ NGS data.}
   \item{priorImpact}{Positive real value that reflects how
   strong the prior assumption affects the result. The
   higher the value the more samples will be assumed to have
-  copy number 2. Default = 1.}
+  copy number 2. Default = 10.}
 
   \item{cyc}{Positive integer that sets the number of
   cycles for the algorithm. Usually after less than 15
@@ -62,18 +62,18 @@ NGS data.}
   cut-off for copy number gains. All CNV calling values
   above this value will be called as "gain". The value
   should be set close to the log2 of the expected
-  foldchange for copy number 3 or 4. Default = 0.5.}
+  foldchange for copy number 3 or 4. Default = 0.55.}
 
   \item{lowerThreshold}{Negative real value that sets the
   cut-off for copy number losses. All CNV calling values
   below this value will be called as "loss". The value
   should be set close to the log2 of the expected
-  foldchange for copy number 1 or 0. Default = -0.9.}
+  foldchange for copy number 1 or 0. Default = -0.8.}
 
   \item{minWidth}{Positive integer that is exactly the
   parameter "min.width" of the "segment" function of
   "DNAcopy". minWidth is the minimum number of segments a
-  CNV should span. Default = 3.}
+  CNV should span. Default = 5.}
 
   \item{segAlgorithm}{Which segmentation algorithm should
   be used. If set to "DNAcopy" circular binary segmentation
@@ -93,11 +93,12 @@ NGS data.}
 }
 \description{
   Performs the cn.mops algorithm for copy number detection
-  in NGS data.
+  in NGS data with parameters adjusted to exome sequencing
+  data.
 }
 \examples{
 data(cn.mops)
-cn.mops(XRanges)
+exomecn.mops(exomeCounts)
 }
 \author{
   Guenter Klambauer \email{klambauer@bioinf.jku.at}

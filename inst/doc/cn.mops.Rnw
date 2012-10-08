@@ -437,8 +437,32 @@ BAMFiles <- list.files(pattern=".bam$")
 segments <- read.table("targetRegions.bed",sep="\t",as.is=TRUE)
 gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
 X <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr,mode="unpaired")
-resCNMOPS <- cn.mops(X)
+resCNMOPS <- exomecn.mops(X)
 @
+
+We included an exome sequencing data set in this package. It is
+ stored in {\tt exomeCounts}.
+<<>>=
+resultExomeData <- exomecn.mops(exomeCounts)
+@
+
+<<eval=FALSE>>=
+plot(resultExomeData,which=2)
+@
+
+<<fig=FALSE,echo=FALSE,results=hide>>=
+pdf("004.pdf")
+plot(resultExomeData,which=2,toFile=TRUE)
+dev.off()
+@
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[angle=0,width= \columnwidth]{004}
+\caption{ExomeSeq data results.}
+\end{center}
+\end{figure} 
+
 
 \paragraph{Possible issues and notes}
 A problem can occur, if the names of the reference sequences, e.s. chromosomes,
@@ -489,8 +513,6 @@ haploid genomes.
 <<eval=FALSE>>=
 resHaplo <- haplocn.mops(X)
 @
-
-
 
 
 
