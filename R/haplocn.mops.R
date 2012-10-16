@@ -456,14 +456,12 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 				if (parallel==0){
 					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
 							cn.mops:::segment,
-							minSeg=minWidth,segMedianT=segMedianT,
-							segPlot=FALSE,...)
+							minSeg=minWidth,segMedianT=segMedianT)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
 					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
-							segment,minSeg=minWidth, segMedianT=segMedianT,
-							segPlot=FALSE,...)
+							segment,minSeg=minWidth, segMedianT=segMedianT)
 					stopCluster(cl)
 				}
 				
