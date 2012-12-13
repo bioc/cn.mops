@@ -16,8 +16,8 @@ all samples after normalization.}
 
   \item{normType}{normType Type of the normalization
   technique. Each samples' read counts are scaled such that
-  the total number of reads is equal after normlization. By
-  this parameter one can decide to which coverage (i.e.
+  the total number of reads is equal after normalization.
+  By this parameter one can decide to which coverage (i.e.
   total reads) the read counts should be normalized.
   Possible choices are the minimal coverage ("min"), the
   mean or median coverage ("mean", "median") or any
