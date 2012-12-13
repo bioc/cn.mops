@@ -10,7 +10,7 @@ NGS data.}
     normType = "poisson", normQu = 0.25, norm = TRUE,
     upperThreshold = 0.5, lowerThreshold = -0.9,
     minWidth = 3, segAlgorithm = "fast", minReadCount = 1,
-    ...)
+    returnPosterior = FALSE, ...)
 }
 \arguments{
   \item{input}{Either an instance of "GRanges" or a raw
@@ -84,6 +84,12 @@ NGS data.}
   the algorithm will return the prior knowledge. This
   prevents that the algorithm from being applied to
   segments with very low coverage. Default=1.}
+
+  \item{returnPosterior}{Flag that decides whether the
+  posterior probabilities should be returned. The posterior
+  probabilities have a dimension of samples times copy
+  number states times genomic regions and therefore consume
+  a lot of memory. Default=FALSE.}
 
   \item{...}{Additional parameters will be passed to the
   "DNAcopy" or the standard segmentation algorithm.}

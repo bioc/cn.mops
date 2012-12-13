@@ -156,6 +156,10 @@
 #' @param minReadCount If all samples are below this value the algorithm will
 #' return the prior knowledge. This prevents that the algorithm from being 
 #' applied to segments with very low coverage. Default=1. 
+#' @param returnPosterior Flag that decides whether the posterior probabilities
+#' should be returned. The posterior probabilities have a dimension of samples
+#' times copy number states times genomic regions and therefore consume a lot
+#' of memory. Default=FALSE.
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
 #' @examples 
@@ -172,7 +176,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=TRUE,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",minReadCount=1,...){
+		minWidth=3,segAlgorithm="fast",minReadCount=1,
+		returnPosterior=FALSE,...){
 	
 	version <- packageDescription("cn.mops")$Version
 	
@@ -352,13 +357,24 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	#write.table(sINI,file="sINIbefore.txt")
 	INI <- (sapply(res,.subset2,5))
 	names(INI) <- rownames(X)
-	post <- array(dim=c(m,n,N))
-	post.tmp <- t(lapply(res,.subset2,6))
-	for (i in 1:m){
-		post[i, ,] <- post.tmp[[i]]
+	
+	if (returnPosterior){
+		tt <- try(post <- array(dim=c(m,n,N)))
+		if (inherits(tt,"try-error")){
+			message("Posterior too large for array extent.")
+			post <- array(NA,dim=c(1,1,1))
+		} else {
+			post.tmp <- t(lapply(res,.subset2,6))
+			for (i in 1:m){
+				post[i, ,] <- post.tmp[[i]]
+			}
+			dimnames(post) <- list(NULL,classes,colnames(X))
+			rm("post.tmp")
+		}
+	} else {
+		post <- array(NA,dim=c(1,1,1))
 	}
-	dimnames(post) <- list(NULL,classes,colnames(X))
-	rm("post.tmp")	
+	rm("res")
 	
 	
 	if (m>1){
