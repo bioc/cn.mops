@@ -10,7 +10,7 @@ The index file is assumed to be in the same folder and have an identical
 file name except that ".bai" is appended.}
 \usage{
   getSegmentReadCountsFromBAM(BAMFiles, GR, sampleNames,
-    mode)
+    mode, parallel = 0)
 }
 \arguments{
   \item{BAMFiles}{BAMFiles}
@@ -23,7 +23,10 @@ file name except that ".bai" is appended.}
 
   \item{mode}{Possible values are "paired" and "unpaired",
   whether the mapping algorithm was using a "paired" or
-  "unpaired" strategy. Default = "unpaired".}
+  "unpaired" strategy.}
+
+  \item{parallel}{The number of parallel processes to be
+  used for this function. Default=0.}
 }
 \value{
   An instance of "GRanges", that contains the breakpoints
