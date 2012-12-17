@@ -10,12 +10,16 @@
 #' The index file is assumed to be in the same folder and have an identical
 #' file name except that ".bai" is appended.
 #' 
+#' This function can also be run in a parallel version.
+#' 
 #' @param BAMFiles BAMFiles
 #' @param sampleNames The corresponding sample names to the BAM Files. 
 #' @param GR A genomic ranges object that contains the genomic coordinates of
 #' the segments. 
 #' @param mode Possible values are "paired" and "unpaired", whether the mapping 
-#' algorithm was using a "paired" or "unpaired" strategy. Default = "unpaired".
+#' algorithm was using a "paired" or "unpaired" strategy. 
+#' @param parallel The number of parallel processes to be used for this function.
+#' Default=0.
 #' @examples 
 #' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 #' 	full.names=TRUE)
@@ -31,7 +35,7 @@
 
 
 getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
-		mode){
+		mode,parallel=0){
 	if (missing(mode)){
 		stop("Parameter \"mode\" must be \"paired\" or \"unpaired\"!")
 	}
@@ -68,10 +72,25 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 	
 	X <- matrix(NA,nrow=length(GR),ncol=length(BAMFiles))
 	
-	for (i in 1:length(BAMFiles)){
-		message("Processing ",BAMFiles[i])
-		X[,i] <- Rsamtools::countBam(BAMFiles[i],param=param)$records
+	if (parallel==0){
+		for (i in 1:length(BAMFiles)){
+			message("Processing ",BAMFiles[i])
+			X[,i] <- Rsamtools::countBam(BAMFiles[i],param=param)$records
+		}	
+	} else {
+		message("Using parallel version of this function.")
+		library(snow)
+		cl <- makeCluster(as.integer(parallel),type="SOCK")
+		clusterEvalQ(cl,"Rsamtools::countBam")
+		XL <- parLapply(cl,BAMFiles,Rsamtools::countBam,param=param)	
+		stopCluster(cl)
+		for (i in 1:length(BAMFiles)){
+			X[,i] <- XL[[i]]$records
+		}
+		rm("XL")
 	}
+	
+	
 	
 	colnames(X) <- BAMFiles
 		

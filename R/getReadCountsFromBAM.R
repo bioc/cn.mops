@@ -12,7 +12,7 @@
 		for (i in 1:length(refSeqName)){
 			refSeqTmp <- refSeqName[i]
 			if (!quiet){message(paste(" ",refSeqTmp)) }
-			gr <- GenomicRanges::GRanges(refSeqTmp,IRanges(0,sl[i]))
+			gr <- GenomicRanges::GRanges(refSeqTmp,IRanges::IRanges(0,sl[i]))
 			if (mode=="paired"){
 				param <- Rsamtools::ScanBamParam(
 						Rsamtools::scanBamFlag(isPaired = TRUE,
@@ -155,6 +155,8 @@
 #' The index file is assumed to be in the same folder and have an identical
 #' file name except that ".bai" is appended.
 #' 
+#' This function can also be run in a parallel version.
+#' 
 #' @param BAMFiles BAMFiles
 #' @param sampleNames The corresponding sample names to the BAM Files. 
 #' @param refSeqName Name of the reference sequence that should be analyzed.
@@ -166,7 +168,9 @@
 #' in each segment. If not given, cn.mops will try to find an appropiate window 
 #' length.
 #' @param mode Possible values are "paired" and "unpaired", whether the mapping 
-#' algorithm was using a "paired" or "unpaired" strategy. Default = "unpaired".
+#' algorithm was using a "paired" or "unpaired" strategy.
+#' @param parallel The number of parallel processes to be used for this function.
+#' Default=0.
 #' @examples 
 #' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 #' 	full.names=TRUE)
@@ -185,7 +189,7 @@
 
 
 getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
-		mode){
+		mode,parallel=0){
 	
 	if (missing(mode)){
 		stop("Parameter \"mode\" must be \"paired\" or \"unpaired\"!")
@@ -265,8 +269,19 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 		message("Window length set to: ",WL)
 	}
 	
-	XL <- lapply(BAMFiles,.countBAM,sl=sl,WL=WL,mode=mode,
-			refSeqName=refSeqName)
+	if (parallel==0){
+		XL <- lapply(BAMFiles,.countBAM,sl=sl,WL=WL,mode=mode,
+				refSeqName=refSeqName)
+		
+	} else {
+		message("Using parallel version of this function.")
+		library(snow)
+		cl <- makeCluster(as.integer(parallel),type="SOCK")
+		clusterEvalQ(cl,".countBAM")
+		XL <- parLapply(cl,BAMFiles,.countBAM,sl=sl,WL=WL,mode=mode,
+				refSeqName=refSeqName)	
+		stopCluster(cl)
+	}
 	
 	if (length(BAMFiles)==1){
 		X <- as.matrix(unlist(XL),ncol=1)
@@ -298,7 +313,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	
 	#browser()
 	mode(X) <- "integer"
-
+	
 	#gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir,sampleNames=X)
 	gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir)
 	
