@@ -33,7 +33,7 @@
 #' @return A data frame containing the segments.
 #' @importFrom IRanges sort
 #' @importFrom IRanges as.data.frame
-#' @importFrom BiocGenerics setdiff
+#' @importFrom IRanges setdiff
 #' @export
 #' @useDynLib cn.mops
 
@@ -132,7 +132,7 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		
 		irAll <- IRanges::IRanges(1, length(x))
 		segsFinal <- IRanges::as.data.frame(IRanges::sort(
-						c(ir, BiocGenerics::setdiff(irAll, ir))))
+						c(ir, IRanges::setdiff(irAll, ir))))
 		
 		nbrOfSegs <- nrow(segsFinal)
 		med <- vector(length=nbrOfSegs)
@@ -168,7 +168,7 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		
 		irAll <- IRanges(1, length(x))
 		segsFinal <- as.data.frame(sort(
-						c(ir, BiocGenerics::setdiff(irAll, ir))))
+						c(ir, IRanges::setdiff(irAll, ir))))
 		
 		nbrOfSegs <- nrow(segsFinal)
 		med <- vector(length=nbrOfSegs)
