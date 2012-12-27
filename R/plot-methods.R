@@ -75,12 +75,12 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				which <- 1
 			}
 			
-			MMstart <- IRanges::match(GRanges(seqnames(r@cnvr),
+			MMstart <- GenomicRanges::findOverlaps(GRanges(seqnames(r@cnvr),
 							IRanges(start(r@cnvr),
-									start(r@cnvr))), normalizedData(r) )
-			MMend <- IRanges::match(GRanges(seqnames(r@cnvr),
+									start(r@cnvr))), normalizedData(r),select="first" )
+			MMend <- GenomicRanges::findOverlaps(GRanges(seqnames(r@cnvr),
 							IRanges(end(r@cnvr),
-									end(r@cnvr))),normalizedData(r) )
+									end(r@cnvr))),normalizedData(r), select="first" )
 			
 			for (select in which){
 				if (!toFile){
