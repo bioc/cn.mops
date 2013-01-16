@@ -34,6 +34,8 @@
 #' @importFrom IRanges sort
 #' @importFrom IRanges as.data.frame
 #' @importFrom IRanges setdiff
+#' @importFrom IRanges width
+#' @importFrom IRanges IRanges
 #' @export
 #' @useDynLib cn.mops
 
@@ -127,7 +129,7 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		
 		#message("No merging of segments.")
 		ir <- IRanges::IRanges(df$start, df$end)
-		ir <- ir[which(width(ir)>=minSeg)]
+		ir <- ir[which(IRanges::width(ir)>=minSeg)]
 		
 		
 		irAll <- IRanges::IRanges(1, length(x))
@@ -162,7 +164,7 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		irLoss <- IRanges::reduce(irLoss)
 		
 		ir <- IRanges::sort(c(irAmp, irLoss))
-		ir <- ir[which(width(ir)>=minSeg)]
+		ir <- ir[which(IRanges::width(ir)>=minSeg)]
 		
 		rm(irAmp, irLoss, dfAmp, dfLoss)    
 		
