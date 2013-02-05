@@ -198,6 +198,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		end <- end(input)
 		
 		irAllRegions <- IRanges(start,end)
+		grAllRegions <- GRanges(chr,irAllRegions)
 		names(irAllRegions) <- NULL
 		
 		#maploc <- (start+end)/2
@@ -209,10 +210,12 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			colnames(X) <- colnames(input)	
 			chr <- rep("undef",nrow(X))
 			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+			grAllRegions <- GRanges(chr,irAllRegions)
 		} else{
 			inputType <- "DataMatrix"
 			chr <- "undef"
 			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+			grAllRegions <- GRanges(chr,irAllRegions)
 			parallel <- 0
 		}
 	} else if (is.vector(input)) {
@@ -221,6 +224,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		X <- matrix(as.numeric(X),nrow=nrow(X))
 		chr <- "undef"
 		irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+		grAllRegions <- GRanges(chr,irAllRegions)
 		parallel <- 0
 	}else{
 		stop("GRanges object or read count matrix needed as input.")
@@ -279,9 +283,13 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	
 	res <- list()
 	Xchr <- list()
+	chrIdxL <- list()
+	
 	for (chrom in unique(chr)){
 		message(paste("Reference sequence: ",chrom))
 		chrIdx <- which(chr==chrom)
+		chrIdxL[[chrom]] <- chrIdx
+		
 		if (norm) {Xchr[[chrom]] <- X.norm[chrIdx, ]} else {
 			Xchr[[chrom]] <- X[chrIdx, ]
 		}
@@ -354,7 +362,6 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	sINI <- t(sapply(res,.subset2,4))
 	rownames(sINI) <- rownames(X)
 	colnames(sINI) <- colnames(X)
-	#write.table(sINI,file="sINIbefore.txt")
 	INI <- (sapply(res,.subset2,5))
 	names(INI) <- rownames(X)
 	
@@ -423,33 +430,12 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			#segDf$chr <- as.character(segDf$chr)
 			
 			segCN <- apply(segDf,1,function(x){
-						sIdx <- as.integer(x["from"]):as.integer(x["to"])
-						if (length(sIdx)>=3){
-							sIdx2 <- sIdx[-c(1,length(sIdx))]
-						} else{
-							sIdx2 <- sIdx
-						}
-						CN <- .cn.mopsC(apply(Xchr[[x["chr"]]][sIdx2,
-												,drop=FALSE],2,
-										median),
-								I=I,
-								classes=classes,
-								cov=cov,priorimpact=priorImpact,
-								cyc=cyc,
-								minReadCount=minReadCount)$expectedCN
-						
-						#Median
-						#segValue <- quantile(sINI[sIdx,x["sample"]],probs=0.5,
-						#		na.rm=TRUE)
-						
-						#Mean
-						#segValue <- mean(sINI[sIdx,x["sample"]],na.rm=TRUE)
-						#segValue2 <- median(sINI[sIdx,x["sample"]],na.rm=TRUE)
-						#segValue <- x["value"]
-						#segValue2 <- x["value"]
-						
-						return(CN[match(x["sample"],colnames(X))])
-						
+						#browser()
+						ridx <- chrIdxL[[x[1]]][as.integer(x[2]):as.integer(x[3])]
+						#if (any(is.na(x))) browser()
+						z <- table(CN[ ridx  ,x[5] ])
+						r <- names(z)[z == max(z)]
+						return(r[1])
 					})
 			
 			
@@ -483,8 +469,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 									segDf$mean <= lowerThreshold), ]
 			segDfSubset <- segDfSubset[which(
 							(segDfSubset$to-segDfSubset$from+1) >= minWidth), ]
-		
-		
+			
+			
 			
 		} else {
 			message("Using \"fastseg\" for segmentation.")
@@ -534,39 +520,55 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			message("Calculating integer copy numbers...")
 			#
-			
-			segCN <- apply(segDf[,c("chr","start","end","sample")],1,
-					function(x){
-						
-						sIdx <- as.integer(x["start"]):as.integer(x["end"])
-						if (length(sIdx)>=3){
-							sIdx <- sIdx[-c(1,length(sIdx))]
-						}
-						
-						CN <- .cn.mopsC(apply(Xchr[[x["chr"]]][sIdx,
-												,drop=FALSE],2,
-										median),
-								I=I,
-								classes=classes,
-								cov=cov,priorimpact=priorImpact,
-								cyc=cyc,
-								minReadCount=minReadCount)$expectedCN
-						
-#						cnProbs <- post[sIdx , , x["sample"]]
-#						if (length(sIdx)>1){
-#							cnProbs <- colSums(-log(cnProbs))
-#						} else {
-#							cnProbs <- -log(cnProbs)
-#						}
-#						mIdx <- which(cnProbs==min(cnProbs))
-#						
-#						return(paste(classes[mIdx],collapse="/"))
-						return(CN[which(x["sample"]==colnames(X))])
+#			grSegStart <- GRanges(segDf$chr,IRanges(segDf$start,segDf$start))
+#			grSegEnd<- GRanges(segDf$chr,IRanges(segDf$end,segDf$end))
+#			mIdx1 <- IRanges::match(grSegStart,grAllRegions)
+#			mIdx2 <- IRanges::match(grSegEnd,grAllRegions)
+#			sIdx1 <- match(segDf$sample,colnames(X))
+#			
+			segCN <- apply(segDf,1,function(x){
+						#browser()
+						ridx <- chrIdxL[[x[6]]][as.integer(x[1]):as.integer(x[2])]
+						#if (any(is.na(x))) browser()
+						z <- table(CN[ ridx  ,x[5] ])
+						r <- names(z)[z == max(z)]
+						return(r[1])
 					})
 			
+			#rm("grSegStart","grSegEnd","mIdx1","mIdx2","sIdx1")
+			
+#			segCN <- apply(segDf[,c("chr","start","end","sample")],1,
+#					function(x){
+#						
+#						sIdx <- as.integer(x["start"]):as.integer(x["end"])
+#						if (length(sIdx)>=3){
+#							sIdx <- sIdx[-c(1,length(sIdx))]
+#						}
+#						
+#						CN <- .cn.mopsC(apply(Xchr[[x["chr"]]][sIdx,
+#												,drop=FALSE],2,
+#										median),
+#								I=I,
+#								classes=classes,
+#								cov=cov,priorimpact=priorImpact,
+#								cyc=cyc,
+#								minReadCount=minReadCount)$expectedCN
+#						
+			##						cnProbs <- post[sIdx , , x["sample"]]
+			##						if (length(sIdx)>1){
+			##							cnProbs <- colSums(-log(cnProbs))
+			##						} else {
+			##							cnProbs <- -log(cnProbs)
+			##						}
+			##						mIdx <- which(cnProbs==min(cnProbs))
+			##						
+			##						return(paste(classes[mIdx],collapse="/"))
+#						return(CN[which(x["sample"]==colnames(X))])
+#					})
+#			
 			segDf <- data.frame(segDf,"CN"=segCN,stringsAsFactors=FALSE)
 			
-
+			
 			colnames(segDf) <- c("from","to","mean","median","sample",
 					"chr","CN")
 			
