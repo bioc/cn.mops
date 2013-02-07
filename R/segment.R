@@ -77,11 +77,9 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 	if (minSeg < 2) minSeg <- 2
 	if (maxInt < (minSeg+5)) maxInt <- minSeg+5
 	if (cyberWeight < 0) cyberWeight <- 0
-	
-	
-	
-	
 
+	m <- length(x)	
+	
 	if (missing("eps")){
 		eps <- quantile(abs(diff(x)), probs=0.75)
 	}
@@ -107,22 +105,21 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 						"greater than 1."))
 	}
 	
-	brkptsInit <- unique(c(0, brkptsInit, length(x)))
-	nbrOfBrkpts <- length(brkptsInit)-1
+	nbrOfBrkpts <- length(brkptsInit)+1
+	start <- c(1,brkptsInit+1)
+	end <- c(brkptsInit,m)
+	brkptsInit <- c(0, brkptsInit, m)
 	
-	med <- vector(length=nbrOfBrkpts)
-	m <- vector(length=nbrOfBrkpts)
-	start <- vector(length=nbrOfBrkpts)
-	end <- vector(length=nbrOfBrkpts)
-	for (i in 1:nbrOfBrkpts){
-		y <- x[(brkptsInit[i]+1):brkptsInit[i+1]]
-		m[i] <- mean(y,na.rm=TRUE)
-		med[i] <- quantile(y,probs=0.5,na.rm=TRUE)
-		start[i] <- brkptsInit[i]+1
-		end[i] <- brkptsInit[i+1]
-	}
-
-	df <- data.frame("start"=start, "end"=end, "mean"=m, "median"=med)
+	
+	avgs <- sapply(2:(nbrOfBrkpts+1),function(i){ 
+						c(median(x[((brkptsInit[i-1]+1):brkptsInit[i])]),
+								mean(x[((brkptsInit[i-1]+1):brkptsInit[i])]))
+					}
+			)
+	
+			
+	df <- data.frame("start"=start, "end"=end, "mean"=avgs[2, ], 
+			"median"=avgs[1, ])
 	
 	
 	if (all(segMedianT==0)) {
@@ -136,19 +133,16 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		segsFinal <- IRanges::as.data.frame(IRanges::sort(
 						c(ir, IRanges::setdiff(irAll, ir))))
 		
-		nbrOfSegs <- nrow(segsFinal)
-		med <- vector(length=nbrOfSegs)
-		m <- vector(length=nbrOfSegs)
-		start <- vector(length=nbrOfSegs)
-		end <- vector(length=nbrOfSegs)
-		for (i in 1:nbrOfSegs) {
-			y <- x[segsFinal$start[i]:segsFinal$end[i]]
-			m[i] <- mean(y)
-			med[i] <- median(y)
-		}
+		bIdx <- c(0,segsFinal$end)
+		
+		avgs <- sapply(2:(length(bIdx)),function(i){ 
+					c(median(x[((bIdx[i-1]+1):bIdx[i])]),
+							mean(x[((bIdx[i-1]+1):bIdx[i])]))
+				}
+		)
 		
 		df2 <- data.frame("start"=segsFinal$start, "end"=segsFinal$end, 
-				"mean"=m, "median"=med)
+				"mean"=avgs[2,], "median"=avgs[1,])
 		
 		
 		return(df2)
@@ -172,19 +166,16 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		segsFinal <- as.data.frame(sort(
 						c(ir, IRanges::setdiff(irAll, ir))))
 		
-		nbrOfSegs <- nrow(segsFinal)
-		med <- vector(length=nbrOfSegs)
-		m <- vector(length=nbrOfSegs)
-		start <- vector(length=nbrOfSegs)
-		end <- vector(length=nbrOfSegs)
-		for (i in 1:nbrOfSegs) {
-			y <- x[segsFinal$start[i]:segsFinal$end[i]]
-			m[i] <- mean(y)
-			med[i] <- median(y)
-		}
+		bIdx <- c(0,segsFinal$end)
+		
+		avgs <- sapply(2:(length(bIdx)),function(i){ 
+					c(median(x[((bIdx[i-1]+1):bIdx[i])]),
+							mean(x[((bIdx[i-1]+1):bIdx[i])]))
+				}
+		)
 		
 		df2 <- data.frame("start"=segsFinal$start, "end"=segsFinal$end, 
-				"mean"=m, "median"=med)
+				"mean"=avgs[2, ], "median"=avgs[1, ])
 		
 		
 		return(df2)

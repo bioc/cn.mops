@@ -1,6 +1,6 @@
 \name{sampleNames}
 \alias{sampleNames}
-\title{These generic function returns the sample names of
+\title{This generic function returns the sample names of
  a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
@@ -11,7 +11,7 @@
   containing the parameters.
 }
 \description{
-  These generic function returns the sample names of a CNV
+  This generic function returns the sample names of a CNV
   detection method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.
 }

@@ -1,6 +1,6 @@
 \name{posteriorProbs}
 \alias{posteriorProbs}
-\title{These generic function returns the posterior probabilities of
+\title{This generic function returns the posterior probabilities of
  a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.
 The posterior probabilities are represented
@@ -13,12 +13,12 @@ copy number and individual.}
   \code{posteriorProbs} returns a three dimensional array.
 }
 \description{
-  These generic function returns the posterior
-  probabilities of a CNV detection method stored in an
-  instance of \code{\link{CNVDetectionResult-class}}. The
-  posterior probabilities are represented as a three
-  dimensional array, where the three dimensions are
-  segment, copy number and individual.
+  This generic function returns the posterior probabilities
+  of a CNV detection method stored in an instance of
+  \code{\link{CNVDetectionResult-class}}. The posterior
+  probabilities are represented as a three dimensional
+  array, where the three dimensions are segment, copy
+  number and individual.
 }
 \examples{
 data(cn.mops)

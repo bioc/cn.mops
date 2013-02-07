@@ -1,6 +1,6 @@
 \name{cnvs}
 \alias{cnvs}
-\title{These generic function returns CNVs of
+\title{This generic function returns CNVs of
  a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
@@ -11,7 +11,7 @@
   containing the CNVs.
 }
 \description{
-  These generic function returns CNVs of a CNV detection
+  This generic function returns CNVs of a CNV detection
   method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.
 }

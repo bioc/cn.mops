@@ -269,7 +269,10 @@ We are now ready to run \cnmops\ on the \verb+GRanges+ object:
 resCNMOPS <- cn.mops(XRanges)
 @
 
-
+To calculate integer copy number use the command {\tt calcIntegerCopyNumbers}:
+<<>>=
+resCNMOPS <- calcIntegerCopyNumbers(resCNMOPS)
+@
 
 Alternatively, it is possible to use an integer matrix, where the genomic
 coordinates can be stored as \verb+rownames+ and the entries are the read counts. 
@@ -280,6 +283,11 @@ head(X[,1:3])
 We are now ready to run \cnmops\ on the integer matrix:
 <<eval=FALSE>>=
 resCNMOPSX <- cn.mops(X)
+@
+
+To calculate integer copy number use the command {\tt calcIntegerCopyNumbers}:
+<<eval=FALSE>>=
+resCNMOPSX <- calcIntegerCopyNumbers(resCNMOPSX)
 @
 
 
@@ -438,12 +446,14 @@ segments <- read.table("targetRegions.bed",sep="\t",as.is=TRUE)
 gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
 X <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr,mode="unpaired")
 resCNMOPS <- exomecn.mops(X)
+resCNMOPS <- calcIntegerCopyNumbers(resCNMOPS)
 @
 
 We included an exome sequencing data set in this package. It is
  stored in {\tt exomeCounts}.
 <<>>=
 resultExomeData <- exomecn.mops(exomeCounts)
+resultExomeData  <- calcIntegerCopyNumbers(resultExomeData )
 @
 
 <<eval=FALSE>>=
@@ -496,7 +506,7 @@ if the first 10 individuals are males ({\tt ploidy} set to 1) and the next
 
 <<>>=
 XchrX <- normalizeChromosomes(X[1:500, ],ploidy=c(rep(1,10),rep(2,30)))
-cnvr(cn.mops(XchrX,norm=FALSE))
+cnvr(calcIntegerCopyNumbers(cn.mops(XchrX,norm=FALSE)))
 @
 
 Karyotype information can also improve results of CNV detection in tumor 
@@ -512,6 +522,7 @@ haploid genomes.
 
 <<eval=FALSE>>=
 resHaplo <- haplocn.mops(X)
+resHaplo <- calcIntegerCopyNumbers(resHaplo)
 @
 
 

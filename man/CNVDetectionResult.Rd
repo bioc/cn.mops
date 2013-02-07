@@ -19,6 +19,7 @@
 \alias{segmentation,CNVDetectionResult-method}
 \alias{segplot,CNVDetectionResult-method}
 \alias{sampleNames,CNVDetectionResult-method}
+\alias{calcIntegerCopyNumbers,CNVDetectionResult-method}
 
 \title{Class "CNVDetectionResult"}
 \description{S4 class for storing results of a CNV detection method.}
@@ -59,6 +60,7 @@ The following slots are defined for \link{CNVDetectionResult} objects:
     \item{segmentation}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{segplot}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{show}{\code{signature(object = "CNVDetectionResult")}: ... }
+    \item{calcIntegerCopyNumbers}{\code{signature(object = "CNVDetectionResult")}: ... }
 	 }
  }
 \author{

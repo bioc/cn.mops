@@ -1,6 +1,6 @@
 \name{integerCopyNumber}
 \alias{integerCopyNumber}
-\title{These generic function returns the integer copy numbers of
+\title{This generic function returns the integer copy numbers of
  a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
@@ -11,8 +11,8 @@
   object containing the integer copy numbers.
 }
 \description{
-  These generic function returns the integer copy numbers
-  of a CNV detection method stored in an instance of
+  This generic function returns the integer copy numbers of
+  a CNV detection method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.
 }
 \examples{

@@ -23,7 +23,7 @@ Description: cn.mops (Copy Number estimation by a Mixture
     written in C++.
 biocViews: HighThroughputSequencing, Sequencing,
     Bioinformatics, CopyNumberVariants
-Version: 1.5.7
+Version: 1.5.8
 Date: 2013-02-05
 URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
 Depends:
@@ -58,3 +58,4 @@ Collate:
     'haplocn.mops.R'
     'segPlot.R'
     'exomecn.mops.R'
+    'calcIntegerCopyNumbers.R'
