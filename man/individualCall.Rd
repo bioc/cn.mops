@@ -1,6 +1,6 @@
 \name{individualCall}
 \alias{individualCall}
-\title{These generic function returns the individual calls of
+\title{This generic function returns the individual calls of
  a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
@@ -11,7 +11,7 @@
   containing the individual calls.
 }
 \description{
-  These generic function returns the individual calls of a
+  This generic function returns the individual calls of a
   CNV detection method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.
 }

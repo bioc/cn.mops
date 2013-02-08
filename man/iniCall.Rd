@@ -1,6 +1,6 @@
 \name{iniCall}
 \alias{iniCall}
-\title{These generic function returns the informative/non-informative call of
+\title{This generic function returns the informative/non-informative call of
  a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.
  The I/NI call is a measure for a genomic
@@ -14,7 +14,7 @@ segment across all samples, whether this segment is a CNV region
   individual calls.
 }
 \description{
-  These generic function returns the
+  This generic function returns the
   informative/non-informative call of a CNV detection
   method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.  The I/NI call is

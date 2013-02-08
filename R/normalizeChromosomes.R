@@ -9,7 +9,7 @@
 	} else {
 		if (any(is.na(x))){return(NA)
 		} else {
-			z <- table(as.vector(x[!is.na(x)]))
+			z <- table(as.vector(x))
 			r <- names(z)[z == max(z)]
 			return(as.numeric(r)[1])
 		}

@@ -1,6 +1,6 @@
 \name{normalizedData}
 \alias{normalizedData}
-\title{These generic function returns the normalized data
+\title{This generic function returns the normalized data
  of a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
@@ -11,7 +11,7 @@
   containing the normalized data.
 }
 \description{
-  These generic function returns the normalized data of a
+  This generic function returns the normalized data of a
   CNV detection method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.
 }

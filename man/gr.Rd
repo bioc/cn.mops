@@ -1,6 +1,6 @@
 \name{gr}
 \alias{gr}
-\title{These generic function returns the genomic ranges
+\title{This generic function returns the genomic ranges
  of a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
@@ -11,8 +11,8 @@
   containing the normalized data.
 }
 \description{
-  These generic function returns the genomic ranges of a
-  CNV detection method stored in an instance of
+  This generic function returns the genomic ranges of a CNV
+  detection method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.
 }
 \examples{

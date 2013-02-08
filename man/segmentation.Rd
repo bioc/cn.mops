@@ -1,6 +1,6 @@
 \name{segmentation}
 \alias{segmentation}
-\title{These generic function returns segmentation of
+\title{This generic function returns segmentation of
  a CNV detection method stored in an instance of
 \code{\link{CNVDetectionResult-class}}.}
 \arguments{
@@ -11,7 +11,7 @@
   containing the segmentation.
 }
 \description{
-  These generic function returns segmentation of a CNV
+  This generic function returns segmentation of a CNV
   detection method stored in an instance of
   \code{\link{CNVDetectionResult-class}}.
 }

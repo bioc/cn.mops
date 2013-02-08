@@ -3,9 +3,8 @@
 
 haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
-		priorimpact = 1,cyc = 20, minReadCount=1) {
+		priorImpact = 1,cyc = 20, minReadCount=1) {
 	
-	version <- packageDescription("cn.mops")$Version
 	
 	N <- length(x)
 	n <- length(I)
@@ -20,7 +19,7 @@ haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8),
 	alpha.est <- alpha.init
 	alpha.prior <- rep(0,n)
 	alpha.prior[idxCN1] <- 1
-	alpha.prior <- alpha.prior*priorimpact
+	alpha.prior <- alpha.prior*priorImpact
 	
 	if (all(x<=minReadCount)) {
 		lambda.est <- rep(0,n)
@@ -33,11 +32,11 @@ haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8),
 		post.ik[idxCN1, ] <- 1
 		
 		
-		params <- list(n,classes,I,priorimpact,cyc)
-		names(params) <- c("nclasses","classes","I","priorimpact","cyc")
+		params <- list(n,classes,I,priorImpact,cyc)
+		names(params) <- c("nclasses","classes","I","priorImpact","cyc")
 		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
 				"sini"=ExpLogFoldChange,"ini"=ini,"post"=post.ik, 
-				"params"=params,"version"=version)
+				"params"=params)
 		return(l)
 		
 	} else {
@@ -63,11 +62,41 @@ haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8),
 		
 		ini <- mean(abs(log2(I)) %*% alpha.ik)
 		ExpLogFoldChange <-  log2(I) %*%  post.ik
-		params <- list(n,classes,I,priorimpact,cyc)
-		names(params) <- c("nclasses","classes","I","priorimpact","cyc")
+		params <- list(n,classes,I,priorImpact,cyc)
+		names(params) <- c("nclasses","classes","I","priorImpact","cyc")
 		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN, 
 				"sini"=ExpLogFoldChange, "ini"=ini, "post"=post.ik,
 				"params"=params,"version"=version)
+		return(l)
+	}
+}
+
+haplocn.mopsCE <- function(x, I, classes, cov, cyc, N, n,
+		idxCN1, alphaInit, alphaPrior, minReadCount) {
+	if (all(x<=minReadCount)) {
+		lambda.est <- rep(0,n)
+		alpha.est <- rep(0,n)
+		alpha.est[idxCN1] <- 1
+		expCN <- rep(classes[idxCN1],N)
+		ini <- 0
+		ExpLogFoldChange <- rep(0,N)
+		post.ik <- matrix(0,nrow=n,ncol=N)
+		post.ik[idxCN1, ] <- 1
+		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
+				"sini"=ExpLogFoldChange,"ini"=ini,"post"=post.ik)
+		return(l)
+	} else {
+		lambda.est <- median(x*1/cov,na.rm=TRUE)
+		if (lambda.est < 1e-10){lambda.est <- max(mean(x*1/cov,na.rm=TRUE),1.0)}
+		lambda.init <- I*lambda.est
+		ret <- .Call("cnmops", as.numeric(x), I,cov, 
+				as.integer(cyc), alphaInit, lambda.init,
+				alphaPrior)
+		expCN <- classes[apply(ret$alpha.ik,2,function(x) which(x==max(x))[1] )]
+		ini <- mean(abs(log2(I)) %*% ret$alpha.ik)
+		ExpLogFoldChange <-  log2(I) %*%  ret$alpha.ik
+		l <-  list ("lambda"=ret$lambda.est, "alpha"=ret$alpha.est, "expectedCN"=expCN, 
+				"sini"=ExpLogFoldChange, "ini"=ini, "post"=ret$alpha.ik)
 		return(l)
 	}
 }
@@ -124,6 +153,10 @@ haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8),
 #' applied to segments with very low coverage.
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
+#' @param returnPosterior Flag that decides whether the posterior probabilities
+#' should be returned. The posterior probabilities have a dimension of samples
+#' times copy number states times genomic regions and therefore consume a lot
+#' of memory. Default=FALSE.
 #' @examples 
 #' data(cn.mops)
 #' haplocn.mops(XRanges[1:200, ])
@@ -139,17 +172,16 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=TRUE,
 		upperThreshold=0.6,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",minReadCount=1,...){
+		minWidth=3,segAlgorithm="fast",minReadCount=1,
+		returnPosterior=FALSE,...){
 	
 	version <- packageDescription("cn.mops")$Version
 	
 	
+	############ check input ##################################################
 	if(class(input)=="GRanges"){
 		inputType <- "GRanges"
 		input <- IRanges::sort(input)
-		#X <- (do.call("cbind",(values(input)@unlistData@listData)))
-		#X <- do.call("cbind",values(input)@listData)
-		#X <- matrix(as.numeric(X),nrow=nrow(X))
 		X <- IRanges::as.matrix(IRanges::values(input))
 		
 		if (ncol(X)==1){
@@ -158,11 +190,12 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		chr <- as.character(seqnames(input))
 		start <- start(input)
 		end <- end(input)
+		rownames(X) <- paste(chr,start,end,sep="_")
 		
 		irAllRegions <- IRanges(start,end)
+		grAllRegions <- GRanges(chr,irAllRegions)
 		names(irAllRegions) <- NULL
 		
-		#maploc <- (start+end)/2
 	} else if (is.matrix(input)){
 		if (nrow(input)> 1){
 			inputType <- "DataMatrix"
@@ -171,10 +204,12 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			colnames(X) <- colnames(input)	
 			chr <- rep("undef",nrow(X))
 			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+			grAllRegions <- GRanges(chr,irAllRegions)
 		} else{
 			inputType <- "DataMatrix"
 			chr <- "undef"
 			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+			grAllRegions <- GRanges(chr,irAllRegions)
 			parallel <- 0
 		}
 	} else if (is.vector(input)) {
@@ -183,6 +218,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		X <- matrix(as.numeric(X),nrow=nrow(X))
 		chr <- "undef"
 		irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+		grAllRegions <- GRanges(chr,irAllRegions)
 		parallel <- 0
 	}else{
 		stop("GRanges object or read count matrix needed as input.")
@@ -191,33 +227,71 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	
 	if (any(X<0) | any(!is.finite(X))){
 		stop("All values must be greater or equal zero and finite.\n")
-	}	
+	}
+	if (!is.numeric(I)) stop("\"I\" must be numeric.")
+	if (!is.character(classes)) stop("\"classes\" must be character.")
 	if (length(I)!=length(classes)){
 		stop("I and classes must have same length!")
 	}
 	if (!("CN1" %in% classes)){stop("One element of classes must be CN1 .\n")}
+	if (!(is.numeric(priorImpact) & length(priorImpact)==1)) 
+		stop("\"priorImpact\" be must numeric and of length 1.")
+	if (!(is.numeric(cyc) & length(cyc)==1)) 
+		stop("\"cyc\" must be numeric and of length 1.")
+	if (!(is.numeric(parallel) & length(parallel)==1)) 
+		stop("\"parallel\" must be numeric and of length 1.")
+	if (!(normType %in% c("mean","min","median","quant","mode","poisson"))){
+		stop(paste("Set normalization to \"mean\"",
+						"\"min\", \"median\", \"quant\" or \"mode\"."))
+	}
+	if (!(is.numeric(normQu) & length(normQu)==1)) 
+		stop("\"normQu\" must be numeric and of length 1.")
+	if (!is.logical(norm))
+		stop("\"norm\" must be logical.")
+	if (!(is.numeric(lowerThreshold) & length(lowerThreshold)==1)) 
+		stop("\"lowerThreshold\" must be numeric and of length 1.")
+	if (!(is.numeric(upperThreshold) & length(upperThreshold)==1)) 
+		stop("\"upperThreshold\" must be numeric and of length 1.")
+	if (!(is.numeric(minWidth) & length(minWidth)==1)) 
+		stop("\"minWidth\" must be numeric and of length 1.")
+	if (!is.character(segAlgorithm)){
+		stop("\"segAlgorithm\" must be \"fastseg\" or \"DNAcopy\"!")
+	}
+	if (!(is.numeric(minReadCount) & length(minReadCount)==1)) 
+		stop("\"minReadCount\" must be numeric and of length 1.")
+	if (!is.logical(returnPosterior))
+		stop("\"returnPosterior\" must be logical.")	
 	
-	m <- nrow(X)
-	N <- ncol(X)
-	n <- length(I)
 	
 	if (is.null(colnames(X))){
 		colnames(X) <- paste("Sample",1:N,sep="_")
 	}
+	############################################################################
 	
-	
+	version <- packageDescription("cn.mops")$Version
 	params <- list("cn.mops",I,
 			classes,
 			priorImpact,cyc,
 			normType,normQu,
 			upperThreshold,lowerThreshold,
-			minWidth,paste(...))
+			minWidth,segAlgorithm,minReadCount,"CN2",version,paste(...))
 	names(params) <- c("method","folds",
 			"classes",
-			"priorimpact","cyc",
+			"priorImpact","cyc",
 			"normType","normQu",
 			"upperThreshold","lowerThreshold",
-			"minWidth","SegmentationParams")
+			"minWidth","segAlgorithm","minReadCount","mainClass",
+			"version","SegmentationParams")
+	############################################################################
+	m <- nrow(X)
+	N <- ncol(X)
+	n <- length(I)
+	chrOrder <- unique(chr) #unique chromosome names in alphabetic order
+	chrBpts <- cumsum(table(chr)[chrOrder])
+	# contains the idx where chromosomes start and end in X
+	chrDf <- data.frame(start=c(1,chrBpts[-length(chrBpts)]+1),
+			end=chrBpts)
+	rownames(chrDf) <- chrOrder
 	
 	if (m < 100){
 		warning(paste("For this small number of segments normalization",
@@ -240,66 +314,53 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	} 
 	
 	res <- list()
-	Xchr <- list()
-	for (chrom in unique(chr)){
+	
+	for (chrom in chrOrder){
 		message(paste("Reference sequence: ",chrom))
-		chrIdx <- which(chr==chrom)
-		if (norm) {Xchr[[chrom]] <- X.norm[chrIdx, ]} else {
-			Xchr[[chrom]] <- X[chrIdx, ]
-		}
+		chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 		
-#		if(m > 1 & !norm){
-#			cov <- colSums(X[chrIdx, ])
-#			if (median(cov) > 0){
-#				cov <- cov/median(cov)
-#			} else {
-#				stop(paste("Median of total reads is zero.",
-#								"Too many samples with zero reads."))
-#			}
-#		} else {
-#			#X.norm <- X
-#			cov <- rep(1,N)
-#		}
 		cov <- rep(1,N)
+		#n,N, I set
+		idxCN1 <- which(classes=="CN1")
+		alphaInit <- rep(0.05,n) 
+		alphaInit[idxCN1] <- 0.6
+		alphaInit <- alphaInit/ sum(alphaInit)
+		alphaPrior <- rep(0,n)
+		alphaPrior[idxCN1] <- priorImpact
 		
-		#cat("Coverage: ",cov ," Norm: ",norm)
-		
-		#cov[which(cov < 1e-15)] <- 1e-15
-		
+
 		if (norm & m > 1){
 			if (parallel==0){
-				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsC, I=I,
-						classes=classes,
-						cov=cov,priorimpact=priorImpact,cyc=cyc,
+				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
 						minReadCount=minReadCount)
 			} else {
-				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsC, 
-						I=I,classes=classes,cov=cov,priorimpact=priorImpact,
-						cyc=cyc,
-						minReadCount=minReadCount)				
+				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
+						minReadCount=minReadCount)
 			}
 		} else {
 			if (parallel==0){
-				resChr <-apply(X[chrIdx, ,drop=FALSE],1,haplocn.mopsC, I=I,
-						classes=classes,
-						cov=cov,priorimpact=priorImpact,cyc=cyc,
+				resChr <-apply(X[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
 						minReadCount=minReadCount)
 			} else {
-				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,haplocn.mopsC, 
-						I=I,classes=classes,cov=cov,priorimpact=priorImpact,
-						cyc=cyc,
-						minReadCount=minReadCount)				
+				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
+						minReadCount=minReadCount)
 			}
 		}
 		
-		#cat(paste(Sys.time(),"\n"))
 		res <- c(res, resChr)
 	}
 	if (parallel > 0){
 		stopCluster(cl)
 	} 
 	
-	message("Postprocessing result...")
 	
 	## Postprocess result
 	L <- t(sapply(res,.subset2,1))
@@ -316,19 +377,29 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	sINI <- t(sapply(res,.subset2,4))
 	rownames(sINI) <- rownames(X)
 	colnames(sINI) <- colnames(X)
-	#write.table(sINI,file="sINIbefore.txt")
 	INI <- (sapply(res,.subset2,5))
 	names(INI) <- rownames(X)
-	post <- array(dim=c(m,n,N))
-	post.tmp <- t(lapply(res,.subset2,6))
-	for (i in 1:m){
-		post[i, ,] <- post.tmp[[i]]
+	
+	if (returnPosterior){
+		tt <- try(post <- array(dim=c(m,n,N)))
+		if (inherits(tt,"try-error")){
+			message("Posterior too large for array extent.")
+			post <- array(NA,dim=c(1,1,1))
+		} else {
+			post.tmp <- t(lapply(res,.subset2,6))
+			for (i in 1:m){
+				post[i, ,] <- post.tmp[[i]]
+			}
+			dimnames(post) <- list(NULL,classes,colnames(X))
+			rm("post.tmp")
+		}
+	} else {
+		post <- array(NA,dim=c(1,1,1))
 	}
-	dimnames(post) <- list(NULL,classes,colnames(X))
-	rm("post.tmp")	
+	rm("res")
 	
 	
-	if (m>1){
+	if (m>5){
 		message("Starting segmentation algorithm...")
 		
 		if (segAlgorithm=="DNAcopy"){
@@ -359,69 +430,21 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			
 		
 			
-			
+			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
 			segDf <- cbind(do.call(rbind,resSegm),
 					rep(colnames(X),sapply(resSegm,nrow)))
 			rm("resSegm")
 			
-			segDf <- data.frame("chr"=as.character(segDf[,1]),"from"=segDf[,2],
-					"to"=segDf[,3],"value"=segDf[,4],"sample"=segDf[,5],
-					stringsAsFactors=FALSE)
-			#segDf <- segDf[order(segDf$chr,segDf$sample,segDf$from), ]
-			
-			#colnames(segDf) <- c("chr","from","to","value","sample")
-			#segDf$chr <- as.character(segDf$chr)
-			
-			segCN <- apply(segDf,1,function(x){
-						sIdx <- as.integer(x["from"]):as.integer(x["to"])
-						if (length(sIdx)>=3){
-							sIdx2 <- sIdx[-c(1,length(sIdx))]
-						} else{
-							sIdx2 <- sIdx
-						}
-						CN <- haplocn.mopsC(apply(Xchr[[x["chr"]]][sIdx2,
-												,drop=FALSE],2,
-										median),
-								I=I,
-								classes=classes,
-								cov=cov,priorimpact=priorImpact,
-								cyc=cyc,
-								minReadCount=minReadCount)$expectedCN
-						
-						#Median
-						#segValue <- quantile(sINI[sIdx,x["sample"]],probs=0.5,
-						#		na.rm=TRUE)
-						
-						#Mean
-						#segValue <- mean(sINI[sIdx,x["sample"]],na.rm=TRUE)
-						#segValue2 <- median(sINI[sIdx,x["sample"]],na.rm=TRUE)
-						#segValue <- x["value"]
-						#segValue2 <- x["value"]
-						
-						return(CN[match(x["sample"],colnames(X))])
-						
-					})
-			
-			
-			## value <- sapply(segCN,.subset2,2)
-			## value2 <- sapply(segCN,.subset2,3)
-			## segDf <- data.frame(segDf,"CN"=sapply(segCN,.subset2,1),
-			##         "mean"=value,"median"=value2,
-			##         stringsAsFactors=FALSE)
-			segDf$CN <- segCN
-			
-			# we do not compute the seg median:
-			segDf$value2 <- segDf$value 
-			segDf <- segDf[,c("chr","from","to","sample","value","value2","CN")]
+			segDf$CN <- NA
 			colnames(segDf) <-
-					c("chr","from","to","sample","mean","median","CN")
+					c("chr","start","end","sample","mean","median","CN")
 			
 			callsS <- matrix(NA,nrow=m,ncol=N)
-			for (chrom in unique(chr)){
-				chrIdx <- which(chr==chrom)
+			for (chrom in chrOrder){
+				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				segDfTmp <- subset(segDf,chr==chrom)
 				callsS[chrIdx, ] <- 
-						matrix(rep(segDfTmp$mean,segDfTmp$to-segDfTmp$from+1),
+						matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
 								ncol=N)
 			}
 			
@@ -432,7 +455,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 							segDf$mean >= upperThreshold |
 									segDf$mean <= lowerThreshold), ]
 			segDfSubset <- segDfSubset[which(
-							(segDfSubset$to-segDfSubset$from+1) >= minWidth), ]
+							(segDfSubset$end-segDfSubset$start+1) >= minWidth), ]
 			
 			
 			
@@ -447,23 +470,20 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 								"instead of segMedianT."))
 			}
 			
-			#if (!exists("alpha")){alpha <- 0.1}
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			colnames(callsS) <- colnames(X)
-			for (chrom in unique(chr)){
-				chrIdx <- which(chr==chrom)
+			for (chrom in chrOrder){
+				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				
 				if (parallel==0){
 					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
 							cn.mops:::segment,
-							minSeg=minWidth,segMedianT=segMedianT,
-							segPlot=FALSE,...)
+							minSeg=minWidth,segMedianT=segMedianT)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
 					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
-							segment,minSeg=minWidth, segMedianT=segMedianT,
-							segPlot=FALSE,...)
+							segment,minSeg=minWidth, segMedianT=segMedianT)
 					stopCluster(cl)
 				}
 				
@@ -479,74 +499,15 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 				
 				segDf <- rbind(segDf,segDfTmp)
 			}
-			
-			
-			#segDf <- segDf[,c("chr","start","end","sample")]
-			#colnames(segDf) <- c("chr","from","to","sample")
-			
-			message("Calculating integer copy numbers...")
-			#browser()
-			
-			segCN <- apply(segDf[,c("chr","start","end","sample")],1,
-					function(x){
-						
-						sIdx <- as.integer(x["start"]):as.integer(x["end"])
-						if (length(sIdx)>=3){
-							sIdx <- sIdx[-c(1,length(sIdx))]
-						}
-						
-						CN <- haplocn.mopsC(apply(Xchr[[x["chr"]]][sIdx,
-												,drop=FALSE],2,
-										median),
-								I=I,
-								classes=classes,
-								cov=cov,priorimpact=priorImpact,
-								cyc=cyc,
-								minReadCount=minReadCount)$expectedCN
-						
-#						cnProbs <- post[sIdx , , x["sample"]]
-#						if (length(sIdx)>1){
-#							cnProbs <- colSums(-log(cnProbs))
-#						} else {
-#							cnProbs <- -log(cnProbs)
-#						}
-#						mIdx <- which(cnProbs==min(cnProbs))
-#						
-#						return(paste(classes[mIdx],collapse="/"))
-						return(CN[which(x["sample"]==colnames(X))])
-					})
-			
-			segDf <- data.frame(segDf,"CN"=segCN,stringsAsFactors=FALSE)
-		
-			
-			colnames(segDf) <- c("from","to","mean","median","sample",
+			segDf <- data.frame(segDf,"CN"=NA,stringsAsFactors=FALSE)		
+			colnames(segDf) <- c("start","end","mean","median","sample",
 					"chr","CN")
 			
-			#value <- segDf$value
-			
-			#median
-			#callsS <- matrix(rep(segDf$value,segDf$to-segDf$from+1),ncol=N)
-			#segDf <- segDf[which(segDf$value >= upperThreshold
-			#						| segDf$value <= lowerThreshold), ]
-			
-			#mean for AUC
-			
-			
-			
-			#mean for the table
 			segDfSubset <- segDf[which(segDf$mean >= upperThreshold
-									| segDf$mean <= lowerThreshold), ]
-			
-			
-			#segDf$value <- segDf$value2
-			
-			
+									| segDf$mean <= lowerThreshold), ]	
 			segDfSubset <- 
-					segDfSubset[which((segDfSubset$to-segDfSubset$from+1)
+					segDfSubset[which((segDfSubset$end-segDfSubset$start+1)
 											>= minWidth), ]
-			
-			
-			
 		}
 		
 		
@@ -557,23 +518,9 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
 			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
-							IRanges(segDfSubset$from,segDfSubset$to)))
+							IRanges(segDfSubset$start,segDfSubset$end)))
 			cnvrCN <- matrix(NA,ncol=N,nrow=length(cnvrR))
-			for (jj in 1:length(cnvrR)){
-				sIdx3 <- (start(cnvrR)[jj]:end(cnvrR)[jj])
-				chrIdx2 <- as.character(seqnames(cnvrR))[jj]
-				if (length(sIdx3) >= 3){sIdx3 <- sIdx3[2:(length(sIdx3)-1)]}
-				cnvrCN[jj, ] <- haplocn.mopsC(apply(Xchr[[chrIdx2]][sIdx3,
-										,drop=FALSE],
-								2,median),
-						I=I,
-						classes=classes,
-						cov=cov,priorimpact=priorImpact,
-						cyc=cyc,
-						minReadCount=minReadCount)$expectedCN
-				
-				
-			}
+			
 			colnames(cnvrCN) <- colnames(X) 
 			
 			sampleNames <- segDfSubset$sample
@@ -581,24 +528,23 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			if (inputType=="GRanges"){
 				ir <- IRanges()
 				irCNVR <- IRanges()
-				for (chrom in unique(chr)){
-					inputChr <- input[which(as.character(
-											seqnames(input))==chrom)]
+				for (chrom in chrOrder){
+					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
+					inputChr <- input[chrIdx]
 					segDfSubsetChr <- subset(segDfSubset,chr==chrom)
 					cnvrRChr <- cnvrR[which(as.character(
 											seqnames(cnvrR))==chrom)]
 					if (nrow(segDfSubsetChr) >0){
 						ir <- c(ir,IRanges(start(inputChr)[
-												segDfSubsetChr$from],
-										end(inputChr)[segDfSubsetChr$to]))
-						
+												segDfSubsetChr$start],
+										end(inputChr)[segDfSubsetChr$end]))
 						irCNVR <- c(irCNVR,IRanges(start(inputChr)[
 												start(cnvrRChr)],
 										end(inputChr)[end(cnvrRChr)]))
 					}
 				}
 			} else if (inputType=="DataMatrix"){
-				ir <- IRanges(start=segDfSubset$from,end=segDfSubset$to)
+				ir <- IRanges(start=segDfSubset$start,end=segDfSubset$end)
 				irCNVR <- IRanges(start=start(cnvrR),end=end(cnvrR))
 			}
 			
@@ -607,17 +553,12 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 					"median"=segDfSubset$median,"mean"=segDfSubset$mean,
 					"CN"=segDfSubset$CN)
 			
-			#cnvr <- reduce(rd)
 			
 			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,CN=cnvrCN)
-			#values(cnvrR) <- cnvrCN
-			#colnames(elementMetadata(cnvrR)) <- colnames(X)
-			
+		
 			
 			r@normalizedData    <- X.norm
 			r@localAssessments  <- sINI
-			#write.table(sINI,file="sINIafter.txt")
-			
 			r@individualCall   	<- callsS
 			r@iniCall        	<- INI
 			r@cnvs				<- rd
@@ -627,14 +568,13 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			
 			if (inputType=="GRanges"){
 				irS <- IRanges()
-				for (chrom in unique(chr)){
-					inputChr <- input[which(as.character(
-											seqnames(input))==chrom)]
-					
+				for (chrom in chrOrder){
+					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
+					inputChr <- input[chrIdx]
 					segDfChr <- subset(segDf,chr==chrom)
 					if (nrow(segDfChr) >0 ){
-						irS <- c(irS,IRanges(start(inputChr)[segDfChr$from],
-										end(inputChr)[segDfChr$to]))
+						irS <- c(irS,IRanges(start(inputChr)[segDfChr$start],
+										end(inputChr)[segDfChr$end]))
 					}
 				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
@@ -642,13 +582,13 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			} else if (inputType=="DataMatrix"){
-				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						IRanges(segDf$from,segDf$to),"sampleName"=segDf$sample,
+				r@segmentation <- GRanges(seqnames=segDf$chr,
+						IRanges(segDf$start,segDf$end),"sampleName"=segDf$sample,
 						"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			}
 			
-			r@gr <- GRanges(seqnames=chr,irAllRegions)
+			r@gr <- grAllRegions
 			r@posteriorProbs 	<- post
 			r@params			<- params
 			r@integerCopyNumber	<- CN
@@ -657,19 +597,18 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			return(r)	
 		} else {
 			message(paste("No CNVs detected. Try changing \"normalization\",", 
-							"\"priorimpact\" or \"thresholds\"."))
+							"\"priorImpact\" or \"thresholds\"."))
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
 			if (inputType=="GRanges"){
 				irS <- IRanges()
-				for (chrom in unique(chr)){
-					inputChr <- input[which(as.character(
-											seqnames(input))==chrom)]
-					
+				for (chrom in chrOrder){
+					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
+					inputChr <- input[chrIdx]
 					segDfChr <- subset(segDf,chr==chrom)
 					if (nrow(segDfChr) >0 ){
-						irS <- c(irS,IRanges(start(inputChr)[segDfChr$from],
-										end(inputChr)[segDfChr$to]))
+						irS <- c(irS,IRanges(start(inputChr)[segDfChr$start],
+										end(inputChr)[segDfChr$end]))
 					}
 				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
@@ -678,15 +617,14 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			} else if (inputType=="DataMatrix"){
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						IRanges(segDf$from,segDf$to),
+						IRanges(segDf$start,segDf$end),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
 			}
 			
-			r@gr <- GRanges(seqnames=chr,irAllRegions)
+			r@gr <- grAllRegions
 			r@normalizedData    <- X.norm
 			r@localAssessments  <- sINI
-			r@gr <- GRanges(seqnames=chr,irAllRegions)
 			r@individualCall   	<- callsS
 			r@iniCall        	<- INI
 			r@posteriorProbs 	<- post
@@ -698,22 +636,17 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		
 		
 	} else {
-		message(paste("Only one genomic segment considered, therefore no ",
-						"segmentation."))	
+		message(paste("Less than five genomic segments considered, therefore no",
+						" segmentation."))	
 		# Assembly of result object
 		r <- new("CNVDetectionResult")	#
-		
-		r@gr <- GRanges(seqnames=chr,irAllRegions)
+		r@gr <- grAllRegions
 		r@normalizedData    <- X.norm
 		r@localAssessments  <- sINI
 		r@individualCall   	<- sINI
-		
 		r@params			<- params
-		
 		r@integerCopyNumber	<- CN
 		r@sampleNames		<- colnames(X)
-		
-		
 		return(r)	
 		
 	}

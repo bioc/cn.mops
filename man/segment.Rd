@@ -5,7 +5,7 @@ and the t statistics.}
 \usage{
   segment(x, alpha = 0.05, segMedianT = 0, minSeg = 3,
     eps = 0, delta = 20, maxInt = 40, squashing = 0,
-    cyberWeight = 50, segPlot = TRUE, ...)
+    cyberWeight = 50)
 }
 \arguments{
   \item{x}{Values to be segmented.}
@@ -44,13 +44,6 @@ and the t statistics.}
 
   \item{cyberWeight}{The "nu" parameter of the cyber
   t-test. Default = 50.}
-
-  \item{segPlot}{Logical indicating whether the result of
-  the segmentation a algorithm should be plotted. Default =
-  TRUE.}
-
-  \item{...}{additional parameters passed to the plotting
-  function.}
 }
 \value{
   A data frame containing the segments.

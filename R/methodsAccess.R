@@ -1,6 +1,6 @@
 # Copyright (C) 2011 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
-#'  These generic function returns the genomic ranges
+#'  This generic function returns the genomic ranges
 #'  of a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}.
 #' 
@@ -19,7 +19,7 @@ setMethod("gr", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns the normalized data
+#'  This generic function returns the normalized data
 #'  of a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}.
 #' 
@@ -43,7 +43,7 @@ setMethod("normalizedData", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns the local assessments, i.e. 
+#'  This generic function returns the local assessments, i.e. 
 #' signed individual informative/non-informative calls,
 #' of a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. For other CNV detection methods
@@ -70,7 +70,7 @@ setMethod("localAssessments", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns the individual calls of
+#'  This generic function returns the individual calls of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -95,7 +95,7 @@ setMethod("individualCall", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns the informative/non-informative call of
+#'  This generic function returns the informative/non-informative call of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}.
 #'  The I/NI call is a measure for a genomic
@@ -122,7 +122,7 @@ setMethod("iniCall", signature = "CNVDetectionResult",
 )
 
 
-#'  These generic function returns the posterior probabilities of
+#'  This generic function returns the posterior probabilities of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' The posterior probabilities are represented
@@ -143,7 +143,7 @@ setMethod("posteriorProbs", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns CNVs of
+#'  This generic function returns CNVs of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -163,7 +163,7 @@ setMethod("cnvs", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns CNV regions of
+#'  This generic function returns CNV regions of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -183,7 +183,7 @@ setMethod("cnvr", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns segmentation of
+#'  This generic function returns segmentation of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -203,7 +203,7 @@ setMethod("segmentation", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns the integer copy numbers of
+#'  This generic function returns the integer copy numbers of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -229,7 +229,7 @@ setMethod("integerCopyNumber", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns the parameters of
+#'  This generic function returns the parameters of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -249,7 +249,7 @@ setMethod("params", signature = "CNVDetectionResult",
 
 
 
-#'  These generic function returns the sample names of
+#'  This generic function returns the sample names of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -262,9 +262,15 @@ setMethod("params", signature = "CNVDetectionResult",
 #' the parameters.
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
-
 setMethod("sampleNames", signature = "CNVDetectionResult", 
 		definition = function(object) object@sampleNames)
+
+
+
+
+
+
+
 
 
 

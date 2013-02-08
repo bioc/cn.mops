@@ -25,9 +25,6 @@
 #' before segmentation. Should be left to zero, which means that squashing is 
 #' not performed. Default = 0.
 #' @param cyberWeight The "nu" parameter of the cyber t-test. Default = 50.
-#' @param segPlot Logical indicating whether the result of the segmentation a
-#' algorithm should be plotted. Default = TRUE.
-#' @param ... additional parameters passed to the plotting function.
 #' @examples 
 #' x <- rnorm(n=500,sd=0.5)
 #' x[150:200] <- rnorm(n=51,mean=3,sd=0.5)
@@ -36,16 +33,29 @@
 #' @return A data frame containing the segments.
 #' @importFrom IRanges sort
 #' @importFrom IRanges as.data.frame
-#' @importFrom BiocGenerics setdiff
+#' @importFrom IRanges setdiff
+#' @importFrom IRanges width
+#' @importFrom IRanges IRanges
 #' @export
 #' @useDynLib cn.mops
 
 
 segment <- function(x, alpha=.05, segMedianT=0, minSeg=3, 
-		eps=0, delta=20, maxInt=40, squashing=0, cyberWeight=50,
-		segPlot=TRUE, ...){
+		eps=0, delta=20, maxInt=40, squashing=0, cyberWeight=50){
 	
-	library(IRanges)
+	if (any(!is.finite(x))){
+		message("Detected infinite values in the data. Replacing with max/min!")
+		y <- x[which(is.finite(x) & !is.na(x))]
+		x[which(x==Inf)] <- max(y,na.rm=TRUE)
+		x[which(x==-Inf)] <- min(y,na.rm=TRUE)
+		
+	}   
+	
+	globalMedian <- median(x,na.rm=TRUE)
+	if (any(is.na(x))){
+		message("NA values detected. Replacing with median.")
+		x[is.na(x)] <- globalMedian 
+	}
 	
 	if (missing("segMedianT")) {
 		segMedianT <- c()
@@ -58,13 +68,19 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		}
 	}
 	
-	if (any(is.na(x))){
-		message("NA values detected. Replacing with median.")
-		x[is.na(x)] <- median(x, na.rm=TRUE)
-	}
+	if (!is.numeric(alpha)) stop("\"alpha\" must be numeric!")
+	if (!is.numeric(minSeg)) stop("\"minSeg\" must be numeric!")
+	if (!is.numeric(maxInt)) stop("\"maxInt\" must be numeric!")
+	if (!is.numeric(delta)) stop("\"minSeg\" must be numeric!")
+	if (!is.numeric(cyberWeight)) stop("\"cyberWeight\" must be numeric!")
+	
+	if (minSeg < 2) minSeg <- 2
+	if (maxInt < (minSeg+5)) maxInt <- minSeg+5
+	if (cyberWeight < 0) cyberWeight <- 0
+
+	m <- length(x)	
 	
 	if (missing("eps")){
-		#eps <- min(abs(quantile(x, 0.05)), abs(quantile(x, 0.95)))
 		eps <- quantile(abs(diff(x)), probs=0.75)
 	}
 	
@@ -89,54 +105,44 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 						"greater than 1."))
 	}
 	
-	brkptsInit <- unique(c(0, brkptsInit, length(x)))
-	nbrOfBrkpts <- length(brkptsInit)-1
+	nbrOfBrkpts <- length(brkptsInit)+1
+	start <- c(1,brkptsInit+1)
+	end <- c(brkptsInit,m)
+	brkptsInit <- c(0, brkptsInit, m)
 	
-	#plot(x, pch=15, cex=0.5, ...)
-	med <- vector(length=nbrOfBrkpts)
-	m <- vector(length=nbrOfBrkpts)
-	start <- vector(length=nbrOfBrkpts)
-	end <- vector(length=nbrOfBrkpts)
-	for (i in 1:nbrOfBrkpts){
-		y <- x[(brkptsInit[i]+1):brkptsInit[i+1]]
-		m[i] <- mean(y,na.rm=TRUE)
-		med[i] <- quantile(y,probs=0.5,na.rm=TRUE)
-		start[i] <- brkptsInit[i]+1
-		end[i] <- brkptsInit[i+1]
-		#   lines(c(start[i], end[i]), c(med[i], med[i]), lwd=5, col="green")
-	}
 	
-	#browser()
+	avgs <- sapply(2:(nbrOfBrkpts+1),function(i){ 
+						c(median(x[((brkptsInit[i-1]+1):brkptsInit[i])]),
+								mean(x[((brkptsInit[i-1]+1):brkptsInit[i])]))
+					}
+			)
 	
-	df <- data.frame("start"=start, "end"=end, "mean"=m, "median"=med)
+			
+	df <- data.frame("start"=start, "end"=end, "mean"=avgs[2, ], 
+			"median"=avgs[1, ])
+	
 	
 	if (all(segMedianT==0)) {
 		
 		#message("No merging of segments.")
-		ir <- IRanges(df$start, df$end)
-		ir <- ir[which(ir@width>=minSeg)]
+		ir <- IRanges::IRanges(df$start, df$end)
+		ir <- ir[which(IRanges::width(ir)>=minSeg)]
 		
 		
-		irAll <- IRanges(1, length(x))
-		segsFinal <- as.data.frame(sort(c(ir, BiocGenerics::setdiff(irAll, ir))))
+		irAll <- IRanges::IRanges(1, length(x))
+		segsFinal <- IRanges::as.data.frame(IRanges::sort(
+						c(ir, IRanges::setdiff(irAll, ir))))
 		
-		if (segPlot) plot(x, pch=15, cex=0.5, ...)
-		nbrOfSegs <- nrow(segsFinal)
-		med <- vector(length=nbrOfSegs)
-		m <- vector(length=nbrOfSegs)
-		start <- vector(length=nbrOfSegs)
-		end <- vector(length=nbrOfSegs)
-		for (i in 1:nbrOfSegs) {
-			y <- x[segsFinal$start[i]:segsFinal$end[i]]
-			m[i] <- mean(y)
-			med[i] <- median(y)
-			
-			if (segPlot) lines(c(segsFinal$start[i], segsFinal$end[i]), 
-						c(med[i], med[i]), lwd=5, col="green")
-		}
+		bIdx <- c(0,segsFinal$end)
+		
+		avgs <- sapply(2:(length(bIdx)),function(i){ 
+					c(median(x[((bIdx[i-1]+1):bIdx[i])]),
+							mean(x[((bIdx[i-1]+1):bIdx[i])]))
+				}
+		)
 		
 		df2 <- data.frame("start"=segsFinal$start, "end"=segsFinal$end, 
-				"mean"=m, "median"=med)
+				"mean"=avgs[2,], "median"=avgs[1,])
 		
 		
 		return(df2)
@@ -152,31 +158,24 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		irLoss <- IRanges::reduce(irLoss)
 		
 		ir <- IRanges::sort(c(irAmp, irLoss))
-		ir <- ir[which(ir@width>=minSeg)]
+		ir <- ir[which(IRanges::width(ir)>=minSeg)]
 		
 		rm(irAmp, irLoss, dfAmp, dfLoss)    
 		
 		irAll <- IRanges(1, length(x))
 		segsFinal <- as.data.frame(sort(
-						c(ir, BiocGenerics::setdiff(irAll, ir))))
+						c(ir, IRanges::setdiff(irAll, ir))))
 		
-		if (segPlot) plot(x, pch=15, cex=0.5, ...)
-		nbrOfSegs <- nrow(segsFinal)
-		med <- vector(length=nbrOfSegs)
-		m <- vector(length=nbrOfSegs)
-		start <- vector(length=nbrOfSegs)
-		end <- vector(length=nbrOfSegs)
-		for (i in 1:nbrOfSegs) {
-			y <- x[segsFinal$start[i]:segsFinal$end[i]]
-			m[i] <- mean(y)
-			med[i] <- median(y)
-			
-			if (segPlot) lines(c(segsFinal$start[i], segsFinal$end[i]), 
-						c(med[i], med[i]), lwd=5, col="green")
-		}
+		bIdx <- c(0,segsFinal$end)
+		
+		avgs <- sapply(2:(length(bIdx)),function(i){ 
+					c(median(x[((bIdx[i-1]+1):bIdx[i])]),
+							mean(x[((bIdx[i-1]+1):bIdx[i])]))
+				}
+		)
 		
 		df2 <- data.frame("start"=segsFinal$start, "end"=segsFinal$end, 
-				"mean"=m, "median"=med)
+				"mean"=avgs[2, ], "median"=avgs[1, ])
 		
 		
 		return(df2)
