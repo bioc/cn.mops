@@ -30,8 +30,6 @@
 		ExpLogFoldChange <- rep(0,N)
 		post.ik <- matrix(0,nrow=n,ncol=N)
 		post.ik[idxCN2, ] <- 1
-		
-		
 		params <- list(n,classes,I,priorImpact,cyc)
 		names(params) <- c("nclasses","classes","I","priorImpact","cyc")
 		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
@@ -83,7 +81,6 @@
 		ExpLogFoldChange <- rep(0,N)
 		post.ik <- matrix(0,nrow=n,ncol=N)
 		post.ik[idxCN2, ] <- 1
-		names(params) <- c("nclasses","classes","I","priorImpact","cyc")
 		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
 				"sini"=ExpLogFoldChange,"ini"=ini,"post"=post.ik)
 		return(l)

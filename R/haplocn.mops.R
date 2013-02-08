@@ -5,7 +5,6 @@ haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8),
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
 		priorImpact = 1,cyc = 20, minReadCount=1) {
 	
-	version <- packageDescription("cn.mops")$Version
 	
 	N <- length(x)
 	n <- length(I)
@@ -37,7 +36,7 @@ haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8),
 		names(params) <- c("nclasses","classes","I","priorImpact","cyc")
 		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
 				"sini"=ExpLogFoldChange,"ini"=ini,"post"=post.ik, 
-				"params"=params,"version"=version)
+				"params"=params)
 		return(l)
 		
 	} else {
@@ -68,6 +67,36 @@ haplocn.mopsC <- function(x,I = c(0.025,1,2,3,4,5,6,7,8),
 		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN, 
 				"sini"=ExpLogFoldChange, "ini"=ini, "post"=post.ik,
 				"params"=params,"version"=version)
+		return(l)
+	}
+}
+
+haplocn.mopsCE <- function(x, I, classes, cov, cyc, N, n,
+		idxCN1, alphaInit, alphaPrior, minReadCount) {
+	if (all(x<=minReadCount)) {
+		lambda.est <- rep(0,n)
+		alpha.est <- rep(0,n)
+		alpha.est[idxCN1] <- 1
+		expCN <- rep(classes[idxCN1],N)
+		ini <- 0
+		ExpLogFoldChange <- rep(0,N)
+		post.ik <- matrix(0,nrow=n,ncol=N)
+		post.ik[idxCN1, ] <- 1
+		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
+				"sini"=ExpLogFoldChange,"ini"=ini,"post"=post.ik)
+		return(l)
+	} else {
+		lambda.est <- median(x*1/cov,na.rm=TRUE)
+		if (lambda.est < 1e-10){lambda.est <- max(mean(x*1/cov,na.rm=TRUE),1.0)}
+		lambda.init <- I*lambda.est
+		ret <- .Call("cnmops", as.numeric(x), I,cov, 
+				as.integer(cyc), alphaInit, lambda.init,
+				alphaPrior)
+		expCN <- classes[apply(ret$alpha.ik,2,function(x) which(x==max(x))[1] )]
+		ini <- mean(abs(log2(I)) %*% ret$alpha.ik)
+		ExpLogFoldChange <-  log2(I) %*%  ret$alpha.ik
+		l <-  list ("lambda"=ret$lambda.est, "alpha"=ret$alpha.est, "expectedCN"=expCN, 
+				"sini"=ExpLogFoldChange, "ini"=ini, "post"=ret$alpha.ik)
 		return(l)
 	}
 }
@@ -161,6 +190,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		chr <- as.character(seqnames(input))
 		start <- start(input)
 		end <- end(input)
+		rownames(X) <- paste(chr,start,end,sep="_")
 		
 		irAllRegions <- IRanges(start,end)
 		grAllRegions <- GRanges(chr,irAllRegions)
@@ -290,42 +320,47 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 		
 		cov <- rep(1,N)
+		#n,N, I set
+		idxCN1 <- which(classes=="CN1")
+		alphaInit <- rep(0.05,n) 
+		alphaInit[idxCN1] <- 0.6
+		alphaInit <- alphaInit/ sum(alphaInit)
+		alphaPrior <- rep(0,n)
+		alphaPrior[idxCN1] <- priorImpact
 		
-
+		
 		if (norm & m > 1){
 			if (parallel==0){
-				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsC, I=I,
-						classes=classes,
-						cov=cov,priorImpact=priorImpact,cyc=cyc,
+				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
 						minReadCount=minReadCount)
 			} else {
-				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsC, 
-						I=I,classes=classes,cov=cov,priorImpact=priorImpact,
-						cyc=cyc,
-						minReadCount=minReadCount)				
+				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
+						minReadCount=minReadCount)
 			}
 		} else {
 			if (parallel==0){
-				resChr <-apply(X[chrIdx, ,drop=FALSE],1,haplocn.mopsC, I=I,
-						classes=classes,
-						cov=cov,priorImpact=priorImpact,cyc=cyc,
+				resChr <-apply(X[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
 						minReadCount=minReadCount)
 			} else {
-				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,haplocn.mopsC, 
-						I=I,classes=classes,cov=cov,priorImpact=priorImpact,
-						cyc=cyc,
-						minReadCount=minReadCount)				
+				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+						alphaInit=alphaInit,alphaPrior=alphaPrior,
+						minReadCount=minReadCount)
 			}
 		}
 		
-		#cat(paste(Sys.time(),"\n"))
 		res <- c(res, resChr)
 	}
 	if (parallel > 0){
 		stopCluster(cl)
 	} 
 	
-	message("Postprocessing result...")
 	
 	## Postprocess result
 	L <- t(sapply(res,.subset2,1))
@@ -393,7 +428,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 				stopCluster(cl)
 			}
 			
-		
+			
 			
 			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
 			segDf <- cbind(do.call(rbind,resSegm),
@@ -520,7 +555,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			
 			
 			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,CN=cnvrCN)
-		
+			
 			
 			r@normalizedData    <- X.norm
 			r@localAssessments  <- sINI
