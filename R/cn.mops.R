@@ -5,7 +5,7 @@
 .cn.mopsC <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
 		priorImpact = 1,cyc = 20,minReadCount=1) {
-		
+	
 	N <- length(x)
 	n <- length(I)
 	
@@ -73,7 +73,7 @@
 }
 
 .cn.mopsCE <- function(x, I, classes, cov, cyc, N, n,
-		idxCN2, alphaInit, alphaPrior, minReadCount) {
+		idxCN2, alphaInit, alphaPrior, minReadCount,returnPosterior) {
 	if (all(x<=minReadCount)) {
 		lambda.est <- rep(0,n)
 		alpha.est <- rep(0,n)
@@ -81,11 +81,18 @@
 		expCN <- rep(classes[idxCN2],N)
 		ini <- 0
 		ExpLogFoldChange <- rep(0,N)
-		post.ik <- matrix(0,nrow=n,ncol=N)
-		post.ik[idxCN2, ] <- 1
-		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
-				"sini"=ExpLogFoldChange,"ini"=ini,"post"=post.ik)
-		return(l)
+		if (returnPosterior){
+			post.ik <- matrix(0,nrow=n,ncol=N)
+			post.ik[idxCN2, ] <- 1
+			l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
+					"sini"=ExpLogFoldChange,"ini"=ini,"post"=post.ik)
+			return(l) 
+		} else {
+			l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN,
+					"sini"=ExpLogFoldChange,"ini"=ini,"post"=NA)
+			return(l) 
+		}
+		
 	} else {
 		lambda.est <- median(x*1/cov,na.rm=TRUE)
 		if (lambda.est < 1e-10){lambda.est <- max(mean(x*1/cov,na.rm=TRUE),1.0)}
@@ -96,8 +103,13 @@
 		expCN <- classes[apply(ret$alpha.ik,2,function(x) which(x==max(x))[1] )]
 		ini <- mean(abs(log2(I)) %*% ret$alpha.ik)
 		ExpLogFoldChange <-  log2(I) %*%  ret$alpha.ik
-		l <-  list ("lambda"=ret$lambda.est, "alpha"=ret$alpha.est, "expectedCN"=expCN, 
-				"sini"=ExpLogFoldChange, "ini"=ini, "post"=ret$alpha.ik)
+		if (returnPosterior){
+			l <-  list ("lambda"=ret$lambda.est, "alpha"=ret$alpha.est, "expectedCN"=expCN, 
+					"sini"=ExpLogFoldChange, "ini"=ini, "post"=ret$alpha.ik)
+		} else {
+			l <-  list ("lambda"=ret$lambda.est, "alpha"=ret$alpha.est, "expectedCN"=expCN, 
+					"sini"=ExpLogFoldChange, "ini"=ini, "post"=NA)
+		}
 		return(l)
 	}
 }
@@ -360,24 +372,24 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsCE, I=I,
 						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN2=idxCN2,
 						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
+						minReadCount=minReadCount,returnPosterior=returnPosterior)
 			} else {
 				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsCE, I=I,
 						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN2=idxCN2,
 						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
+						minReadCount=minReadCount,returnPosterior=returnPosterior)
 			}
 		} else {
 			if (parallel==0){
 				resChr <-apply(X[chrIdx, ,drop=FALSE],1,.cn.mopsCE, I=I,
 						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN2=idxCN2,
 						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
+						minReadCount=minReadCount,returnPosterior=returnPosterior)
 			} else {
 				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,.cn.mopsCE, I=I,
 						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN2=idxCN2,
 						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
+						minReadCount=minReadCount,returnPosterior=returnPosterior)
 			}
 		}
 		
@@ -454,7 +466,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				stopCluster(cl)
 			}
 			
-		
+			
 			
 			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
 			segDf <- cbind(do.call(rbind,resSegm),
@@ -581,7 +593,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			
 			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,CN=cnvrCN)
-		
+			
 			
 			r@normalizedData    <- X.norm
 			r@localAssessments  <- sINI
