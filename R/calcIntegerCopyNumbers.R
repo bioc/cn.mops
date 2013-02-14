@@ -14,8 +14,11 @@
 #' @importFrom IRanges findOverlaps
 #' @importFrom IRanges as.list
 #' @importFrom GenomicRanges values
+
+
 setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 		definition = function(object){
+			
 			priorImpact <- object@params$priorImpact
 			cyc <- object@params$cyc
 			classes <- object@params$classes
@@ -31,6 +34,8 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			lT <- object@params$lowerThreshold
 			mainClass <- object@params$mainClass
 			
+			
+			# for CNV regions
 			M <- IRanges::as.list(IRanges::findOverlaps(cnvr,object@gr))
 			XX <- lapply(M,function(i){ 
 						if (length(i)>=3) ii <- i[-c(1,length(i))]
@@ -46,13 +51,15 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			GenomicRanges::values(cnvr) <- CN
 			resObject@cnvr <- cnvr
 			
+			## now for individual CNVs and segmentation
 			
-			idx <- which(values(segmentation)$mean >= uT | 
-							values(segmentation)$mean <= lT)
-			if (length(idx)!=length(cnvs)){
-				stop("Corrupted CNVDetectionResult!")
-			}
 			iCN <- rep(mainClass,length(segmentation))
+			#mapping from CNVs to segmentation
+			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs))
+			tmpIdx <- which(values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
+			csM <- csM[tmpIdx, ]
+			idx <- csM[,1]
+			
 			M2 <- IRanges::as.list(IRanges::findOverlaps(segmentation[idx],object@gr))
 			XX2 <- lapply(M2,function(i){ 
 						if (length(i)>=3) ii <- i[-c(1,length(i))]
@@ -64,14 +71,13 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 										minReadCount=minReadCount)$expectedCN))
 			colnames(CN) <- colnames(X)
 			extractedCN <- CN2[cbind(1:length(idx),
-							match(as.character(values(segmentation[idx])$sample),
+							match(as.character(values(segmentation[idx])$sampleName),
 									colnames(X)))]
 			iCN[idx] <- extractedCN 
 			GenomicRanges::values(segmentation)$CN <- iCN
-			GenomicRanges::values(cnvs)$CN <- extractedCN
+			GenomicRanges::values(cnvs)$CN <- extractedCN[csM[,2]]
 			resObject@cnvs <- cnvs
 			resObject@segmentation <- segmentation
 			
 			return(resObject)							
 		})
-
