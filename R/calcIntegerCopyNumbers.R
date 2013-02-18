@@ -20,6 +20,7 @@
 setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 		definition = function(object){
 			
+			
 			priorImpact <- object@params$priorImpact
 			cyc <- object@params$cyc
 			classes <- object@params$classes
@@ -34,6 +35,10 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			uT <- object@params$upperThreshold
 			lT <- object@params$lowerThreshold
 			mainClass <- object@params$mainClass
+			
+			if (length(cnvr)==0 | length(cnvs)==0)
+				stop(paste("No CNV regions in result object. Rerun cn.mops",
+							"with different parameters!"))
 			
 			
 			# for CNV regions
@@ -58,7 +63,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			#mapping from CNVs to segmentation
 			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs))
 			tmpIdx <- which(values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
-			csM <- csM[tmpIdx, ]
+			csM <- csM[tmpIdx, ,drop=FALSE]
 			idx <- csM[,1]
 			
 			M2 <- IRanges::as.list(IRanges::findOverlaps(segmentation[idx],object@gr))
