@@ -2,7 +2,9 @@
 # <klambauer@bioinf.jku.at>
 
 
-#' Displays the result object of a copy number detection method.
+#' @title Display CNVs and CNV regions of a CNV detection result.
+#' 
+#' @description Displays the result object of a copy number detection method.
 #'  
 #' @param object An instance of a "CNVDetectionResult".
 #' @examples 

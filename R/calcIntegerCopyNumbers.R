@@ -1,4 +1,5 @@
-#'  This generic function calculates the integer copy numbers of
+#' @title Calculation of integer copy numbers for the CNVs and CNV regions.
+#' @description This generic function calculates the integer copy numbers of
 #'  a CNV detection method stored in an instance of 
 #' \code{\link{CNVDetectionResult-class}}. 
 #' 
@@ -38,7 +39,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			
 			if (length(cnvr)==0 | length(cnvs)==0)
 				stop(paste("No CNV regions in result object. Rerun cn.mops",
-							"with different parameters!"))
+								"with different parameters!"))
 			
 			
 			# for CNV regions
@@ -56,7 +57,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			resObject <- object
 			GenomicRanges::values(cnvr) <- CN
 			resObject@cnvr <- cnvr
-		
+			
 			## now for individual CNVs and segmentation
 			
 			iCN <- rep(mainClass,length(segmentation))

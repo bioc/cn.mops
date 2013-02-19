@@ -1,7 +1,9 @@
 # Copyright (C) 2011 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
 
-#' Performs a fast segmentation algorithm based on the cyber t test
+#' @title Fast segmentation of CNV calls.
+#' 
+#' @description Performs a fast segmentation algorithm based on the cyber t test
 #' and the t statistics.
 #' 
 #' @param x Values to be segmented.

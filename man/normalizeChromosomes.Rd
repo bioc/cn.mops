@@ -1,7 +1,10 @@
 \name{normalizeChromosomes}
 \alias{normalizeChromosomes}
-\title{Normalize quantitative NGS data in order to make counts comparable over
-samples. Scales each samples' reads such that the coverage is even for
+\title{Normalization of NGS data.
+
+Normalize quantitative NGS data in order to make counts comparable over
+samples, i.e., correcting for different library sizes or coverages.
+Scales each samples' reads such that the coverage is even for
 all samples after normalization.}
 \usage{
   normalizeChromosomes(X, chr, normType = "poisson",
@@ -45,9 +48,12 @@ all samples after normalization.}
   dimensions as the input matrix X.
 }
 \description{
+  Normalization of NGS data.
+
   Normalize quantitative NGS data in order to make counts
-  comparable over samples. Scales each samples' reads such
-  that the coverage is even for all samples after
+  comparable over samples, i.e., correcting for different
+  library sizes or coverages. Scales each samples' reads
+  such that the coverage is even for all samples after
   normalization.
 }
 \examples{

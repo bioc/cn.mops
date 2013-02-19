@@ -1,8 +1,6 @@
 \name{haplocn.mops}
 \alias{haplocn.mops}
-\title{Performs the cn.mops algorithm for copy number detection in
-NGS data adjusted to haploid genomes. It is assumed that the normal state
-is copy number 1. This is an experimental method at the moment.}
+\title{Copy number detection in NGS data of haploid samples.}
 \usage{
   haplocn.mops(input, I = c(0.025, 1, 2, 3, 4, 5, 6, 7, 8),
     classes = c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6", "CN7", "CN8"),

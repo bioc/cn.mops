@@ -1,8 +1,6 @@
 \name{calcIntegerCopyNumbers}
 \alias{calcIntegerCopyNumbers}
-\title{This generic function calculates the integer copy numbers of
- a CNV detection method stored in an instance of
-\code{\link{CNVDetectionResult-class}}.}
+\title{Calculation of integer copy numbers for the CNVs and CNV regions.}
 \arguments{
   \item{object}{An instance of "CNVDetectionResult"}
 }

@@ -147,8 +147,8 @@
 }
 
 
-
-#' Generates the read counts from BAM Files. 
+#' @title Calculation of read counts from BAM files.
+#' @description Generates the read counts from BAM Files. 
 #' These counts are necessary for CNV detection methods based
 #' on depth of coverage information.
 #' Note that the function is much faster, if the BAM files have an index file.

@@ -1,7 +1,6 @@
 \name{segment}
 \alias{segment}
-\title{Performs a fast segmentation algorithm based on the cyber t test
-and the t statistics.}
+\title{Fast segmentation of CNV calls.}
 \usage{
   segment(x, alpha = 0.05, segMedianT = 0, minSeg = 3,
     eps = 0, delta = 20, maxInt = 40, squashing = 0,

@@ -102,7 +102,9 @@ haplocn.mopsCE <- function(x, I, classes, cov, cyc, N, n,
 }
 
 
-#' Performs the cn.mops algorithm for copy number detection in
+#' @title Copy number detection in NGS data of haploid samples.
+#' 
+#' @description Performs the cn.mops algorithm for copy number detection in
 #' NGS data adjusted to haploid genomes. It is assumed that the normal state
 #' is copy number 1. This is an experimental method at the moment.
 #' 
@@ -328,7 +330,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		alphaPrior <- rep(0,n)
 		alphaPrior[idxCN1] <- priorImpact
 		
-
+		
 		if (norm & m > 1){
 			if (parallel==0){
 				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
@@ -428,7 +430,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 				stopCluster(cl)
 			}
 			
-		
+			
 			
 			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
 			segDf <- cbind(do.call(rbind,resSegm),
@@ -555,7 +557,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			
 			
 			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,CN=cnvrCN)
-		
+			
 			
 			r@normalizedData    <- X.norm
 			r@localAssessments  <- sINI

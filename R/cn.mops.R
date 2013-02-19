@@ -146,8 +146,10 @@
 }
 
 
-#' Performs the cn.mops algorithm for copy number detection in
-#' NGS data.
+#' @title Copy number detection in NGS data. 
+#' 
+#' @description This function performs the cn.mops algorithm for copy number
+#' detection in NGS data.
 #' 
 #' @param input Either an instance of "GRanges" or a raw data matrix, where
 #' columns are interpreted as samples and rows as genomic regions. An entry is
@@ -155,7 +157,7 @@
 #' @param I Vector positive real values that contain the expected fold change
 #' of the copy number classes.  Length of this vector must be equal to the 
 #' length of the "classes" parameter vector. For human copy number polymorphisms 
-#' we suggest to use the default I = c(0.05,0.5,1,1.5,2,2.5,3,3.5,4).
+#' we suggest to use the default I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4).
 #' @param classes Vector of characters of the same length as the parameter
 #' vector "I". One vector element must be named "CN2". The names reflect the 
 #' labels of the copy number classes. 

@@ -1,7 +1,6 @@
 \name{exomecn.mops}
 \alias{exomecn.mops}
-\title{Performs the cn.mops algorithm for copy number detection in
-NGS data with parameters adjusted to exome sequencing data.}
+\title{Copy number detection in exome sequencing data.}
 \usage{
   exomecn.mops(input,
     I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4),
@@ -23,7 +22,7 @@ NGS data with parameters adjusted to exome sequencing data.}
   of this vector must be equal to the length of the
   "classes" parameter vector. For human copy number
   polymorphisms we suggest to use the default I =
-  c(0.05,0.5,1,1.5,2,2.5,3,3.5,4).}
+  c(0.025,0.5,1,1.5,2,2.5,3,3.5,4).}
 
   \item{classes}{Vector of characters of the same length as
   the parameter vector "I". One vector element must be

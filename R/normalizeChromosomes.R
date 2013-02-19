@@ -17,9 +17,13 @@
 } 
 
 
+#' @title Normalization of NGS data. 
+#' 
 #' Normalize quantitative NGS data in order to make counts comparable over
-#' samples. Scales each samples' reads such that the coverage is even for
+#' samples, i.e., correcting for different library sizes or coverages. 
+#' Scales each samples' reads such that the coverage is even for 
 #' all samples after normalization. 
+#' 
 #' @param X Matrix of positive real values, where
 #' columns are interpreted as samples and rows as genomic regions. An entry is
 #' the read count of a sample in the genomic region. Alternatively this can be
