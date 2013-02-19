@@ -102,7 +102,9 @@ haplocn.mopsCE <- function(x, I, classes, cov, cyc, N, n,
 }
 
 
-#' Performs the cn.mops algorithm for copy number detection in
+#' @title Copy number detection in NGS data of haploid samples.
+#' 
+#' @description Performs the cn.mops algorithm for copy number detection in
 #' NGS data adjusted to haploid genomes. It is assumed that the normal state
 #' is copy number 1. This is an experimental method at the moment.
 #' 

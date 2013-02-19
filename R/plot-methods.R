@@ -47,7 +47,9 @@
 
 
 
-#' Plots read counts, call values and CNV calls in an identified CNV region.
+#' @title Visualization of a CNV detection result.
+#' 
+#' @description Plots read counts, call values and CNV calls in an identified CNV region.
 #' 
 #' @param x An instance of "CNVDetectionResult" 
 #' @param which The index of the CNV region to be plotted.
@@ -165,7 +167,9 @@ setGeneric("segplot",
 			standardGeneric("segplot")
 		})
 
-#' Plots the log normalized read counts and the detected segments as a 
+#' @title Visualization of a CNV detection result.
+#' 
+#' @description Plots the log normalized read counts and the detected segments as a 
 #' segmentation plot.
 #' 
 #' @param r An instance of "CNVDetectionResult" 

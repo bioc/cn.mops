@@ -1,7 +1,8 @@
 # Copyright (C) 2012 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
 
-#' Generates the read counts from BAM Files for predefined segments. 
+#' @title Calculation of read counts from BAM files for predefined segments.
+#' @description Generates the read counts from BAM Files for predefined segments. 
 #' This is the appropiate choice for exome sequencing data, where the
 #' bait regions, target regions or exons are the predefined segments.
 #' These counts are necessary for CNV detection methods based

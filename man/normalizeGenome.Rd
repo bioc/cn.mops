@@ -1,8 +1,6 @@
 \name{normalizeGenome}
 \alias{normalizeGenome}
-\title{Normalize quantitative NGS data in order to make counts comparable over
-samples. Scales each samples' reads such that the coverage is even for
-all samples after normalization.}
+\title{Normalization of NGS data}
 \usage{
   normalizeGenome(X, normType = "poisson", qu = 0.25,
     ploidy)

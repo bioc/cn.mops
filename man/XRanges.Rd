@@ -12,8 +12,8 @@ object. It was generated using
 distributions of read counts as they appear in real sequencing experiments. 
 CNVs were implanted under the assumption that the expected read count is linear
 dependent on the copy number (e.g. in a certain genomic we expect 
-\deqn{\lambda}{lambda} reads for copy number 2, then we expect 
-\deqn{2\cdot \lambda}{2*lambda} reads for copy number 4).
+\eqn{\lambda}{lambda} reads for copy number 2, then we expect 
+\eqn{2\cdot \lambda}{2*lambda} reads for copy number 4).
 }
 \usage{XRanges}
 \format{A GRanges object with 5000 rows and 40 value columns across 1 space.}

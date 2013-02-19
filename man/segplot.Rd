@@ -1,7 +1,6 @@
 \name{segplot}
 \alias{segplot}
-\title{Plots the log normalized read counts and the detected segments as a
-segmentation plot.}
+\title{Visualization of a CNV detection result.}
 \arguments{
   \item{r}{An instance of "CNVDetectionResult"}
 

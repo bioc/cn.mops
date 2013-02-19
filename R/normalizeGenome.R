@@ -2,7 +2,9 @@
 # <klambauer@bioinf.jku.at>
 
 
-#' Normalize quantitative NGS data in order to make counts comparable over
+#' @title Normalization of NGS data
+#' 
+#' @description Normalize quantitative NGS data in order to make counts comparable over
 #' samples. Scales each samples' reads such that the coverage is even for
 #' all samples after normalization. 
 #' @param X Matrix of positive real values, where
