@@ -46,6 +46,27 @@
 }
 
 
+# A function to replace the sample names in a CNVDetectionResult
+# oldNames <- sample(colnames(r@normalizedData))
+# newNames <- sapply(strsplit(oldNames,"/|\\."),.subset2,8)
+.replaceNames <- function(r, oldNames, newNames){
+	#r is a CNVDetectionResult
+	idx <- match(colnames(r@normalizedData),oldNames)
+	colnames(r@normalizedData) <- newNames[idx]
+	colnames(r@localAssessments) <-	newNames[idx]
+	colnames(r@individualCall) <- newNames[idx]
+	values(r@cnvs)["sampleName"] <-	newNames[match(as.character(values(r@cnvs)[,1]),oldNames)]
+	CN <- values(r@cnvr)
+	colnames(CN) <- newNames[idx]
+	values(r@cnvr) <- CN
+	values(r@segmentation)["sampleName"] <- 
+			newNames[match(as.character(values(r@segmentation)[,1]),oldNames)]
+	colnames(r@integerCopyNumber) <- newNames[idx]
+	r@sampleNames <- newNames[idx]
+	return(r)
+}
+
+
 
 #' @title Visualization of a CNV detection result.
 #' 
@@ -228,6 +249,15 @@ setMethod("segplot",
 				cbys.layout, include.means=TRUE, zeroline=TRUE,
 				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),
 				segcol="red", zlcol="grey", ylim, lwd=3, ...) {
+			
+			if (any(grepl("[^0-9A-Za-z]",colnames(r@normalizedData)))){
+				message(
+				paste("Segplot might not work because of special characters",
+					  "in the sample names. Use only A-Z,a-z and 0-9! \n There",
+					  "is a hidden function cn.mops:::.replaceNames that replaces",
+					  "the names in the \"CNVDetectionResult\" object."))
+			}
+			
 			
 			if (!missing(sampleIdx)){
 				
