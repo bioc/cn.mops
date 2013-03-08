@@ -57,7 +57,7 @@
 	colnames(r@individualCall) <- newNames[idx]
 	values(r@cnvs)["sampleName"] <-	newNames[match(as.character(values(r@cnvs)[,1]),oldNames)]
 	CN <- values(r@cnvr)
-    colnames(CN) <- newNames[idx]
+	colnames(CN) <- newNames[idx]
 	values(r@cnvr) <- CN
 	values(r@segmentation)["sampleName"] <- 
 			newNames[match(as.character(values(r@segmentation)[,1]),oldNames)]
@@ -87,92 +87,79 @@
 #' @noRd
 #' @export
 #' @importFrom graphics plot
-
 setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 		function(x,which,margin=c(10,10),toFile=FALSE){
-			r <- x
 			
 			if (missing(which)){
 				message("Missing argument \"which\". Plotting the first CNVR.")
 				which <- 1
 			}
 			
-			MMstart <- GenomicRanges::findOverlaps(GRanges(seqnames(r@cnvr),
-							IRanges(start(r@cnvr),
-									start(r@cnvr))), normalizedData(r),select="first" )
-			MMend <- GenomicRanges::findOverlaps(GRanges(seqnames(r@cnvr),
-							IRanges(end(r@cnvr),
-									end(r@cnvr))),normalizedData(r), select="first" )
+			tmp <- GRanges(seqnames(x@cnvr), IRanges(start(x@cnvr), start(x@cnvr)))
+			MMstart <- findOverlaps(tmp, x@gr, select="first" )
+			tmp <- GRanges(seqnames(x@cnvr), IRanges(end(x@cnvr), end(x@cnvr)))
+			MMend <- findOverlaps(tmp, x@gr, select="first" )
 			
 			for (select in which){
 				if (!toFile){
 					dev.new()
 				}
 				
-				if (select>length(r@cnvr)){
-					stop("Selected unknown CNVR for plotting.")}
-				refSeq <- as.character(seqnames(r@cnvr)[select])
-				start <- MMstart[select]
-				end <- MMend[select]
-				plotStart <- max(start-margin[1],1)
-				plotEnd <- min(end+margin[2],length(r@normalizedData))
-				
-				if (plotEnd==plotStart){plotStart <- plotStart-1}
-				#plot.new()
-				layout(matrix(1:4,nrow=2))
-				ND <- r@normalizedData
-				LA <- r@localAssessments
-				IC <- r@individualCall
-				#ratios
-				RA <- (ND[plotStart:plotEnd, ]+0.1)/
-						rowMedians(ND[plotStart:plotEnd, ]+0.1)
-				
-				rn <- paste(start(normalizedData(r)),
-						end(normalizedData(r)),sep=" - ")
-				
-				rownames(ND) <- rownames(LA) <- rownames(IC) <- rn
-				
-				refSeqName <- unique(as.character(seqnames(r@cnvr)))
-				xlab <- paste(refSeq,": ",
-						unlist(start(normalizedData(r)))[plotStart],
-						" - ",unlist(end(normalizedData(r)))[plotEnd],sep="")
-				
-				lt <- r@params$lowerThreshold
-				ut <- r@params$upperThreshold
-				col <- rep("black",ncol(ND))
-				if (is.numeric(lt) & is.numeric(ut)){
-					col[apply(IC[start:end, ,drop=FALSE] >= ut,2,any)] <- "red"
-					col[apply(IC[start:end, ,drop=FALSE] <= lt,2,any)] <- "blue"
+				if (select>length(x@cnvr)){
+					stop("Selected unknown CNVR for plotting.")
 				}
 				
-				lty <- sample(2:6,replace=TRUE,size=ncol(ND))
+				refSeq <- as.character(seqnames(x@cnvr)[select])
+				start <- MMstart[select]
+				end <- MMend[select]
+				plotStart <- max(start - margin[1], 1)
+				plotEnd <- min(end + margin[2], nrow(x@normalizedData))
 				
-				matplot(ND[plotStart:plotEnd, ],type="l",lty=lty,lwd=2,
-						main="Normalized Read Counts",ylab="Read Count",
-						xlab=xlab,xaxt="n",col=col)
-				axis(1,at=1:length(plotStart:plotEnd),
-						labels=FALSE)
+				if (plotEnd == plotStart) {
+					plotStart <- plotStart - 1
+				}
 				
-				matplot(LA[plotStart:plotEnd, ],type="l",lty=lty,lwd=2,
+				layout(matrix(1:4,nrow=2))
+				
+				normDataSel <- x@normalizedData[plotStart:plotEnd, ]
+				
+				refSeqName <- unique(as.character(seqnames(x@cnvr)))
+				xlab <- paste(refSeq,": ", unlist(start(x@gr))[plotStart], " - ",
+						unlist(end(x@gr))[plotEnd], sep="")
+				
+				lt <- x@params$lowerThreshold
+				ut <- x@params$upperThreshold
+				col <- rep("grey", ncol(x@normalizedData))
+				if (is.numeric(lt) & is.numeric(ut)){
+					col[apply(x@individualCall[start:end, ,drop=FALSE] >= ut, 2, any)] <- "red"
+					col[apply(x@individualCall[start:end, ,drop=FALSE] <= lt, 2, any)] <- "blue"
+				}
+				sampOrd <- c(which(col == "grey"), which(col == "red"), which(col == "blue"))
+				colOrd <- col[sampOrd]
+				lty <- sample(2:6, replace=TRUE, size=ncol(x@normalizedData))
+				
+				matplot(normDataSel[, sampOrd], type="l", lty=lty, lwd=2,
+						main="Normalized Read Counts", ylab="Read Count",
+						xlab=xlab, xaxt="n", col=colOrd)
+				axis(1, at=1:length(plotStart:plotEnd),	labels=FALSE)
+				
+				matplot(x@localAssessments[plotStart:plotEnd, sampOrd],type="l",lty=lty,lwd=2,
 						main="Local Assessments",ylab="Local Assessment Score",
-						xlab=xlab,xaxt="n",col=col)
-				axis(1,at=1:length(plotStart:plotEnd),
-						labels=FALSE)
+						xlab=xlab,xaxt="n",col=colOrd)
+				axis(1,at=1:length(plotStart:plotEnd), labels=FALSE)
 				
-				
-				matplot(RA,type="l",lty=lty,lwd=2,
+				RA <- (normDataSel + 0.1) / rowMedians(normDataSel + 0.1)
+				matplot(RA[, sampOrd],type="l",lty=lty,lwd=2,
 						main="Read Count Ratios",ylab="Ratio",
-						xlab=xlab,xaxt="n",col=col)
+						xlab=xlab,xaxt="n",col=colOrd)
 				axis(1,at=1:length(plotStart:plotEnd),
 						labels=FALSE)
-					
-				matplot(IC[plotStart:plotEnd, ],type="l",lty=lty,lwd=2,
-						main="CNV Call",ylab="CNV Call Value",
-						xlab=xlab,xaxt="n",col=col)
-				axis(1,at=1:length(plotStart:plotEnd),
-						labels=FALSE)
-			
 				
+				matplot(x@individualCall[plotStart:plotEnd, sampOrd],type="l",lty=lty,lwd=2,
+						main="CNV Call",ylab="CNV Call Value",
+						xlab=xlab,xaxt="n",col=colOrd)
+				axis(1,at=1:length(plotStart:plotEnd),
+						labels=FALSE)
 			}
 		})
 
@@ -251,10 +238,10 @@ setMethod("segplot",
 			
 			if (any(grepl("[^0-9A-Za-z]",colnames(r@normalizedData)))){
 				message(
-				paste("Segplot might not work because of special characters",
-					  "in the sample names. Use only A-Z,a-z and 0-9! \n There",
-					  "is a hidden function cn.mops:::.replaceNames that replaces",
-					  "the names in the \"CNVDetectionResult\" object."))
+						paste("Segplot might not work because of special characters",
+								"in the sample names. Use only A-Z,a-z and 0-9! \n There",
+								"is a hidden function cn.mops:::.replaceNames that replaces",
+								"the names in the \"CNVDetectionResult\" object."))
 			}
 			
 			if (!missing(sampleIdx)){
@@ -276,7 +263,7 @@ setMethod("segplot",
 			if (!missing(seqnames)){
 				#browser()
 				idx <- which(as.character(GenomicRanges::seqnames(
-								segmentation(r))) %in% seqnames)
+										segmentation(r))) %in% seqnames)
 				r@segmentation <- segmentation(r)[idx]
 				
 				nd <- normalizedData(r)
@@ -286,7 +273,7 @@ setMethod("segplot",
 				
 				if (length(idx2)==0){
 					stop(paste("Given \"seqnames\" do not appear in result",
-					"object. Try to exchange \"chr1\" <--> \"1\"."))
+									"object. Try to exchange \"chr1\" <--> \"1\"."))
 				}
 				#nd <- nd[idx2]
 				
@@ -311,4 +298,3 @@ setMethod("segplot",
 			
 		})
 
-		
