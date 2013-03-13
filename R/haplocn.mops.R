@@ -248,8 +248,10 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	}
 	if (!(is.numeric(normQu) & length(normQu)==1)) 
 		stop("\"normQu\" must be numeric and of length 1.")
-	if (!is.logical(norm))
-		stop("\"norm\" must be logical.")
+	if (is.logical(norm))
+		norm <- as.integer(norm)
+	if (!(norm %in% c(0,1,2)))
+		stop("\"norm\" must be 0,1 or 2.")
 	if (!(is.numeric(lowerThreshold) & length(lowerThreshold)==1)) 
 		stop("\"lowerThreshold\" must be numeric and of length 1.")
 	if (!(is.numeric(upperThreshold) & length(upperThreshold)==1)) 
@@ -271,7 +273,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	############################################################################
 	
 	version <- packageDescription("cn.mops")$Version
-	params <- list("cn.mops",I,
+	params <- list("haplocn.mops",I,
 			classes,
 			priorImpact,cyc,
 			normType,normQu,
@@ -300,19 +302,35 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 						"might not be applicable."))
 	}
 	
-	if (norm) {
+	if (norm==0){
+		X.norm <- X
+		cov <- rep(1,N)
+	} else if (norm==1) {
 		message("Normalizing...")
 		X.norm <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)
-	} else {
-		#X.norm <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)
+		cov <- rep(1,N)
+	} else if (norm==2) {
+		X.viz <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)		
 		X.norm <- X
+		# robust estimates for the different coverages
+		cov <- apply(X.norm,2,function(x) {
+					mean(x[which(x>quantile(x,0.05) & x < quantile(x,0.95))])
+				})
+		if (median(cov)==0)
+			stop("Median of the coverages is zero!")
+		cov <- cov/median(cov)
+	} else {
+		stop("\"norm\" must be 0,1 or 2.")
 	}
+	params$cov <- cov
+	
+	
 	message("Starting local modeling, please be patient...  ")
 	
 	if (parallel > 0){
 		library(snow)
 		cl <- makeCluster(as.integer(parallel),type="SOCK")
-		clusterEvalQ(cl,"haplocn.mopsC")
+		clusterEvalQ(cl,"haplocn.mopsCE")
 	} 
 	
 	res <- list()
@@ -331,30 +349,16 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		alphaPrior[idxCN1] <- priorImpact
 		
 		
-		if (norm & m > 1){
-			if (parallel==0){
-				resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
-						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
-						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
-			} else {
-				resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
-						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
-						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
-			}
+		if (parallel==0){
+			resChr <-apply(X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+					classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+					alphaInit=alphaInit,alphaPrior=alphaPrior,
+					minReadCount=minReadCount)
 		} else {
-			if (parallel==0){
-				resChr <-apply(X[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
-						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
-						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
-			} else {
-				resChr <- parApply(cl,X[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
-						classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
-						alphaInit=alphaInit,alphaPrior=alphaPrior,
-						minReadCount=minReadCount)
-			}
+			resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,haplocn.mopsCE, I=I,
+					classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN1=idxCN1,
+					alphaInit=alphaInit,alphaPrior=alphaPrior,
+					minReadCount=minReadCount)
 		}
 		
 		res <- c(res, resChr)
@@ -559,7 +563,11 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,CN=cnvrCN)
 			
 			
-			r@normalizedData    <- X.norm
+			if (norm==2){
+				r@normalizedData    <- X.viz		
+			} else {
+				r@normalizedData    <- X.norm			
+			}		
 			r@localAssessments  <- sINI
 			r@individualCall   	<- callsS
 			r@iniCall        	<- INI
@@ -625,7 +633,11 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			}
 			
 			r@gr <- grAllRegions
-			r@normalizedData    <- X.norm
+			if (norm==2){
+				r@normalizedData    <- X.viz		
+			} else {
+				r@normalizedData    <- X.norm			
+			}
 			r@localAssessments  <- sINI
 			r@individualCall   	<- callsS
 			r@iniCall        	<- INI
@@ -643,7 +655,11 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		# Assembly of result object
 		r <- new("CNVDetectionResult")	#
 		r@gr <- grAllRegions
-		r@normalizedData    <- X.norm
+		if (norm==2){
+			r@normalizedData    <- X.viz		
+		} else {
+			r@normalizedData    <- X.norm			
+		}	
 		r@localAssessments  <- sINI
 		r@individualCall   	<- sINI
 		r@params			<- params

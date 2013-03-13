@@ -20,6 +20,8 @@
 \alias{segplot,CNVDetectionResult-method}
 \alias{sampleNames,CNVDetectionResult-method}
 \alias{calcIntegerCopyNumbers,CNVDetectionResult-method}
+\alias{makeRobustCNVR,CNVDetectionResult-method}
+
 
 \title{Class "CNVDetectionResult"}
 \description{S4 class for storing results of a CNV detection method.}

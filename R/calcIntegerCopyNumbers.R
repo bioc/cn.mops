@@ -32,27 +32,53 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			segmentation <- segmentation(object)
 			cnvs <- cnvs(object)
 			gr <- object@gr
-			cov <- rep(1,ncol(X))
+			cov <- object@params$cov
 			uT <- object@params$upperThreshold
 			lT <- object@params$lowerThreshold
 			mainClass <- object@params$mainClass
+			method <- object@params$method
+			
+			usedMethod <- switch(method,
+					"cn.mops"=.cn.mopsC,
+					"haplocn.mops"=haplocn.mopsC,
+					"referencecn.mops"=.referencecn.mops)
+			
 			
 			if (length(cnvr)==0 | length(cnvs)==0)
 				stop(paste("No CNV regions in result object. Rerun cn.mops",
 								"with different parameters!"))
 			
-			
 			# for CNV regions
 			M <- IRanges::as.list(IRanges::findOverlaps(cnvr,object@gr))
 			XX <- lapply(M,function(i){ 
 						if (length(i)>=3) ii <- i[-c(1,length(i))]
+						else ii <- i
 						apply(X[ii, ,drop=FALSE],2,mean) })
-			CN <-t(sapply(XX,function(x) .cn.mopsC(x,I=I,
-										classes=classes,
-										cov=cov,priorImpact=priorImpact,
-										cyc=cyc,
-										minReadCount=minReadCount)$expectedCN))
+			if (method=="referencecn.mops"){
+				lambda <- object@params$L[,mainClass]
+				ll <- lapply(M,function(i){ 
+							if (length(i)>=3) ii <- i[-c(1,length(i))]
+							else ii <- i
+							mean(lambda[ii]) 
+						})
+				CN <-t(sapply(1:length(XX),function(j) {
+								usedMethod(x=XX[[j]],
+								lambda=ll[[j]],
+								I=I,
+								classes=classes,
+								cov=cov,
+								minReadCount=minReadCount)$expectedCN
+								}))
+				
+			} else {
+				CN <-t(sapply(XX,function(x) usedMethod(x,I=I,
+											classes=classes,
+											cov=cov,priorImpact=priorImpact,
+											cyc=cyc,
+											minReadCount=minReadCount)$expectedCN))
+			}
 			
+			CN <- matrix(CN,ncol=ncol(X))
 			colnames(CN) <- colnames(X)
 			resObject <- object
 			GenomicRanges::values(cnvr) <- CN
@@ -70,13 +96,33 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			M2 <- IRanges::as.list(IRanges::findOverlaps(segmentation[idx],object@gr))
 			XX2 <- lapply(M2,function(i){ 
 						if (length(i)>=3) ii <- i[-c(1,length(i))]
+						else ii <- i
 						apply(X[ii, ,drop=FALSE],2,mean) })
-			CN2 <-t(sapply(XX2,function(x) .cn.mopsC(x,I=I,
-										classes=classes,
-										cov=cov,priorImpact=priorImpact,
-										cyc=cyc,
-										minReadCount=minReadCount)$expectedCN))
-			colnames(CN) <- colnames(X)
+			
+			if (method=="referencecn.mops"){
+				ll <- lapply(M2,function(i){ 
+							if (length(i)>=3) ii <- i[-c(1,length(i))]
+							else ii <- i
+							mean(lambda[ii]) 
+						})
+				CN2 <-t(sapply(1:length(XX2),function(j) {
+									usedMethod(x=XX2[[j]],
+											lambda=ll[[j]],
+											I=I,
+											classes=classes,
+											cov=cov,
+											minReadCount=minReadCount)$expectedCN
+								}))
+			} else {
+				CN2 <-t(sapply(XX2,function(x) usedMethod(x,I=I,
+											classes=classes,
+											cov=cov,priorImpact=priorImpact,
+											cyc=cyc,
+											minReadCount=minReadCount)$expectedCN))
+			}
+			
+			CN2 <- matrix(CN2,ncol=ncol(X))
+			colnames(CN2) <- colnames(X)
 			extractedCN <- CN2[cbind(1:length(idx),
 							match(as.character(values(segmentation[idx])$sampleName),
 									colnames(X)))]

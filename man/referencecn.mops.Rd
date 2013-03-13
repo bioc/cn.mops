@@ -1,8 +1,9 @@
-\name{cn.mops}
-\alias{cn.mops}
-\title{Copy number detection in NGS data.}
+\name{referencecn.mops}
+\alias{referencecn.mops}
+\title{Copy number detection in NGS data with in a control versus cases
+setting.}
 \usage{
-  cn.mops(input,
+  referencecn.mops(cases, controls,
     I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4),
     classes = c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6", "CN7", "CN8"),
     priorImpact = 1, cyc = 20, parallel = 0,
@@ -12,7 +13,12 @@
     returnPosterior = FALSE, ...)
 }
 \arguments{
-  \item{input}{Either an instance of "GRanges" or a raw
+  \item{cases}{Either an instance of "GRanges" or a raw
+  data matrix, where columns are interpreted as samples and
+  rows as genomic regions. An entry is the read count of a
+  sample in the genomic region.}
+
+  \item{controls}{Either an instance of "GRanges" or a raw
   data matrix, where columns are interpreted as samples and
   rows as genomic regions. An entry is the read count of a
   sample in the genomic region.}
@@ -101,12 +107,13 @@
   An instance of "CNVDetectionResult".
 }
 \description{
-  This function performs the cn.mops algorithm for copy
-  number detection in NGS data.
+  This function performs the an alternative version of the
+  cn.mops algorithm adapted to a setting of control versus
+  cases
 }
 \examples{
 data(cn.mops)
-cn.mops(XRanges)
+referencecn.mops(X[1:200, ],rowMedians(X[1:200, ]))
 }
 \author{
   Guenter Klambauer \email{klambauer@bioinf.jku.at}

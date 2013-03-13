@@ -526,6 +526,16 @@ resHaplo <- calcIntegerCopyNumbers(resHaplo)
 @
 
 
+\section{Cases vs. Control or Tumor vs. Normal}
+For detection of CNVs in a setting where the normal state is known, the
+function {\tt referencecn.mops} can be applied. It implements the cn.MOPS 
+algorithm adjusted to this setting.
+
+<<>>=
+resRef <- referencecn.mops(cases=X[,1],controls=rowMeans(X))
+resRef <- calcIntegerCopyNumbers(resRef)
+(cnvs(resRef))
+@
 
 \section{How to cite this package}
 
