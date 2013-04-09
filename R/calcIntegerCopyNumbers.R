@@ -21,7 +21,6 @@
 setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 		definition = function(object){
 			
-			
 			priorImpact <- object@params$priorImpact
 			cyc <- object@params$cyc
 			classes <- object@params$classes
@@ -88,7 +87,9 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			
 			iCN <- rep(mainClass,length(segmentation))
 			#mapping from CNVs to segmentation
-			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs))
+			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs,type="within"))
+			
+			
 			tmpIdx <- which(values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
 			csM <- csM[tmpIdx, ,drop=FALSE]
 			idx <- csM[,1]
@@ -128,6 +129,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 									colnames(X)))]
 			iCN[idx] <- extractedCN 
 			GenomicRanges::values(segmentation)$CN <- iCN
+			
 			GenomicRanges::values(cnvs)$CN <- extractedCN[csM[,2]]
 			resObject@cnvs <- cnvs
 			resObject@segmentation <- segmentation
