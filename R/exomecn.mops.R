@@ -46,6 +46,10 @@
 #' @param minReadCount If all samples are below this value the algorithm will
 #' return the prior knowledge. This prevents that the algorithm from being 
 #' applied to segments with very low coverage. Default=1. 
+#' @param returnPosterior Flag that decides whether the posterior probabilities
+#' should be returned. The posterior probabilities have a dimension of samples
+#' times copy number states times genomic regions and therefore consume a lot
+#' of memory. Default=FALSE.
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
 #' @examples 
@@ -63,12 +67,12 @@ exomecn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		priorImpact = 10,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=TRUE,
 		upperThreshold=0.5,lowerThreshold=-0.8,
-		minWidth=5,segAlgorithm="fast",minReadCount=1,...){
+		minWidth=5,segAlgorithm="fast",minReadCount=1,returnPosterior=FALSE,...){
 	res <- cn.mops(input=input,I=I,classes=classes,priorImpact=priorImpact,
 			cyc=cyc,parallel=parallel,normType=normType,normQu=normQu,norm=norm,
 			lowerThreshold=lowerThreshold,
 			upperThreshold=upperThreshold,minWidth=minWidth,segAlgorithm="fast",
-			minReadCount=minReadCount,...)
+			minReadCount=minReadCount,returnPosterior=returnPosterior,...)
 	return(res)
 }
 	

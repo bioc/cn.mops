@@ -2,11 +2,10 @@
 # <klambauer@bioinf.jku.at>
 
 .convertToFastSegRes <- function(mopsres){
-	ol <- IRanges::findOverlaps(segmentation(mopsres),
-			gr(mopsres))
+	ol <- IRanges::findOverlaps(gr(mopsres),segmentation(mopsres))
 	ID <- as.character(values(segmentation(mopsres))$sampleName)
 	seg.mean <- values(segmentation(mopsres))$mean
-	T <- table(queryHits(ol))
+	T <- table(subjectHits(ol))
 	nn <- length(gr(mopsres))
 	cs <- cumsum(T)%%nn
 	num.mark <- as.integer(T)
@@ -243,6 +242,14 @@ setMethod("segplot",
 								"is a hidden function cn.mops:::.replaceNames that replaces",
 								"the names in the \"CNVDetectionResult\" object."))
 			}
+			if (any(!grepl("^[A-Za-z]",colnames(r@normalizedData)))){
+				message(
+						paste("Segplot might not work because of special characters",
+								"in the sample names. Use only A-Z,a-z and 0-9! \n There",
+								"is a hidden function cn.mops:::.replaceNames that replaces",
+								"the names in the \"CNVDetectionResult\" object."))
+			}
+			
 			
 			if (!missing(sampleIdx)){
 				

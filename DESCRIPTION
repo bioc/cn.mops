@@ -22,8 +22,9 @@ Description: cn.mops (Copy Number estimation by a Mixture
     noise and filtered out. cn.mops is very fast and
     written in C++.
 biocViews: HighThroughputSequencing, Sequencing,
-    Bioinformatics, CopyNumberVariants
-Version: 1.7.0
+    Bioinformatics, CopyNumberVariants, Homo_sapiens, CellBiology, 
+    HighTroughputSequencingData, HapMap, Genetics
+Version: 1.7.1
 Date: 2013-03-08
 URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
 Depends:
