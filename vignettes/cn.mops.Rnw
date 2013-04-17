@@ -457,12 +457,12 @@ resultExomeData  <- calcIntegerCopyNumbers(resultExomeData )
 @
 
 <<eval=FALSE>>=
-plot(resultExomeData,which=2)
+plot(resultExomeData,which=3)
 @
 
 <<fig=FALSE,echo=FALSE,results=hide>>=
 pdf("004.pdf")
-plot(resultExomeData,which=2,toFile=TRUE)
+plot(resultExomeData,which=3,toFile=TRUE)
 dev.off()
 @
 
