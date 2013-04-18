@@ -140,11 +140,15 @@ normalizeChromosomes <-
 						correctwiththis <- asm/ssm
 						
 					} else if (normType=="poisson"){
-						
+						#browser()
 						correctwiththis <-  median(mappedreads,na.rm=TRUE)/mappedreads
 						YYtmp <- t(t(Ytmp)*correctwiththis)
 						v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
-						mv2m <- median(v2m,na.rm=TRUE)
+						uut <- quantile(v2m,probs=0.95,na.rm=TRUE)
+						dd <- density(v2m,na.rm=TRUE,from=0,
+								to=uut,n=uut*100)
+						#mv2m <- median(v2m,na.rm=TRUE)
+						mv2m <- dd$x[which.max(dd$y)]
 						if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
 					} else {
 						stop("normType not known.")
