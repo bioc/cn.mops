@@ -482,15 +482,17 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			rm("resSegm")
 			
 			segDf$CN <- NA
+			
 			colnames(segDf) <-
-					c("chr","start","end","sample","mean","median","CN")
+					c("chr","start","end","mean","median","sample","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
 			
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			for (chrom in chrOrder){
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				segDfTmp <- subset(segDf,chr==chrom)
 				callsS[chrIdx, ] <- 
-						matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
+						matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
 								ncol=N)
 			}
 			
@@ -510,7 +512,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
 			if (!exists("segMedianT")){
-				segMedianT <- 0.01
+				segMedianT <- 0.0001
 			} else {
 				stop(paste("Use \"upper-\" and \"lowerThreshold\" parameters",
 								"instead of segMedianT."))
@@ -524,12 +526,12 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				if (parallel==0){
 					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
 							cn.mops:::segment,
-							minSeg=minWidth,segMedianT=segMedianT)
+							minSeg=minWidth,segMedianT=segMedianT,...)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
 					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
-							segment,minSeg=minWidth, segMedianT=segMedianT)
+							segment,minSeg=minWidth, segMedianT=segMedianT,...)
 					stopCluster(cl)
 				}
 				
@@ -540,7 +542,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				
 				
 				callsS[chrIdx, ] <- 
-						matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
+						matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
 								ncol=N)
 				
 				segDf <- rbind(segDf,segDfTmp)
@@ -548,6 +550,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			segDf <- data.frame(segDf,"CN"=NA,stringsAsFactors=FALSE)		
 			colnames(segDf) <- c("start","end","mean","median","sample",
 					"chr","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
 			
 			segDfSubset <- segDf[which(segDf$mean >= upperThreshold
 									| segDf$mean <= lowerThreshold), ]	
