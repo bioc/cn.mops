@@ -14,6 +14,10 @@
   \item{seqnames}{The names of the reference sequence
   (chromosomes) to be plotted. (Default = missing)}
 
+  \item{segStat}{Whether the segment line should display
+  the mean or the median of a segments calls. (Default =
+  "mean").}
+
   \item{plot.type}{the type of plot. (Default = "s").}
 
   \item{altcol}{logical flag to indicate if chromosomes

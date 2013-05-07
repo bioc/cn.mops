@@ -7,7 +7,7 @@
 		minReadCount=1,returnPosterior=FALSE) {
 	N <- length(x)
 	
-	if (all(x<=minReadCount)) {
+	if (all(x<=minReadCount) & lambda <= minReadCount) {
 		n <- length(I)
 		idxCN2 <- which(classes=="CN2")
 		alpha.est <- rep(0,n)
@@ -330,7 +330,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	
 	res <- list()
 	lambda <- rowMeans(R.norm)
-	lambda <- pmax(lambda,1)
+	lambda <- pmax(lambda,0.0001)
 	
 	for (chrom in chrOrder){
 		message(paste("Reference sequence: ",chrom))
@@ -347,14 +347,14 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		if (parallel==0){
 			resChr <- lapply(1:length(chrIdx),function(i)
 						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
-										lambda[i],I=I,classes=classes,cov=cov,
+										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
 								returnPosterior=returnPosterior))
 		} else {
 			
 			resChr <- parLapply(cl,1:length(chrIdx),function(i)
 						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
-										lambda[i],I=I,classes=classes,cov=cov,
+										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
 								returnPosterior=returnPosterior))
 		}
@@ -490,12 +490,12 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 				if (parallel==0){
 					resSegmList[[chrom]] <- apply(sINI[chrIdx, ,drop=FALSE],2,
 							cn.mops:::segment,
-							minSeg=minWidth,segMedianT=segMedianT)
+							minSeg=minWidth,segMedianT=segMedianT,...)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
 					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ,drop=FALSE],2,
-							segment,minSeg=minWidth, segMedianT=segMedianT)
+							segment,minSeg=minWidth, segMedianT=segMedianT,...)
 					stopCluster(cl)
 				}
 				
