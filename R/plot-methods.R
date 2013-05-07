@@ -1,10 +1,13 @@
 # Copyright (C) 2011 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
 
-.convertToFastSegRes <- function(mopsres){
+.convertToFastSegRes <- function(mopsres,segStat){
 	ol <- IRanges::findOverlaps(gr(mopsres),segmentation(mopsres))
 	ID <- as.character(values(segmentation(mopsres))$sampleName)
-	seg.mean <- values(segmentation(mopsres))$mean
+	if (segStat=="mean")
+		seg.mean <- values(segmentation(mopsres))$mean
+	else 
+		seg.mean <- values(segmentation(mopsres))$median
 	T <- table(subjectHits(ol))
 	nn <- length(gr(mopsres))
 	cs <- cumsum(T)%%nn
@@ -30,12 +33,12 @@
 		r <- rowMedians(X)
 	}
 	
-	R <- X/r
-	R[which(is.na(R))] <- 1
+	R <- (X+0.01)/(r+0.01)
+	#R[which(is.na(R))] <- 1
 	
-	R[which(R==Inf)] <- max(R[which(is.finite(R))],na.rm=TRUE)
+	#R[which(R==Inf)] <- max(R[which(is.finite(R))],na.rm=TRUE)
 	
-	R[which(R==0)] <- min(R[which(R>0)],na.rm=TRUE)
+	#R[which(R==0)] <- min(R[which(R>0)],na.rm=TRUE)
 	R <- log2(R)
 	gr <- normalizedData(mopsres)
 	colnames(R) <-  unique(as.character(
@@ -165,7 +168,7 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 
 #setMethod("segPlot", signature(r="CNVDetectionResult"),
 setGeneric("segplot",
-		function(r,mainCN="CN2", sampleIdx, seqnames, plot.type="chrombysample", 
+		function(r,mainCN="CN2", sampleIdx, seqnames, segStat="mean", plot.type="chrombysample", 
 				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
 				cbys.layout, include.means=TRUE, zeroline=TRUE,
 				pt.pch=".", pt.cex=3, pt.cols=c("green","black"),segcol, 
@@ -184,6 +187,8 @@ setGeneric("segplot",
 #' @param sampleIdx The index of the samples to be plotted. (Default = missing)
 #' @param seqnames The names of the reference sequence (chromosomes) to
 #' be plotted. (Default = missing)
+#' @param segStat Whether the segment line should display the mean or the 
+#' median of a segments calls. (Default = "mean").
 #' @param plot.type the type of plot. (Default = "s").
 #' @param altcol logical flag to indicate if chromosomes should be
 #'   plotted in alternating colors in the whole genome plot. (Default = TRUE).
@@ -228,7 +233,7 @@ setGeneric("segplot",
 
 setMethod("segplot",
 		signature(r="CNVDetectionResult"),
-		function(r, mainCN="CN2",sampleIdx, seqnames, 
+		function(r, mainCN="CN2",sampleIdx, seqnames, segStat="mean",
 				plot.type="s", 
 				altcol=TRUE, sbyc.layout, cbys.nchrom=1,
 				cbys.layout, include.means=TRUE, zeroline=TRUE,
@@ -266,7 +271,6 @@ setMethod("segplot",
 				
 				
 			} 
-			
 			if (!missing(seqnames)){
 				#browser()
 				idx <- which(as.character(GenomicRanges::seqnames(
@@ -293,7 +297,8 @@ setMethod("segplot",
 				
 			} 
 			R <- cn.mops:::.makeLogRatios(r,mainCN)
-			segm <- cn.mops:::.convertToFastSegRes(r)
+			segm <- cn.mops:::.convertToFastSegRes(r,segStat=segStat)			
+			
 			.segPlot(x=R,
 					res=segm,
 					plot.type=plot.type, 
