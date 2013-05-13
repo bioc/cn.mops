@@ -474,9 +474,9 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				stopCluster(cl)
 			}
 			
+			#browser()
 			
-			
-			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
+			#resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
 			segDf <- cbind(do.call(rbind,resSegm),
 					rep(colnames(X),sapply(resSegm,nrow)))
 			rm("resSegm")
@@ -486,6 +486,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			colnames(segDf) <-
 					c("chr","start","end","mean","median","sample","CN")
 			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
+			segDf <- segDf[order(as.character(segDf$chr),segDf$sample,segDf$start), ]
 			
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			for (chrom in chrOrder){
@@ -511,13 +512,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			message("Using \"fastseg\" for segmentation.")
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
-			if (!exists("segMedianT")){
-				segMedianT <- 0.0001
-			} else {
-				stop(paste("Use \"upper-\" and \"lowerThreshold\" parameters",
-								"instead of segMedianT."))
-			}
-			
+		
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			colnames(callsS) <- colnames(X)
 			for (chrom in chrOrder){
@@ -526,12 +521,12 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				if (parallel==0){
 					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
 							cn.mops:::segment,
-							minSeg=minWidth,segMedianT=segMedianT,...)
+							minSeg=minWidth,...)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
 					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
-							segment,minSeg=minWidth, segMedianT=segMedianT,...)
+							segment,minSeg=minWidth,...)
 					stopCluster(cl)
 				}
 				
@@ -547,6 +542,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				
 				segDf <- rbind(segDf,segDfTmp)
 			}
+			
+			#browser()
 			segDf <- data.frame(segDf,"CN"=NA,stringsAsFactors=FALSE)		
 			colnames(segDf) <- c("start","end","mean","median","sample",
 					"chr","CN")

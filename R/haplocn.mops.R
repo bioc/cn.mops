@@ -436,14 +436,18 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			
 			
 			
-			resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
+			#resSegm <- lapply(resSegm,function(x) x <- x[order(x$chr,x$start), ])
 			segDf <- cbind(do.call(rbind,resSegm),
 					rep(colnames(X),sapply(resSegm,nrow)))
 			rm("resSegm")
 			
 			segDf$CN <- NA
+		
 			colnames(segDf) <-
-					c("chr","start","end","sample","mean","median","CN")
+					c("chr","start","end","mean","median","sample","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
+			segDf <- segDf[order(as.character(segDf$chr),segDf$sample,segDf$start), ]
+			
 			
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			for (chrom in chrOrder){
@@ -469,12 +473,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			message("Using \"fastseg\" for segmentation.")
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
-			if (!exists("segMedianT")){
-				segMedianT <- 0.01
-			} else {
-				stop(paste("Use \"upper-\" and \"lowerThreshold\" parameters",
-								"instead of segMedianT."))
-			}
+	
 			
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			colnames(callsS) <- colnames(X)
@@ -484,12 +483,12 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 				if (parallel==0){
 					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
 							cn.mops:::segment,
-							minSeg=minWidth,segMedianT=segMedianT)
+							minSeg=minWidth, ...)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
 					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
-							segment,minSeg=minWidth, segMedianT=segMedianT)
+							segment,minSeg=minWidth, ...)
 					stopCluster(cl)
 				}
 				
