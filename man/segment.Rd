@@ -2,7 +2,7 @@
 \alias{segment}
 \title{Fast segmentation of CNV calls.}
 \usage{
-  segment(x, alpha = 0.05, segMedianT = 0, minSeg = 3,
+  segment(x, alpha = 0.05, segMedianT = NULL, minSeg = 3,
     eps = 0, delta = 20, maxInt = 40, squashing = 0,
     cyberWeight = 50)
 }
@@ -18,7 +18,10 @@
   \item{segMedianT}{Vector of length 2. Thresholds on the
   segment's median. Segments' medians above the first
   element are considered as gains and below the second
-  value as losses.}
+  value as losses. If set to NULL the segmentation
+  algorithm tries to determine the thresholds itself. If
+  set to 0 the gain and loss segments are not merged.
+  (Default = NULL).}
 
   \item{minSeg}{Minimum length of segments. Default = 3.}
 

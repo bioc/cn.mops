@@ -12,7 +12,9 @@
 #' than 1 is interpreted as number of initial breakpoints. Default = 0.05.
 #' @param segMedianT Vector of length 2. Thresholds on the segment's median. 
 #' Segments' medians above the first element are considered as gains and below
-#' the second value as losses.
+#' the second value as losses. If set to NULL the segmentation algorithm tries
+#' to determine the thresholds itself. If set to 0 the gain and loss segments
+#' are not merged. (Default = NULL).
 #' @param minSeg Minimum length of segments. Default = 3.
 #' @param eps Real value greater or equal zero. A breakpoint is only possible 
 #' between to consecutive values of x that have a distance of at least "eps".
@@ -42,7 +44,7 @@
 #' @useDynLib cn.mops
 
 
-segment <- function(x, alpha=.05, segMedianT=0, minSeg=3, 
+segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3, 
 		eps=0, delta=20, maxInt=40, squashing=0, cyberWeight=50){
 	
 	if (any(!is.finite(x))){
@@ -52,6 +54,7 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		x[which(x==-Inf)] <- min(y,na.rm=TRUE)
 		
 	}   
+	#browser()
 	
 	globalMedian <- median(x,na.rm=TRUE)
 	if (any(is.na(x))){
@@ -59,7 +62,7 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		x[is.na(x)] <- globalMedian 
 	}
 	
-	if (missing("segMedianT")) {
+	if (is.null(segMedianT)) {
 		segMedianT <- c()
 		segMedianT[1] <- mean(x, na.rm=TRUE)+2*sd(x, na.rm=TRUE)
 		segMedianT[2] <- mean(x, na.rm=TRUE)-2*sd(x, na.rm=TRUE)
@@ -125,7 +128,6 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 	
 	
 	if (all(segMedianT==0)) {
-		
 		#message("No merging of segments.")
 		ir <- IRanges::IRanges(df$start, df$end)
 		ir <- ir[which(IRanges::width(ir)>=minSeg)]
@@ -151,6 +153,8 @@ segment <- function(x, alpha=.05, segMedianT=0, minSeg=3,
 		
 		
 	} else {
+		#browser()
+		#message("Merging segments.")
 		dfAmp <- df[which(df$median > segMedianT[1]), ]
 		irAmp <- IRanges::IRanges(dfAmp$start, dfAmp$end)
 		irAmp <- IRanges::reduce(irAmp)
