@@ -20,6 +20,7 @@
 \alias{segplot,CNVDetectionResult-method}
 \alias{sampleNames,CNVDetectionResult-method}
 \alias{calcIntegerCopyNumbers,CNVDetectionResult-method}
+\alias{calcFractionalCopyNumbers,CNVDetectionResult-method}
 \alias{makeRobustCNVR,CNVDetectionResult-method}
 
 
