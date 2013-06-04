@@ -9,7 +9,7 @@
   (Default="mean").}
 }
 \value{
-  \code{calcIntegerCopyNumbers} returns an instance of
+  \code{calcFractionalCopyNumbers} returns an instance of
   "CNVDetectionResult".
 }
 \description{

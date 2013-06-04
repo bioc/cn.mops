@@ -1,10 +1,10 @@
-# Copyright (C) 2011 Klambauer Guenter 
+# Copyright (C) 2013 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
 
 #cn.mops for given references
-.referencecn.mops <- function(x,lambda,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
+.singlecn.mops <- function(x,lambda,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
-		minReadCount=1,returnPosterior=FALSE,M=1,adjL=FALSE,
+		minReadCount=1,returnPosterior=FALSE,
 		priorImpact=1) {
 	N <- length(x)
 	
@@ -29,17 +29,18 @@
 		}
 		
 	} else {
-		if (adjL){
-			lmu <- lambda
-			lvar <- lmu/M*1/priorImpact
-			lambda <- 0.5*(lmu-M*lvar)+sqrt((lmu-M*lvar)^2/4+lvar*sum(x))
-		}
 		
+		#browser()
 		if (N>1){
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
+			alpha.est <- rep(1,length(I))
+			alpha.est[which(classes=="CN2")] <- 1+priorImpact
+			alpha.est <- alpha.est/sum(alpha.est)
 			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- alpha.ik*alpha.est
+			
 			alpha.ik <- t(alpha.ik/rowSums(alpha.ik))
 			alpha.est <- rowMeans(alpha.ik)
 			expCN <- classes[apply(alpha.ik,2,function(x) which(x==max(x))[1] )]
@@ -49,7 +50,11 @@
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
+			alpha.est <- rep(1,length(I))
+			alpha.est[which(classes=="CN2")] <- 1+priorImpact
+			alpha.est <- alpha.est/sum(alpha.est)
 			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- alpha.ik*alpha.est
 			alpha.ik <- alpha.ik/sum(alpha.ik)
 			alpha.est <- (alpha.ik)
 			expCN <- classes[ which.max(alpha.ik)][1]
@@ -71,19 +76,16 @@
 
 
 
-#' @title Copy number detection in NGS data with in a control versus cases 
-#' setting. 
-#' @name referencecn.mops
+#' @title Copy number detection in NGS data with in a setting in which only 
+#' one sample is available
+#' @name singlecn.mops
 #' 
 #' @description This function performs the an alternative version of the
-#' cn.mops algorithm adapted to a setting of control versus cases
+#' cn.mops algorithm adapted to a setting of a single sample.
 #' 
-#' @param cases Either an instance of "GRanges" or a raw data matrix, where
-#' columns are interpreted as samples and rows as genomic regions. An entry is
-#' the read count of a sample in the genomic region.
-#' @param controls Either an instance of "GRanges" or a raw data matrix, where
-#' columns are interpreted as samples and rows as genomic regions. An entry is
-#' the read count of a sample in the genomic region.
+#' @param x Either an instance of "GRanges" or a raw data matrix with one column
+#' or a vector of read counts. An entry is the read count of the  sample 
+#' in the genomic region.
 #' @param I Vector positive real values that contain the expected fold change
 #' of the copy number classes.  Length of this vector must be equal to the 
 #' length of the "classes" parameter vector. For human copy number polymorphisms 
@@ -133,81 +135,68 @@
 #' should be returned. The posterior probabilities have a dimension of samples
 #' times copy number states times genomic regions and therefore consume a lot
 #' of memory. Default=FALSE.
-#' @param adjL Whether a MAP estimate for lambda should be used. Experimental
-#' parameter. (Default =FALSE).
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
 #' @examples 
 #' data(cn.mops)
-#' referencecn.mops(X[1:200, ],rowMedians(X[1:200, ]))
+#' singlecn.mops(XRanges[,1])
 #'
 #' @return An instance of "CNVDetectionResult".
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
-referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
+singlecn.mops <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"),
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=1,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",minReadCount=1,adjL=FALSE,
+		minWidth=3,segAlgorithm="fast",minReadCount=1,
 		returnPosterior=FALSE,...){
 	
-	############ check input ##################################################
-	if (is.vector(cases))
-		cases <- matrix(cases,ncol=1)
-	if (is.vector(controls))
-		controls <- matrix(controls,ncol=1)
 	
-	if(class(cases)=="GRanges" & class(controls)=="GRanges"){
+	############ check input ##################################################
+	if (is.vector(x)){
+		inputType <- "DataMatrix"
+		X <- matrix(x,ncol=1)
+		chr <- rep("undef",nrow(X))
+		irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+		grAllRegions <- GRanges(chr,irAllRegions)
+		start <- 1:nrow(X)
+		end <- 1:nrow(X)
+		rownames(X) <- paste(chr,start,end,sep="_")
+		
+	} else if(class(x)=="GRanges"){
+	
 		inputType <- "GRanges"
-		cases <- IRanges::sort(cases)
-		controls <- IRanges::sort(controls)
-		if (length(cases)!=length(controls)){
-			stop("Cases and controls must have the same length.")
-		}
-		if (!(all(cases==controls))){
-			stop("Cases and controls must have the same ranges.")
+		x <- IRanges::sort(x)
+		X <- IRanges::as.matrix(IRanges::values(x))
+		
+		if (ncol(as.matrix(values(x)))!=1){
+			stop("More than one sample detected. Use standard cn.mops!")
 		}
 		
-		X <- IRanges::as.matrix(IRanges::values(cases))
-		R <- IRanges::as.matrix(IRanges::values(controls))
-		
-		
-		chr <- as.character(seqnames(cases))
-		start <- start(cases)
-		end <- end(cases)
+		chr <- as.character(seqnames(x))
+		start <- start(x)
+		end <- end(x)
 		rownames(X) <- paste(chr,start,end,sep="_")
 		
 		irAllRegions <- IRanges(start,end)
 		grAllRegions <- GRanges(chr,irAllRegions)
 		names(irAllRegions) <- NULL
 		
-	} else if (is.matrix(cases) & is.matrix(controls)){
-		if (nrow(cases)!=nrow(controls)){
-			stop("Cases and controls must have the same length.")
+	} else if (is.matrix(x)){
+		if (nrow(x)!=1){
+			stop("More than one sample detected. Use standard cn.mops!")
 		}
 		
-		if (nrow(cases)> 1){
-			inputType <- "DataMatrix"
-			X <- cases
-			R <- controls
-			X <- matrix(as.numeric(X),nrow=nrow(X))
-			R <- matrix(as.numeric(R),nrow=nrow(R))
-			colnames(X) <- colnames(cases)	
-			chr <- rep("undef",nrow(X))
-			
-			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
-			grAllRegions <- GRanges(chr,irAllRegions)
-		} else{
-			X <- cases
-			R <- controls
-			inputType <- "DataMatrix"
-			chr <- "undef"
-			irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
-			grAllRegions <- GRanges(chr,irAllRegions)
-			parallel <- 0
-		}
+		inputType <- "DataMatrix"
+		X <- x
+		chr <- rep("undef",nrow(X))
+		irAllRegions <- IRanges(start=1:nrow(X),end=1:nrow(X))
+		grAllRegions <- GRanges(chr,irAllRegions)
+		start <- 1:nrow(X)
+		end <- 1:nrow(X)
+		rownames(X) <- paste(chr,start,end,sep="_")
 		
 	} else{
 		stop("GRanges object or read count matrix needed as input.")
@@ -217,9 +206,8 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	if (any(X<0) | any(!is.finite(X))){
 		stop("All values must be greater or equal zero and finite.\n")
 	}
-	if (any(R<0) | any(!is.finite(R))){
-		stop("All values must be greater or equal zero and finite.\n")
-	}
+	
+	
 	if (!is.numeric(I)) stop("\"I\" must be numeric.")
 	if (!is.character(classes)) stop("\"classes\" must be character.")
 	if (length(I)!=length(classes)){
@@ -258,12 +246,8 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	
 	
 	if (is.null(colnames(X))){
-		colnames(X) <- paste("Case",1:ncol(X),sep="_")
+		colnames(X) <- paste("Sample",1:ncol(X),sep="_")
 	}
-	if (is.null(colnames(R))){
-		colnames(R) <- paste("Control",1:ncol(R),sep="_")
-	}
-	
 	############################################################################
 	
 	version <- packageDescription("cn.mops")$Version
@@ -283,11 +267,11 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	############################################################################
 	m <- nrow(X)
 	N <- ncol(X)
-	M <- ncol(R)
+	
 	n <- length(I)
 	chrOrder <- unique(chr) #unique chromosome names in alphabetic order
 	chrBpts <- cumsum(table(chr)[chrOrder])
-	# contains the idx where chromosomes start and end in X
+# contains the idx where chromosomes start and end in X
 	chrDf <- data.frame(start=c(1,chrBpts[-length(chrBpts)]+1),
 			end=chrBpts)
 	rownames(chrDf) <- chrOrder
@@ -299,30 +283,16 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	
 	if (norm==0){
 		X.norm <- X
-		R.norm <- R
 		cov <- rep(1,N)
 	} else if (norm==1) {
 		message("Normalizing...")
-		XR.norm <- normalizeChromosomes(cbind(X,R),chr=chr,normType=normType,qu=normQu)
-		X.norm <- XR.norm[,1:N,drop=FALSE]
-		R.norm <- XR.norm[,(N+1):(N*M),drop=FALSE]
+		X.norm <- X
+		
 		cov <- rep(1,N)
 	} else if (norm==2) {
-		X.viz <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)		
+		X.viz <- X		
 		X.norm <- X
-		# robust estimates for the different coverages
-		cov <- apply(cbind(X,R),2,function(x) {
-					mean(x[which(x>quantile(x,0.05) & x < quantile(x,0.95))])
-				})
-		if (median(cov)==0)
-			stop("Median of the coverages is zero!")
-		cov <- cov/median(cov)
-		
-		## for R
-		covR <- cov[(N+1):(N*M)]
-		cov <- cov[1:N]
-		
-		R.norm <- t(t(R)/covR)
+		cov <- rep(1,N)
 		
 	} else {
 		stop("\"norm\" must be 0,1 or 2.")
@@ -338,8 +308,14 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	} 
 	
 	res <- list()
-	lambda <- rowMeans(R.norm)
-	lambda <- pmax(lambda,0.0001)
+	#browser()
+	#lambda <- rep(median(X[which(X[,1]>0),1]),m)
+	lambda <- unlist(apply(chrDf,1,function(ii){
+				yy <- X[ii[1]:ii[2], ]
+				mm <- median(yy[which(yy>0)])
+				return(rep(mm,ii[2]-ii[1]+1))
+			}))
+	
 	
 	for (chrom in chrOrder){
 		message(paste("Reference sequence: ",chrom))
@@ -355,18 +331,18 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		
 		if (parallel==0){
 			resChr <- lapply(1:length(chrIdx),function(i)
-						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
+						.singlecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
 										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
-								returnPosterior=returnPosterior,M=M,adjL=adjL,
+								returnPosterior=returnPosterior,
 								priorImpact=priorImpact))
 		} else {
 			
 			resChr <- parLapply(cl,1:length(chrIdx),function(i)
-						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
+						.singlecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
 										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
-								returnPosterior=returnPosterior,M=M,adjL=adjL,
+								returnPosterior=returnPosterior,
 								priorImpact=priorImpact))
 		}
 		
@@ -459,7 +435,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			rm("resSegm")
 			
 			segDf$CN <- NA
-				
+			
 			colnames(segDf) <-
 					c("chr","start","end","mean","median","sample","CN")
 			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
@@ -537,35 +513,23 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
-			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
-							IRanges(segDfSubset$start,segDfSubset$end)))
-			cnvrCN <- matrix(NA,ncol=N,nrow=length(cnvrR))
-			
-			colnames(cnvrCN) <- colnames(X) 
 			
 			sampleNames <- segDfSubset$sample
 			
 			if (inputType=="GRanges"){
 				ir <- IRanges()
-				irCNVR <- IRanges()
 				for (chrom in chrOrder){
 					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
-					inputChr <- cases[chrIdx]
+					inputChr <- x[chrIdx]
 					segDfSubsetChr <- subset(segDfSubset,chr==chrom)
-					cnvrRChr <- cnvrR[which(as.character(
-											seqnames(cnvrR))==chrom)]
 					if (nrow(segDfSubsetChr) >0){
 						ir <- c(ir,IRanges(start(inputChr)[
 												segDfSubsetChr$start],
 										end(inputChr)[segDfSubsetChr$end]))
-						irCNVR <- c(irCNVR,IRanges(start(inputChr)[
-												start(cnvrRChr)],
-										end(inputChr)[end(cnvrRChr)]))
 					}
 				}
 			} else if (inputType=="DataMatrix"){
 				ir <- IRanges(start=segDfSubset$start,end=segDfSubset$end)
-				irCNVR <- IRanges(start=start(cnvrR),end=end(cnvrR))
 			}
 			
 			
@@ -574,8 +538,8 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 					"CN"=segDfSubset$CN)
 			
 			
-			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR)
-			values(cnvr) <- cnvrCN
+#			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR)
+#			values(cnvr) <- cnvrCN
 			
 			if (norm==2){
 				r@normalizedData    <- X.viz		
@@ -586,7 +550,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			r@individualCall   	<- callsS
 			r@iniCall        	<- INI
 			r@cnvs				<- rd
-			r@cnvr				<- cnvr
+			r@cnvr				<- rd
 			
 			
 			
@@ -594,7 +558,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 				irS <- IRanges()
 				for (chrom in chrOrder){
 					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
-					inputChr <- cases[chrIdx]
+					inputChr <- x[chrIdx]
 					segDfChr <- subset(segDf,chr==chrom)
 					if (nrow(segDfChr) >0 ){
 						irS <- c(irS,IRanges(start(inputChr)[segDfChr$start],
@@ -628,7 +592,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 				irS <- IRanges()
 				for (chrom in chrOrder){
 					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
-					inputChr <- cases[chrIdx]
+					inputChr <- x[chrIdx]
 					segDfChr <- subset(segDf,chr==chrom)
 					if (nrow(segDfChr) >0 ){
 						irS <- c(irS,IRanges(start(inputChr)[segDfChr$start],
@@ -682,4 +646,9 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		return(r)	
 		
 	}
+	
+	
+	message("GC correction is not implemented yet and will improve results.")
+	
 }
+
