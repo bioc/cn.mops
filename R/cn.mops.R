@@ -310,7 +310,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	
 	
 	if (is.null(colnames(X))){
-		colnames(X) <- paste("Sample",1:N,sep="_")
+		colnames(X) <- paste("Sample",1:ncol(X),sep="_")
 	}
 	############################################################################
 	
