@@ -71,7 +71,7 @@ exomecn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	res <- cn.mops(input=input,I=I,classes=classes,priorImpact=priorImpact,
 			cyc=cyc,parallel=parallel,normType=normType,normQu=normQu,norm=norm,
 			lowerThreshold=lowerThreshold,
-			upperThreshold=upperThreshold,minWidth=minWidth,segAlgorithm="fast",
+			upperThreshold=upperThreshold,minWidth=minWidth,segAlgorithm=segAlgorithm,
 			minReadCount=minReadCount,returnPosterior=returnPosterior,...)
 	return(res)
 }
