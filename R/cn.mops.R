@@ -139,9 +139,13 @@
 			min.width=minWidth, sbdry=DNAcopyBdry,...)
 	segDf <- segment.CNA.object$output	
 	names(segDf) <- c("sample","chr","start","end","idx","mean")
-	bIdx <- c(0,segDf$end)
-	segDf$median <- unlist(lapply(2:length(bIdx),function(i) 
-						median(x[((bIdx[i-1]+1):bIdx[i])])  ))	
+	#segDf$start <- pmax(segDf$start-1,1)
+	#segDf$end <- c(segDf$end[1:(nrow(segDf)-1)]-1,segDf$end[nrow(segDf)])	
+	
+	#for calculating medians
+	segDf$median <- apply(segDf,1,function(xx){
+				median(x[which(chr==xx["chr"])][as.integer(xx["start"]):as.integer(xx["end"])])
+			})
 	return(segDf[,c("chr","start","end","mean","median")])
 }
 
@@ -483,12 +487,15 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			segDf$CN <- NA
 			
-			colnames(segDf) <-
-					c("chr","start","end","mean","median","sample","CN")
-			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
-			segDf <- segDf[order(as.character(segDf$chr),segDf$sample,segDf$start), ]
-			
+			colnames(segDf) <- c("chr","start","end","mean","median","sample","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]			
+			segDf <- segDf[order(match(segDf$chr,chrOrder),match(segDf$sample,colnames(X)),segDf$start), ]
+					
+	
+	
 			callsS <- matrix(NA,nrow=m,ncol=N)
+			colnames(callsS) <- colnames(X)
+			
 			for (chrom in chrOrder){
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				segDfTmp <- subset(segDf,chr==chrom)
@@ -497,7 +504,6 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 								ncol=N)
 			}
 			
-			colnames(callsS) <- colnames(X)
 			
 			
 			segDfSubset <- segDf[which(
