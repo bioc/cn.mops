@@ -4,7 +4,8 @@
 #cn.mops for given references
 .referencecn.mops <- function(x,lambda,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
-		minReadCount=1,returnPosterior=FALSE) {
+		minReadCount=1,returnPosterior=FALSE,M=1,adjL=FALSE,
+		priorImpact=1) {
 	N <- length(x)
 	
 	if (all(x<=minReadCount) & lambda <= minReadCount) {
@@ -28,6 +29,12 @@
 		}
 		
 	} else {
+		if (adjL){
+			lmu <- lambda
+			lvar <- lmu/M*1/priorImpact
+			lambda <- 0.5*(lmu-M*lvar)+sqrt((lmu-M*lvar)^2/4+lvar*sum(x))
+		}
+		
 		if (N>1){
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
@@ -126,6 +133,8 @@
 #' should be returned. The posterior probabilities have a dimension of samples
 #' times copy number states times genomic regions and therefore consume a lot
 #' of memory. Default=FALSE.
+#' @param adjL Whether a MAP estimate for lambda should be used. Experimental
+#' parameter. (Default =FALSE).
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
 #' @examples 
@@ -141,7 +150,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=1,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",minReadCount=1,
+		minWidth=3,segAlgorithm="fast",minReadCount=1,adjL=FALSE,
 		returnPosterior=FALSE,...){
 	
 	############ check input ##################################################
@@ -349,14 +358,16 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
 										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
-								returnPosterior=returnPosterior))
+								returnPosterior=returnPosterior,M=M,adjL=adjL,
+								priorImpact=priorImpact))
 		} else {
 			
 			resChr <- parLapply(cl,1:length(chrIdx),function(i)
 						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
 										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
-								returnPosterior=returnPosterior))
+								returnPosterior=returnPosterior,M=M,adjL=adjL,
+								priorImpact=priorImpact))
 		}
 		
 		res <- c(res, resChr)

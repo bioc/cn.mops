@@ -10,7 +10,7 @@ setting.}
     normType = "poisson", normQu = 0.25, norm = 1,
     upperThreshold = 0.5, lowerThreshold = -0.9,
     minWidth = 3, segAlgorithm = "fast", minReadCount = 1,
-    returnPosterior = FALSE, ...)
+    adjL = FALSE, returnPosterior = FALSE, ...)
 }
 \arguments{
   \item{cases}{Either an instance of "GRanges" or a raw
@@ -99,6 +99,9 @@ setting.}
   probabilities have a dimension of samples times copy
   number states times genomic regions and therefore consume
   a lot of memory. Default=FALSE.}
+
+  \item{adjL}{Whether a MAP estimate for lambda should be
+  used. Experimental parameter. (Default =FALSE).}
 
   \item{...}{Additional parameters will be passed to the
   "DNAcopy" or the standard segmentation algorithm.}

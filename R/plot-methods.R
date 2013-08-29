@@ -123,7 +123,7 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				
 				layout(matrix(1:4,nrow=2))
 				
-				normDataSel <- x@normalizedData[plotStart:plotEnd, ]
+				normDataSel <- x@normalizedData[plotStart:plotEnd, ,drop=FALSE]
 				
 				refSeqName <- unique(as.character(seqnames(x@cnvr)))
 				xlab <- paste(refSeq,": ", unlist(start(x@gr))[plotStart], " - ",
@@ -132,32 +132,39 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 				lt <- x@params$lowerThreshold
 				ut <- x@params$upperThreshold
 				col <- rep("grey", ncol(x@normalizedData))
-				if (is.numeric(lt) & is.numeric(ut)){
-					col[apply(x@individualCall[start:end, ,drop=FALSE] >= ut, 2, any)] <- "red"
-					col[apply(x@individualCall[start:end, ,drop=FALSE] <= lt, 2, any)] <- "blue"
+				if (length(col)==1){
+					sampOrd <- 1
+					colOrd <- 1
+				} else {
+					if (is.numeric(lt) & is.numeric(ut)){
+						col[apply(x@individualCall[start:end, ,drop=FALSE] >= ut, 2, any)] <- "red"
+						col[apply(x@individualCall[start:end, ,drop=FALSE] <= lt, 2, any)] <- "blue"
+					}
+					sampOrd <- c(which(col == "grey"), which(col == "red"), which(col == "blue"))
+					colOrd <- col[sampOrd]
 				}
-				sampOrd <- c(which(col == "grey"), which(col == "red"), which(col == "blue"))
-				colOrd <- col[sampOrd]
+					
+				
 				lty <- sample(2:6, replace=TRUE, size=ncol(x@normalizedData))
 				
-				matplot(normDataSel[, sampOrd], type="l", lty=lty, lwd=2,
+				matplot(normDataSel[, sampOrd,drop=FALSE], type="l", lty=lty, lwd=2,
 						main="Normalized Read Counts", ylab="Read Count",
 						xlab=xlab, xaxt="n", col=colOrd)
 				axis(1, at=1:length(plotStart:plotEnd),	labels=FALSE)
 				
-				matplot(x@localAssessments[plotStart:plotEnd, sampOrd],type="l",lty=lty,lwd=2,
+				matplot(x@localAssessments[plotStart:plotEnd, sampOrd,drop=FALSE],type="l",lty=lty,lwd=2,
 						main="Local Assessments",ylab="Local Assessment Score",
 						xlab=xlab,xaxt="n",col=colOrd)
 				axis(1,at=1:length(plotStart:plotEnd), labels=FALSE)
 				
 				RA <- (normDataSel + 0.1) / rowMedians(normDataSel + 0.1)
-				matplot(RA[, sampOrd],type="l",lty=lty,lwd=2,
+				matplot(RA[, sampOrd,drop=FALSE],type="l",lty=lty,lwd=2,
 						main="Read Count Ratios",ylab="Ratio",
 						xlab=xlab,xaxt="n",col=colOrd)
 				axis(1,at=1:length(plotStart:plotEnd),
 						labels=FALSE)
 				
-				matplot(x@individualCall[plotStart:plotEnd, sampOrd],type="l",lty=lty,lwd=2,
+				matplot(x@individualCall[plotStart:plotEnd, sampOrd,drop=FALSE],type="l",lty=lty,lwd=2,
 						main="CNV Call",ylab="CNV Call Value",
 						xlab=xlab,xaxt="n",col=colOrd)
 				axis(1,at=1:length(plotStart:plotEnd),
