@@ -202,7 +202,9 @@
 #' initiate the use of our fast segmentation algorithm. Default = "fast".
 #' @param minReadCount If all samples are below this value the algorithm will
 #' return the prior knowledge. This prevents that the algorithm from being 
-#' applied to segments with very low coverage. Default=1. 
+#' applied to segments with very low coverage. Default=5.
+#' @param useMedian Whether "median" instead of "mean" of a segment
+#' should be used for the CNV call. Default=FALSE. 
 #' @param returnPosterior Flag that decides whether the posterior probabilities
 #' should be returned. The posterior probabilities have a dimension of samples
 #' times copy number states times genomic regions and therefore consume a lot
@@ -223,7 +225,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=1,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",minReadCount=1,
+		minWidth=3,segAlgorithm="fast",minReadCount=5,useMedian=FALSE,
 		returnPosterior=FALSE,...){
 	
 	
@@ -234,6 +236,10 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		X <- IRanges::as.matrix(IRanges::values(input))
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")
+		}
+		if (length(unique(strand(input))) >1){
+			stop(paste("Different strands found in GRanges object. Please make",
+							"read counts independent of strand."))
 		}
 		chr <- as.character(seqnames(input))
 		start <- start(input)
@@ -311,11 +317,10 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		stop("\"minReadCount\" must be numeric and of length 1.")
 	if (!is.logical(returnPosterior))
 		stop("\"returnPosterior\" must be logical.")	
-	
-	
 	if (is.null(colnames(X))){
 		colnames(X) <- paste("Sample",1:ncol(X),sep="_")
 	}
+
 	############################################################################
 	
 	version <- packageDescription("cn.mops")$Version
@@ -324,13 +329,13 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			priorImpact,cyc,
 			normType,normQu,
 			upperThreshold,lowerThreshold,
-			minWidth,segAlgorithm,minReadCount,"CN2",version,paste(...))
+			minWidth,segAlgorithm,minReadCount,useMedian,"CN2",version,paste(...))
 	names(params) <- c("method","folds",
 			"classes",
 			"priorImpact","cyc",
 			"normType","normQu",
 			"upperThreshold","lowerThreshold",
-			"minWidth","segAlgorithm","minReadCount","mainClass",
+			"minWidth","segAlgorithm","minReadCount","useMedian","mainClass",
 			"version","SegmentationParams")
 	############################################################################
 	m <- nrow(X)
@@ -496,19 +501,31 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			colnames(callsS) <- colnames(X)
 			
-			for (chrom in chrOrder){
-				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
-				segDfTmp <- subset(segDf,chr==chrom)
-				callsS[chrIdx, ] <- 
-						matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
-								ncol=N)
+			if (useMedian){
+				for (chrom in chrOrder){
+					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
+					segDfTmp <- subset(segDf,chr==chrom)
+					callsS[chrIdx, ] <- 
+							matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
+									ncol=N)
+				}			
+				segDfSubset <- segDf[which(
+								segDf$median >= upperThreshold |
+										segDf$median <= lowerThreshold), ]
+			} else {
+				for (chrom in chrOrder){
+					chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
+					segDfTmp <- subset(segDf,chr==chrom)
+					callsS[chrIdx, ] <- 
+							matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
+									ncol=N)
+				}	
+				segDfSubset <- segDf[which(
+								segDf$mean >= upperThreshold |
+										segDf$mean <= lowerThreshold), ]
 			}
+		
 			
-			
-			
-			segDfSubset <- segDf[which(
-							segDf$mean >= upperThreshold |
-									segDf$mean <= lowerThreshold), ]
 			segDfSubset <- segDfSubset[which(
 							(segDfSubset$end-segDfSubset$start+1) >= minWidth), ]
 			
@@ -518,20 +535,20 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			message("Using \"fastseg\" for segmentation.")
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
-		
+			
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			colnames(callsS) <- colnames(X)
 			for (chrom in chrOrder){
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				
 				if (parallel==0){
-					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
+					resSegmList[[chrom]] <- apply(sINI[chrIdx, ,drop=FALSE],2,
 							cn.mops:::segment,
 							minSeg=minWidth,...)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
-					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
+					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ,drop=FALSE],2,
 							segment,minSeg=minWidth,...)
 					stopCluster(cl)
 				}
@@ -541,10 +558,16 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 								sapply(resSegmList[[chrom]],nrow)))
 				segDfTmp$chr <- chrom
 				
-				
-				callsS[chrIdx, ] <- 
-						matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
-								ncol=N)
+				if (useMedian){
+					callsS[chrIdx, ] <- 
+							matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
+									ncol=N)
+				} else {
+					callsS[chrIdx, ] <- 
+							matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
+									ncol=N)
+				}
+	
 				
 				segDf <- rbind(segDf,segDfTmp)
 			}
@@ -554,9 +577,13 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			colnames(segDf) <- c("start","end","mean","median","sample",
 					"chr","CN")
 			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
-			
-			segDfSubset <- segDf[which(segDf$mean >= upperThreshold
-									| segDf$mean <= lowerThreshold), ]	
+			if (useMedian){
+				segDfSubset <- segDf[which(segDf$median >= upperThreshold
+										| segDf$median <= lowerThreshold), ]	
+			} else {
+				segDfSubset <- segDf[which(segDf$mean >= upperThreshold
+										| segDf$mean <= lowerThreshold), ]	
+			}
 			segDfSubset <- 
 					segDfSubset[which((segDfSubset$end-segDfSubset$start+1)
 											>= minWidth), ]

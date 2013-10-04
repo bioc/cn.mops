@@ -174,7 +174,10 @@ singlecn.mops <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		if (ncol(as.matrix(values(x)))!=1){
 			stop("More than one sample detected. Use standard cn.mops!")
 		}
-		
+		if (length(unique(strand(x))) >1){
+			stop(paste("Different strands found in GRanges object. Please make",
+							"read counts independent of strand."))
+		}
 		chr <- as.character(seqnames(x))
 		start <- start(x)
 		end <- end(x)

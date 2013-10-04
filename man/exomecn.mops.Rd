@@ -9,7 +9,7 @@
     normType = "poisson", normQu = 0.25, norm = TRUE,
     upperThreshold = 0.5, lowerThreshold = -0.8,
     minWidth = 5, segAlgorithm = "fast", minReadCount = 1,
-    returnPosterior = FALSE, ...)
+    useMedian = FALSE, returnPosterior = FALSE, ...)
 }
 \arguments{
   \item{input}{Either an instance of "GRanges" or a raw
@@ -83,6 +83,10 @@
   the algorithm will return the prior knowledge. This
   prevents that the algorithm from being applied to
   segments with very low coverage. Default=1.}
+
+  \item{useMedian}{Whether "median" instead of "mean"
+  of a segment should be used for the CNV call.
+  Default=FALSE.}
 
   \item{returnPosterior}{Flag that decides whether the
   posterior probabilities should be returned. The posterior
