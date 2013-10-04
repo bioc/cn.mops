@@ -189,6 +189,10 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")
 		}
+		if (length(unique(strand(input))) >1){
+			stop(paste("Different strands found in GRanges object. Please make",
+							"read counts independent of strand."))
+		}
 		chr <- as.character(seqnames(input))
 		start <- start(input)
 		end <- end(input)
@@ -268,7 +272,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	
 	
 	if (is.null(colnames(X))){
-		colnames(X) <- paste("Sample",1:N,sep="_")
+		colnames(X) <- paste("Sample",1:ncol(X),sep="_")
 	}
 	############################################################################
 	
@@ -443,13 +447,18 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			
 			segDf$CN <- NA
 		
-			colnames(segDf) <-
-					c("chr","start","end","mean","median","sample","CN")
-			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
-			segDf <- segDf[order(as.character(segDf$chr),segDf$sample,segDf$start), ]
+			colnames(segDf) <- c("chr","start","end","mean","median","sample","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]			
+			segDf <- segDf[order(match(segDf$chr,chrOrder),match(segDf$sample,colnames(X)),segDf$start), ]
+					
+	
+	
 			
-			
+	
+	
 			callsS <- matrix(NA,nrow=m,ncol=N)
+			colnames(callsS) <- colnames(X)
+			
 			for (chrom in chrOrder){
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				segDfTmp <- subset(segDf,chr==chrom)
@@ -458,7 +467,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 								ncol=N)
 			}
 			
-			colnames(callsS) <- colnames(X)
+			
 			
 			
 			segDfSubset <- segDf[which(
@@ -481,14 +490,14 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				
 				if (parallel==0){
-					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
+					resSegmList[[chrom]] <- apply(sINI[chrIdx, ,drop=FALSE],2,
 							cn.mops:::segment,
-							minSeg=minWidth, ...)
+							minSeg=minWidth,...)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
-					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
-							segment,minSeg=minWidth, ...)
+					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ,drop=FALSE],2,
+							segment,minSeg=minWidth,...)
 					stopCluster(cl)
 				}
 				
@@ -507,6 +516,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			segDf <- data.frame(segDf,"CN"=NA,stringsAsFactors=FALSE)		
 			colnames(segDf) <- c("start","end","mean","median","sample",
 					"chr","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
 			
 			segDfSubset <- segDf[which(segDf$mean >= upperThreshold
 									| segDf$mean <= lowerThreshold), ]	

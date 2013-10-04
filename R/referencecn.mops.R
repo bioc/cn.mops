@@ -169,7 +169,10 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		if (!(all(cases==controls))){
 			stop("Cases and controls must have the same ranges.")
 		}
-		
+		if (length(unique(strand(input))) >1){
+			stop(paste("Different strands found in GRanges object. Please make",
+							"read counts independent of strand."))
+		}
 		X <- IRanges::as.matrix(IRanges::values(cases))
 		R <- IRanges::as.matrix(IRanges::values(controls))
 		
@@ -460,13 +463,14 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			
 			segDf$CN <- NA
 				
-			colnames(segDf) <-
-					c("chr","start","end","mean","median","sample","CN")
-			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
-			segDf <- segDf[order(as.character(segDf$chr),segDf$sample,segDf$start), ]
-			
+			colnames(segDf) <- c("chr","start","end","mean","median","sample","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]			
+			segDf <- segDf[order(match(segDf$chr,chrOrder),match(segDf$sample,colnames(X)),segDf$start), ]
+					
 			
 			callsS <- matrix(NA,nrow=m,ncol=N)
+			colnames(callsS) <- colnames(X)
+			
 			for (chrom in chrOrder){
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				segDfTmp <- subset(segDf,chr==chrom)
@@ -475,7 +479,6 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 								ncol=N)
 			}
 			
-			colnames(callsS) <- colnames(X)
 			
 			
 			segDfSubset <- segDf[which(
@@ -523,6 +526,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			segDf <- data.frame(segDf,"CN"=NA,stringsAsFactors=FALSE)		
 			colnames(segDf) <- c("start","end","mean","median","sample",
 					"chr","CN")
+			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]
 			
 			segDfSubset <- segDf[which(segDf$mean >= upperThreshold
 									| segDf$mean <= lowerThreshold), ]	
@@ -570,7 +574,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			
 			
 			rd <- GRanges(seqnames=segDfSubset$chr,ir,"sampleName"=sampleNames,
-					"median"=segDfSubset$median,"mean"=segDfSubset$mean,
+				"median"=segDfSubset$median,"mean"=segDfSubset$mean,
 					"CN"=segDfSubset$CN)
 			
 			

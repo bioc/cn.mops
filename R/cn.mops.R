@@ -235,6 +235,10 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")
 		}
+		if (length(unique(strand(input))) >1){
+			stop(paste("Different strands found in GRanges object. Please make",
+							"read counts independent of strand."))
+		}
 		chr <- as.character(seqnames(input))
 		start <- start(input)
 		end <- end(input)
@@ -311,11 +315,10 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		stop("\"minReadCount\" must be numeric and of length 1.")
 	if (!is.logical(returnPosterior))
 		stop("\"returnPosterior\" must be logical.")	
-	
-	
 	if (is.null(colnames(X))){
 		colnames(X) <- paste("Sample",1:ncol(X),sep="_")
 	}
+
 	############################################################################
 	
 	version <- packageDescription("cn.mops")$Version
@@ -500,7 +503,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				segDfTmp <- subset(segDf,chr==chrom)
 				callsS[chrIdx, ] <- 
-						matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
+						matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
 								ncol=N)
 			}
 			
@@ -526,13 +529,13 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 				
 				if (parallel==0){
-					resSegmList[[chrom]] <- apply(sINI[chrIdx, ],2,
+					resSegmList[[chrom]] <- apply(sINI[chrIdx, ,drop=FALSE],2,
 							cn.mops:::segment,
 							minSeg=minWidth,...)
 				} else {
 					cl <- makeCluster(as.integer(parallel),type="SOCK")
 					clusterEvalQ(cl,"segment")
-					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ],2,
+					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ,drop=FALSE],2,
 							segment,minSeg=minWidth,...)
 					stopCluster(cl)
 				}
@@ -544,7 +547,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				
 				
 				callsS[chrIdx, ] <- 
-						matrix(rep(segDfTmp$median,segDfTmp$end-segDfTmp$start+1),
+						matrix(rep(segDfTmp$mean,segDfTmp$end-segDfTmp$start+1),
 								ncol=N)
 				
 				segDf <- rbind(segDf,segDfTmp)

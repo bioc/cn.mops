@@ -35,7 +35,9 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			uT <- object@params$upperThreshold
 			lT <- object@params$lowerThreshold
 			mainClass <- object@params$mainClass
+			mainClassIdx <- which(classes==mainClass)
 			method <- object@params$method
+			
 			
 			usedMethod <- switch(method,
 					"cn.mops"=.cn.mopsC,
@@ -47,44 +49,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 				stop(paste("No CNV regions in result object. Rerun cn.mops",
 								"with different parameters!"))
 			
-			# for CNV regions
-			M <- IRanges::as.list(IRanges::findOverlaps(cnvr,object@gr))
-			XX <- lapply(M,function(i){ 
-						if (length(i)>=3) ii <- i[-c(1,length(i))]
-						else ii <- i
-						apply(X[ii, ,drop=FALSE],2,mean) })
-			if (method=="referencecn.mops"){
-				lambda <- object@params$L[,mainClass]
-				ll <- lapply(M,function(i){ 
-							if (length(i)>=3) ii <- i[-c(1,length(i))]
-							else ii <- i
-							mean(lambda[ii]) 
-						})
-				CN <-t(sapply(1:length(XX),function(j) {
-								usedMethod(x=XX[[j]],
-								lambda=ll[[j]],
-								I=I,
-								classes=classes,
-								cov=cov,
-								minReadCount=minReadCount)$expectedCN
-								}))
-				
-			} else {
-				CN <-t(sapply(XX,function(x) usedMethod(x,I=I,
-											classes=classes,
-											cov=cov,priorImpact=priorImpact,
-											cyc=cyc,
-											minReadCount=minReadCount)$expectedCN))
-			}
-			
-			CN <- matrix(CN,ncol=ncol(X))
-			colnames(CN) <- colnames(X)
-			resObject <- object
-			GenomicRanges::values(cnvr) <- CN
-			resObject@cnvr <- cnvr
-			
-			## now for individual CNVs and segmentation
-			
+			### now for individual CNVs and segmentation			
 			iCN <- rep(mainClass,length(segmentation))
 			#mapping from CNVs to segmentation
 			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs,type="within"))
@@ -101,6 +66,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 						apply(X[ii, ,drop=FALSE],2,mean) })
 			
 			if (method=="referencecn.mops"){
+				lambda <- object@params$L[,mainClass]
 				ll <- lapply(M2,function(i){ 
 							if (length(i)>=3) ii <- i[-c(1,length(i))]
 							else ii <- i
@@ -127,13 +93,79 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			extractedCN <- CN2[cbind(1:length(idx),
 							match(as.character(values(segmentation[idx])$sampleName),
 									colnames(X)))]
+			
 			iCN[idx] <- extractedCN 
 			GenomicRanges::values(segmentation)$CN <- iCN
 			
+			
+			values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$median > uT)] <-
+					classes[mainClassIdx+1]
+			values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$median < lT)] <- 
+					classes[mainClassIdx-1]
+			
 			GenomicRanges::values(cnvs)$CN <- extractedCN[csM[,2]]
+			values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$median > uT)] <-
+					classes[mainClassIdx+1]
+			values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$median < lT)] <- 
+					classes[mainClassIdx-1]
+			
+			
+			### for CNV regions
+			
+			
+			M <- IRanges::as.list(IRanges::findOverlaps(cnvr,cnvs))
+			CN <-t(sapply(1:length(M),function(i){
+								#browser()
+								xxx <- rep(mainClass,ncol(X))
+								names(xxx) <- colnames(X)
+								zz <- cnvs[M[[i]]]$CN
+								zz2 <- as.character(cnvs[M[[i]]]$sampleName)
+								zIdx <- match(unique(zz2),zz2)
+								xxx[zz2[zIdx]] <- zz[zIdx] 
+								return(xxx)
+							}))
+			
+			colnames(CN) <- colnames(X)
+			
+#			XX <- lapply(M,function(i){ 
+#						if (length(i)>=3) ii <- i[-c(1,length(i))]
+#						else ii <- i
+#						apply(X[ii, ,drop=FALSE],2,mean) })
+#			if (method=="referencecn.mops"){
+#				lambda <- object@params$L[,mainClass]
+#				ll <- lapply(M,function(i){ 
+#							if (length(i)>=3) ii <- i[-c(1,length(i))]
+#							else ii <- i
+#							mean(lambda[ii]) 
+#						})
+#				CN <-t(sapply(1:length(XX),function(j) {
+#								usedMethod(x=XX[[j]],
+#								lambda=ll[[j]],
+#								I=I,
+#								classes=classes,
+#								cov=cov,
+#								minReadCount=minReadCount)$expectedCN
+#								}))
+#				
+#			} else {
+#				CN <-t(sapply(XX,function(x) usedMethod(x,I=I,
+#											classes=classes,
+#											cov=cov,priorImpact=priorImpact,
+#											cyc=cyc,
+#											minReadCount=minReadCount)$expectedCN))
+#			}
+#			
+#			CN <- matrix(CN,ncol=ncol(X))
+#			colnames(CN) <- colnames(X)
+			
+			
+			
+			
+			resObject <- object
+			GenomicRanges::values(cnvr) <- CN
+			resObject@cnvr <- cnvr
 			resObject@cnvs <- cnvs
 			resObject@segmentation <- segmentation
-			
 			return(resObject)							
 		})
 
