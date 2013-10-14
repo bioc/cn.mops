@@ -24,7 +24,7 @@ Description: cn.mops (Copy Number estimation by a Mixture
 biocViews: HighThroughputSequencing, Sequencing,
     Bioinformatics, CopyNumberVariants, Homo_sapiens, CellBiology,
     HighTroughputSequencingData, HapMap, Genetics
-Version: 1.8.0
+Version: 1.9.0
 Date: 2013-10-04
 URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
 Depends:
