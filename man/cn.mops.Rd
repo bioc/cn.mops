@@ -88,9 +88,8 @@
   prevents that the algorithm from being applied to
   segments with very low coverage. Default=5.}
 
-  \item{useMedian}{Whether "median" instead of "mean"
-  of a segment should be used for the CNV call.
-  Default=FALSE.}
+  \item{useMedian}{Whether "median" instead of "mean" of a
+  segment should be used for the CNV call. Default=FALSE.}
 
   \item{returnPosterior}{Flag that decides whether the
   posterior probabilities should be returned. The posterior

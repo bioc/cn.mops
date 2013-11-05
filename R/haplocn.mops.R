@@ -189,7 +189,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")
 		}
-		if (length(unique(strand(input))) >1){
+		if (length(IRanges::unique(strand(input))) >1){
 			stop(paste("Different strands found in GRanges object. Please make",
 							"read counts independent of strand."))
 		}

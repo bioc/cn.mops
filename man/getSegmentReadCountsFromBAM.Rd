@@ -3,7 +3,7 @@
 \title{Calculation of read counts from BAM files for predefined segments.}
 \usage{
   getSegmentReadCountsFromBAM(BAMFiles, GR, sampleNames,
-    mode, parallel = 0)
+    mode, parallel = 0, BAIFiles = NULL)
 }
 \arguments{
   \item{BAMFiles}{BAMFiles}
@@ -20,6 +20,12 @@
 
   \item{parallel}{The number of parallel processes to be
   used for this function. Default=0.}
+
+  \item{BAIFiles}{The names of the BAI files that belong to
+  the BAM files. The vector has to be in the same order as
+  the vector BAMFiles. If the BAI files have the same name
+  as the BAM files, only with ".bai" attached, this
+  parameter needs not be set. (Default = NULL).}
 }
 \value{
   An instance of "GRanges", that contains the breakpoints

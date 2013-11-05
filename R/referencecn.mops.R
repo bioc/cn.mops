@@ -169,11 +169,11 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		if (!(all(cases==controls))){
 			stop("Cases and controls must have the same ranges.")
 		}
-		if (length(unique(strand(cases))) >1){
+		if (length(IRanges::unique(strand(cases))) >1){
 			stop(paste("Different strands found in GRanges object. Please make",
 							"read counts independent of strand."))
 		}
-		if (length(unique(strand(controls))) >1){
+		if (length(IRanges::unique(strand(controls))) >1){
 			stop(paste("Different strands found in GRanges object. Please make",
 							"read counts independent of strand."))
 		}

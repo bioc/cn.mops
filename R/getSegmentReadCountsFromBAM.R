@@ -21,6 +21,10 @@
 #' algorithm was using a "paired" or "unpaired" strategy. 
 #' @param parallel The number of parallel processes to be used for this function.
 #' Default=0.
+#' @param BAIFiles The names of the BAI files that belong to the BAM files. The
+#' vector has to be in the same order as the vector BAMFiles. If the BAI files have
+#' the same name as the BAM files, only with ".bai" attached, this parameter needs
+#' not be set. (Default = NULL).
 #' @examples 
 #' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 #' 	full.names=TRUE)
@@ -36,7 +40,7 @@
 
 
 getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
-		mode,parallel=0){
+		mode,parallel=0,BAIFiles=NULL){
 	if (missing(mode)){
 		stop("Parameter \"mode\" must be \"paired\" or \"unpaired\"!")
 	}
@@ -54,7 +58,7 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 	}
 	
 	
-	if (!all(file.exists(paste(BAMFiles,".bai",sep="")))){
+	if (!all(file.exists(paste(BAMFiles,".bai",sep=""))) & is.null(BAIFiles)){
 		stop("The indices of the BAM files must be present.\n",
 				"They are supposed to have the same file name with ",
 				".bai appended.")
@@ -76,14 +80,29 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 	if (parallel==0){
 		for (i in 1:length(BAMFiles)){
 			message("Processing ",BAMFiles[i])
-			X[,i] <- Rsamtools::countBam(BAMFiles[i],param=param)$records
+			if (is.null(BAIFiles)){
+				X[,i] <- Rsamtools::countBam(BAMFiles[i],param=param)$records
+			} else {
+				newBAI <- gsub(".bai","",BAIFiles)
+				X[,i] <- Rsamtools::countBam(BAMFiles[i],param=param,
+						index=newBAI[i])$records				
+			}
 		}	
 	} else {
 		message("Using parallel version of this function.")
 		library(snow)
 		cl <- makeCluster(as.integer(parallel),type="SOCK")
 		clusterEvalQ(cl,"Rsamtools::countBam")
-		XL <- parLapply(cl,BAMFiles,Rsamtools::countBam,param=param)	
+		if (is.null(BAIFiles)){
+			XL <- parLapply(cl,BAMFiles,Rsamtools::countBam,param=param)
+		} else {
+			newBAI <- gsub(".bai","",BAIFiles)
+			XL <- parLapply(cl,1:length(BAMFiles),function(jj){
+						return(Rsamtools::countBam(BAMFiles[jj],param=param,index=newBAI[jj]))	
+					})
+						
+		}
+		
 		stopCluster(cl)
 		for (i in 1:length(BAMFiles)){
 			X[,i] <- XL[[i]]$records
@@ -94,15 +113,15 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 	
 	
 	colnames(X) <- BAMFiles
-		
+	
 	mode(X) <- "integer"
 	colnames(X) <- sampleNames
 	
 	IRanges::values(GR) <- X
-	#names(gr@elementMetadata@listData) <- sampleNames
-	#IRanges::colnames(IRanges::elementMetadata(GR)) <- sampleNames
-	#gr <- GRanges(GenomicRanges::seqnames(GR),IRanges::ranges(GR),
-	#		sampleNames=X)
+#names(gr@elementMetadata@listData) <- sampleNames
+#IRanges::colnames(IRanges::elementMetadata(GR)) <- sampleNames
+#gr <- GRanges(GenomicRanges::seqnames(GR),IRanges::ranges(GR),
+#		sampleNames=X)
 	
 	return(GR)
 }
