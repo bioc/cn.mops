@@ -13,7 +13,7 @@ using namespace std;
 
 extern "C" SEXP cnmops(SEXP xS, SEXP IS, SEXP covS, SEXP cycS, SEXP alphaInitS,
 		SEXP lambdaInitS, SEXP alphaPriorS) {
-	double eps=1e-25;
+	double eps=1e-100;
 	int i, k;
 	int N = length(xS);
 	int n = length(IS);
