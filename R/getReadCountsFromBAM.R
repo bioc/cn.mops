@@ -5,7 +5,19 @@
 	
 	
 	x <- c()
-	indexed <- file.exists(paste(bamFile,".bai",sep=""))
+	if (length(bamFile)>1){
+		stop("Single BAM file accepted as input.")
+	}
+	
+	indexed <- TRUE		
+	if (file.exists(paste(bamFile,".bai",sep=""))){
+		bamIndex <- paste(bamFile,"",sep="")
+	} else if (file.exists(gsub("bam$","bai",bamFile))) {
+		bamIndex <- gsub(".bam$","",bamFile)
+	} else {
+		indexed <- FALSE
+	}
+	
 	
 	if (indexed){
 		#message("Using the index of the BAM files.")
@@ -20,7 +32,7 @@
 								isProperPair=TRUE),
 						what=c("pos","mpos"),which=gr)
 				#which=IRanges::RangesList(refSeqName))
-				readPos <-Rsamtools::scanBam(bamFile,param=param)[[1]]
+				readPos <-Rsamtools::scanBam(bamFile,param=param,index=bamIndex)[[1]]
 				pp <- ((readPos$pos+readPos$mpos)/2)
 				gapSize <- abs(readPos$pos-readPos$mpos)
 				rm("readPos")
@@ -31,7 +43,7 @@
 				param <- Rsamtools::ScanBamParam(Rsamtools::scanBamFlag(
 								isPaired = FALSE),what=c("pos"),which=gr)
 				#which=IRanges::RangesList(refSeqName))
-				readPos <- Rsamtools::scanBam(bamFile,param=param)[[1]]
+				readPos <- Rsamtools::scanBam(bamFile,param=param,index=bamIndex)[[1]]
 				ppFiltered <- readPos$pos[!is.na(readPos$pos)]
 				rm("readPos")
 			}
@@ -221,11 +233,13 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 		message("Using ",paste(refSeqName,collapse=", ")," as reference.")
 	}
 	
-	if (!all(file.exists(paste(BAMFiles,".bai",sep="")))){
+	if (all(file.exists(paste(BAMFiles,".bai",sep="")))){
+		message("Using indexed BAM files.")
+	} else if (all(file.exists(gsub("bam$","bai",BAMFiles)))){
+		message("Using indexed BAM files.")
+	} else {
 		message("Note that this function is much faster, if the indices of ",
 				"the BAM files are present.")
-	} else {
-		message("Using indexed BAM files.")
 	}
 	
 	if (!(all(refSeqName %in% unique(unlist(sn))))){
