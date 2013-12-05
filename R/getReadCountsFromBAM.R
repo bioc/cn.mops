@@ -315,15 +315,15 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 #	browser()
 		
 		nSegm <- length(brkpts)
-		rn <- c(rn,paste(refSeqName,"_",brkpts[1:(nSegm-1)],"_",
-						brkpts[2:(nSegm)]-1,sep=""))
+		#rn <- c(rn,paste(refSeqName[i],"_",brkpts[1:(nSegm-1)],"_",
+		#				brkpts[2:(nSegm)]-1,sep=""))
 		
 		ir <- c(ir,IRanges::IRanges(start=brkpts[1:(nSegm-1)],
 						end=brkpts[2:(nSegm)]-1))
 		
 		chrv <- c(chrv,rep(refSeqName[i],nSegm-1))
 	}
-	rownames(X) <- rn
+	#rownames(X) <- rn
 	
 	#browser()
 	mode(X) <- "integer"
