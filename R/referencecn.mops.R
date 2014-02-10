@@ -5,7 +5,7 @@
 .referencecn.mops <- function(x,lambda,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4), 
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
 		minReadCount=1,returnPosterior=FALSE,M=1,adjL=FALSE,
-		priorImpact=1) {
+		alpha.prior=c(0.1,0.1,0.2,0.1,0.1,0.1,0.1,0.1,0.1)) {
 	N <- length(x)
 	
 	if (all(x<=minReadCount) & lambda <= minReadCount) {
@@ -29,19 +29,22 @@
 		}
 		
 	} else {
-		if (adjL){
-			lmu <- lambda
-			lvar <- lmu/M*1/priorImpact
-			lambda <- 0.5*(lmu-M*lvar)+sqrt((lmu-M*lvar)^2/4+lvar*sum(x))
-		}
+		#if (adjL){
+			# experimental-- deactivated
+			#lmu <- lambda
+			#lvar <- lmu/M*1/priorImpact
+			#lambda <- 0.5*(lmu-M*lvar)+sqrt((lmu-M*lvar)^2/4+lvar*sum(x))
+		#}
 		
 		if (N>1){
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
 			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- alpha.ik*alpha.prior
 			alpha.ik <- t(alpha.ik/rowSums(alpha.ik))
 			alpha.est <- rowMeans(alpha.ik)
+			
 			expCN <- classes[apply(alpha.ik,2,function(x) which(x==max(x))[1] )]
 			ini <- mean(abs(log2(I)) %*% alpha.ik)
 			ExpLogFoldChange <-  log2(I) %*%  alpha.ik
@@ -50,8 +53,11 @@
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
 			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- alpha.ik*alpha.prior
+			
 			alpha.ik <- alpha.ik/sum(alpha.ik)
 			alpha.est <- (alpha.ik)
+			
 			expCN <- classes[ which.max(alpha.ik)][1]
 			ini <- mean(abs(log2(I)) %*% alpha.ik)
 			ExpLogFoldChange <-  log2(I) %*%  alpha.ik
@@ -133,8 +139,6 @@
 #' should be returned. The posterior probabilities have a dimension of samples
 #' times copy number states times genomic regions and therefore consume a lot
 #' of memory. Default=FALSE.
-#' @param adjL Whether a MAP estimate for lambda should be used. Experimental
-#' parameter. (Default =FALSE).
 #' @param ... Additional parameters will be passed to the "DNAcopy"
 #' or the standard segmentation algorithm.
 #' @examples 
@@ -150,7 +154,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="poisson",normQu=0.25,norm=1,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",minReadCount=1,adjL=FALSE,
+		minWidth=3,segAlgorithm="fast",minReadCount=1,
 		returnPosterior=FALSE,...){
 	
 	############ check input ##################################################
@@ -264,6 +268,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	if (!is.logical(returnPosterior))
 		stop("\"returnPosterior\" must be logical.")	
 	
+	#browser()
 	
 	if (is.null(colnames(X))){
 		colnames(X) <- paste("Case",1:ncol(X),sep="_")
@@ -313,7 +318,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		message("Normalizing...")
 		XR.norm <- normalizeChromosomes(cbind(X,R),chr=chr,normType=normType,qu=normQu)
 		X.norm <- XR.norm[,1:N,drop=FALSE]
-		R.norm <- XR.norm[,(N+1):(N*M),drop=FALSE]
+		R.norm <- XR.norm[,(N+1):(N+M),drop=FALSE]
 		cov <- rep(1,N)
 	} else if (norm==2) {
 		X.viz <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)		
@@ -327,7 +332,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		cov <- cov/median(cov)
 		
 		## for R
-		covR <- cov[(N+1):(N*M)]
+		covR <- cov[(N+1):(N+M)]
 		cov <- cov[1:N]
 		
 		R.norm <- t(t(R)/covR)
@@ -347,7 +352,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 	
 	res <- list()
 	lambda <- rowMeans(R.norm)
-	lambda <- pmax(lambda,0.0001)
+	lambda <- pmax(lambda,1e-5)
 	
 	for (chrom in chrOrder){
 		message(paste("Reference sequence: ",chrom))
@@ -361,21 +366,26 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		#		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"), cov,
 		#			minReadCount=1,returnPosterior=FALSE)
 		
+		alpha.prior <- rep(1,length(I))
+		alpha.prior[which(classes=="CN2")] <- 1+priorImpact
+		alpha.prior <- alpha.prior/sum(alpha.prior)
+		
+		
 		if (parallel==0){
 			resChr <- lapply(1:length(chrIdx),function(i)
 						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
 										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
-								returnPosterior=returnPosterior,M=M,adjL=adjL,
-								priorImpact=priorImpact))
+								returnPosterior=returnPosterior,M=M,
+								alpha.prior=alpha.prior))
 		} else {
 			
 			resChr <- parLapply(cl,1:length(chrIdx),function(i)
 						.referencecn.mops(X.norm[chrIdx[i], ,drop=FALSE],lambda=
 										lambda[chrIdx[i]],I=I,classes=classes,cov=cov,
 								minReadCount=minReadCount,
-								returnPosterior=returnPosterior,M=M,adjL=adjL,
-								priorImpact=priorImpact))
+								returnPosterior=returnPosterior,M=M,
+								alpha.prior=alpha.prior))
 		}
 		
 		res <- c(res, resChr)
@@ -467,11 +477,11 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			rm("resSegm")
 			
 			segDf$CN <- NA
-				
+			
 			colnames(segDf) <- c("chr","start","end","mean","median","sample","CN")
 			segDf <- segDf[ ,c("chr","start","end","sample","median","mean","CN")]			
 			segDf <- segDf[order(match(segDf$chr,chrOrder),match(segDf$sample,colnames(X)),segDf$start), ]
-					
+			
 			
 			callsS <- matrix(NA,nrow=m,ncol=N)
 			colnames(callsS) <- colnames(X)
@@ -579,7 +589,7 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 			
 			
 			rd <- GRanges(seqnames=segDfSubset$chr,ir,"sampleName"=sampleNames,
-				"median"=segDfSubset$median,"mean"=segDfSubset$mean,
+					"median"=segDfSubset$median,"mean"=segDfSubset$mean,
 					"CN"=segDfSubset$CN)
 			
 			
