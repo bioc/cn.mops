@@ -133,7 +133,6 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			
 			M <- IRanges::as.list(IRanges::findOverlaps(cnvr,cnvs))
 			CN <-t(sapply(1:length(M),function(i){
-								#browser()
 								xxx <- rep(mainClass,ncol(X))
 								names(xxx) <- colnames(X)
 								zz <- cnvs[M[[i]]]$CN
@@ -143,6 +142,9 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 								return(xxx)
 							}))
 			
+			
+			if (ncol(X)==1)
+				CN <- matrix(CN,ncol=1)
 			colnames(CN) <- colnames(X)
 			
 #			XX <- lapply(M,function(i){ 
