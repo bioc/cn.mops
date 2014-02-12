@@ -327,8 +327,10 @@ CNVs that were implanted. Towards this end we use the functions
 of the \texttt{GenomicRanges} package.
 <<>>=
 ranges(cnvr(resCNMOPS))[1:2]
-ranges(cnvr(resCNMOPS)) %in% ranges(CNVRanges)
+ranges(cnvr(resCNMOPS)) %over% ranges(CNVRanges)
 @ 
+The detected CNV regions all overlap with the known CNV regions contained in 
+\verb+CNVRanges+.\\
 
 The function \verb+cn.mops+ creates an instance of the S4
 class \verb+CNVDetectionResult+ that is defined by the present package. To get
@@ -457,12 +459,12 @@ resultExomeData  <- calcIntegerCopyNumbers(resultExomeData )
 @
 
 <<eval=FALSE>>=
-plot(resultExomeData,which=4)
+plot(resultExomeData,which=5)
 @
 
 <<fig=FALSE,echo=FALSE,results=hide>>=
 pdf("004.pdf")
-plot(resultExomeData,which=4,toFile=TRUE)
+plot(resultExomeData,which=5,toFile=TRUE)
 dev.off()
 @
 
@@ -529,13 +531,21 @@ resHaplo <- calcIntegerCopyNumbers(resHaplo)
 \section{Cases vs. Control or Tumor vs. Normal}
 For detection of CNVs in a setting where the normal state is known, the
 function {\tt referencecn.mops} can be applied. It implements the cn.MOPS 
-algorithm adjusted to this setting.
+algorithm adjusted to this setting. For tumor samples very high copy numbers 
+can be present -- the maximum copy number with the default setting is 8 -- and
+cn.mops has to be adjusted to allow higher copy numbers.
 
 <<>>=
-resRef <- referencecn.mops(cases=X[,1],controls=rowMeans(X))
+resRef <- referencecn.mops(cases=X[,1],controls=rowMeans(X),
+		classes=c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6",
+				"CN7","CN8","CN16","CN32","CN64","CN128"),
+		I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 8, 16, 32, 64),
+		segAlgorithm="DNAcopy")
 resRef <- calcIntegerCopyNumbers(resRef)
 (cnvs(resRef))
 @
+
+
 
 \section{How to cite this package}
 
