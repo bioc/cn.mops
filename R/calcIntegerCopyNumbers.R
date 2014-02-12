@@ -76,13 +76,18 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 							else ii <- i
 							mean(lambda[ii]) 
 						})
+				alpha.prior <- rep(1,length(I))
+				alpha.prior[which(classes=="CN2")] <- 1+priorImpact
+				alpha.prior <- alpha.prior/sum(alpha.prior)
+				
 				CN2 <-t(sapply(1:length(XX2),function(j) {
 									usedMethod(x=XX2[[j]],
 											lambda=ll[[j]],
 											I=I,
 											classes=classes,
 											cov=cov,
-											minReadCount=minReadCount)$expectedCN
+											minReadCount=minReadCount,
+											alpha.prior=alpha.prior)$expectedCN
 								}))
 			} else {
 				CN2 <-t(sapply(XX2,function(x) usedMethod(x,I=I,
