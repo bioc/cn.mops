@@ -13,7 +13,7 @@ using namespace std;
 
 
 extern "C" SEXP segment(SEXP xS, SEXP epsS, SEXP deltaS, SEXP maxIntS,
-		SEXP minSegS, SEXP squashingS, SEXP cyberWeightS) {
+		SEXP minSegS, SEXP cyberWeightS) {
 	int j, d, ll;
 	long n=LENGTH(xS);
 	long i;
@@ -30,7 +30,6 @@ extern "C" SEXP segment(SEXP xS, SEXP epsS, SEXP deltaS, SEXP maxIntS,
 	int delta= INTEGER(deltaS)[0];
 	int maxInt= INTEGER(maxIntS)[0];
 	int minSeg= INTEGER(minSegS)[0];
-	int squashing= INTEGER(squashingS)[0];
 
 	double* x = REAL(xS);
 	double *partialSumValues=(double *) R_alloc(n, sizeof(double));
@@ -70,6 +69,7 @@ extern "C" SEXP segment(SEXP xS, SEXP epsS, SEXP deltaS, SEXP maxIntS,
 	partialSumValues[0]=x[0];
 	partialSumSquares[0]=x[0]*x[0];
 	M2 = 0;
+
 	for (i=0;i<n;i++){
 		diff = x[i] - globalMean;
 		globalMean = globalMean + diff/(i+1);
@@ -90,44 +90,6 @@ extern "C" SEXP segment(SEXP xS, SEXP epsS, SEXP deltaS, SEXP maxIntS,
 
 	}
 	globalVariance = M2/(n-1);
-
-	if (squashing > 0){
-		// Experimental - will be completely removed in the next version.
-
-		/*
-		//beta = -log(2.0/1.8-1)/((double) squashing * sqrt(globalVariance));
-		//Rprintf("Beta: %lf\n", beta);
-		beta = (double) squashing;
-
-		for (i=0;i<n;i++){
-			x[i]=(2/(1+exp(-1/beta*((x[i]-globalMean)/sqrt(globalVariance))))-1);
-		}
-		globalMean=0;
-		globalSd=0;
-		partialSumValues[0]=x[0];
-		partialSumSquares[0]=x[0]*x[0];
-		M2 = 0;
-		for (i=0;i<n;i++){
-			diff = x[i] - globalMean;
-			globalMean = globalMean + diff/(i+1);
-			//Rprintf("Mean: %lf\n", globalMean);
-			M2 = M2 + diff*(x[i] - globalMean);
-			//Rprintf("M2: %lf\n", M2);
-			//Rprintf("x: %lf\n", x[i]);
-			if (i>0){
-				partialSumValues[i]=partialSumValues[i-1]+x[i];
-				partialSumSquares[i]=partialSumSquares[i-1]+x[i]*x[i];
-			}
-			//Rprintf("PartialSumValues: %lf\n", partialSumValues[i]);
-			//Rprintf("PartialSumSquares: %lf\n", partialSumSquares[i]);
-
-		}
-		globalVariance = M2/(n-1);
-		//Rprintf("Squashing values.\n");
-		*/
-	}
-
-	//Rprintf("Using original values.\n");
 
 
 

@@ -20,7 +20,7 @@
 }
 \examples{
 data(cn.mops)
-r <- referencecn.mops(X[1:100,],rowMedians(X[1:100,]))
+r <- referencecn.mops(X[,1:2],rowMedians(X))
 calcFractionalCopyNumbers(r)
 }
 \author{

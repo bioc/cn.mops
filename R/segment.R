@@ -4,7 +4,11 @@
 #' @title Fast segmentation of CNV calls.
 #' 
 #' @description Performs a fast segmentation algorithm based on the cyber t test
-#' and the t statistics.
+#' and the t statistics. This is a special version for log-ratios or I/NI calls
+#' that are assumed to be centered around 0. For segmentation of data with 
+#' different characteristics you can a) substract the mean/median/mode from
+#' your data or b) use the more general version of this algorithm in the R 
+#' Bioconductor package "fastseg".
 #' 
 #' @param x Values to be segmented.
 #' @param alpha Real value between 0 and 1 is interpreted as the percentage of
@@ -25,9 +29,6 @@
 #' stops. Default = 20.
 #' @param maxInt The maximum length of a segment left of the breakpoint and
 #' right of the breakpoint that is considered. Default = 40.
-#' @param squashing An experimental parameter that squashes the values "x" 
-#' before segmentation. Should be left to zero, which means that squashing is 
-#' not performed. Default = 0.
 #' @param cyberWeight The "nu" parameter of the cyber t-test. Default = 50.
 #' @examples 
 #' x <- rnorm(n=500,sd=0.5)
@@ -45,7 +46,7 @@
 
 
 segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3, 
-		eps=0, delta=20, maxInt=40, squashing=0, cyberWeight=50){
+		eps=0, delta=20, maxInt=40, cyberWeight=50){
 	
 	if (any(!is.finite(x))){
 		message("Detected infinite values in the data. Replacing with max/min!")
@@ -56,7 +57,9 @@ segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3,
 	}   
 	#browser()
 	
-	globalMedian <- median(x,na.rm=TRUE)
+	#globalMedian <- median(x,na.rm=TRUE)
+	#adjustment for log ratios or sI/NI calls
+	globalMedian <- 0
 	if (any(is.na(x))){
 		message("NA values detected. Replacing with median.")
 		x[is.na(x)] <- globalMedian 
@@ -64,8 +67,10 @@ segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3,
 	
 	if (is.null(segMedianT)) {
 		segMedianT <- c()
-		segMedianT[1] <- mean(x, na.rm=TRUE)+2*sd(x, na.rm=TRUE)
-		segMedianT[2] <- mean(x, na.rm=TRUE)-2*sd(x, na.rm=TRUE)
+		#segMedianT[1] <- mean(x, na.rm=TRUE)+2*sd(x, na.rm=TRUE)
+		#segMedianT[2] <- mean(x, na.rm=TRUE)-2*sd(x, na.rm=TRUE)
+		segMedianT[1] <- globalMedian+2*sd(x, na.rm=TRUE)
+		segMedianT[2] <- globalMedian-2*sd(x, na.rm=TRUE)
 		
 	} else {
 		if (length(segMedianT)==1){
@@ -91,7 +96,7 @@ segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3,
 	
 	res <-  .Call("segment", x, as.double(eps), as.integer(delta),
 			as.integer(maxInt), as.integer(minSeg),
-			as.integer(squashing), as.double(cyberWeight))
+			as.double(cyberWeight))
 	
 	#message("Finished C function.")
 	

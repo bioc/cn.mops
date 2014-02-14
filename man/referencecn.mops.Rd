@@ -4,13 +4,13 @@
 setting.}
 \usage{
   referencecn.mops(cases, controls,
-    I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4),
-    classes = c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6", "CN7", "CN8"),
+    I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 8, 16, 32, 64),
+    classes = paste("CN", c(0:8, 16, 32, 64, 128), sep = ""),
     priorImpact = 1, cyc = 20, parallel = 0,
-    normType = "poisson", normQu = 0.25, norm = 1,
+    normType = "mode", normQu = 0.25, norm = 1,
     upperThreshold = 0.5, lowerThreshold = -0.9,
-    minWidth = 3, segAlgorithm = "fast", minReadCount = 1,
-    returnPosterior = FALSE, ...)
+    minWidth = 4, segAlgorithm = "DNAcopy",
+    minReadCount = 1, returnPosterior = FALSE, ...)
 }
 \arguments{
   \item{cases}{Either an instance of "GRanges" or a raw
@@ -28,13 +28,13 @@ setting.}
   of this vector must be equal to the length of the
   "classes" parameter vector. For human copy number
   polymorphisms we suggest to use the default I =
-  c(0.025,0.5,1,1.5,2,2.5,3,3.5,4).}
+  c(0.025,0.5,1,1.5,2,2.5,3,3.5,4,8,16,32,64).}
 
   \item{classes}{Vector of characters of the same length as
   the parameter vector "I". One vector element must be
   named "CN2". The names reflect the labels of the copy
   number classes. Default =
-  c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8").}
+  paste("CN",c(0:8,16,32,64,128),sep="").}
 
   \item{priorImpact}{Positive real value that reflects how
   strong the prior assumption affects the result. The
@@ -53,7 +53,7 @@ setting.}
   \item{normType}{Mode of the normalization technique.
   Possible values are "mean","min","median","quant",
   "poisson" and "mode". Read counts will be scaled
-  sample-wise. Default = "poisson".}
+  sample-wise. Default = "mode".}
 
   \item{normQu}{Real value between 0 and 1. If the
   "normType" parameter is set to "quant" then this
@@ -87,7 +87,7 @@ setting.}
   \item{segAlgorithm}{Which segmentation algorithm should
   be used. If set to "DNAcopy" circular binary segmentation
   is performed. Any other value will initiate the use of
-  our fast segmentation algorithm. Default = "fast".}
+  our fast segmentation algorithm. Default = "DNAcopy".}
 
   \item{minReadCount}{If all samples are below this value
   the algorithm will return the prior knowledge. This
