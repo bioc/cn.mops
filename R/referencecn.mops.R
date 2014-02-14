@@ -93,11 +93,11 @@
 #' @param I Vector positive real values that contain the expected fold change
 #' of the copy number classes.  Length of this vector must be equal to the 
 #' length of the "classes" parameter vector. For human copy number polymorphisms 
-#' we suggest to use the default I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4).
+#' we suggest to use the default I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4,8,16,32,64).
 #' @param classes Vector of characters of the same length as the parameter
 #' vector "I". One vector element must be named "CN2". The names reflect the 
 #' labels of the copy number classes. 
-#' Default = c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8").
+#' Default = paste("CN",c(0:8,16,32,64,128),sep="").
 #' @param priorImpact Positive real value that reflects how strong the prior
 #' assumption affects the result. The higher the value the more samples will
 #' be assumed to have copy number 2. Default = 1.
@@ -108,7 +108,7 @@
 #' for this option. Default = 0.
 #' @param normType Mode of the normalization technique. Possible values are 
 #' "mean","min","median","quant", "poisson" and "mode". 
-#' Read counts will be scaled sample-wise. Default = "poisson".
+#' Read counts will be scaled sample-wise. Default = "mode".
 #' @param normQu Real value between 0 and 1.  
 #' If the "normType" parameter is set to "quant" then this parameter sets the 
 #' quantile that is used for the normalization. Default = 0.25. 
@@ -131,7 +131,7 @@
 #' of segments a CNV should span. Default = 3.
 #' @param segAlgorithm Which segmentation algorithm should be used. If set to
 #' "DNAcopy" circular binary segmentation is performed. Any other value will
-#' initiate the use of our fast segmentation algorithm. Default = "fast".
+#' initiate the use of our fast segmentation algorithm. Default = "DNAcopy".
 #' @param minReadCount If all samples are below this value the algorithm will
 #' return the prior knowledge. This prevents that the algorithm from being 
 #' applied to segments with very low coverage. Default=1. 
@@ -149,15 +149,18 @@
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
-referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
-		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"),
+referencecn.mops <- function(cases,controls,
+		I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4,8,16,32,64),
+		classes=paste("CN",c(0:8,16,32,64,128),sep=""),
 		priorImpact = 1,cyc = 20,parallel=0,
-		normType="poisson",normQu=0.25,norm=1,
+		normType="mode",normQu=0.25,norm=1,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=3,segAlgorithm="fast",minReadCount=1,
+		minWidth=4,segAlgorithm="DNAcopy",minReadCount=1,
 		returnPosterior=FALSE,...){
 	
 	############ check input ##################################################
+	message("NOTE: The default parameters are adjusted for \"tumor-vs-normal\"!")
+	
 	if (is.vector(cases))
 		cases <- matrix(cases,ncol=1)
 	if (is.vector(controls))
@@ -173,11 +176,11 @@ referencecn.mops <- function(cases,controls,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4)
 		if (!(all(cases==controls))){
 			stop("Cases and controls must have the same ranges.")
 		}
-		if (length(unique(strand(cases))) >1){
+		if (length(IRanges::unique(strand(cases))) >1){
 			stop(paste("Different strands found in GRanges object. Please make",
 							"read counts independent of strand."))
 		}
-		if (length(unique(strand(controls))) >1){
+		if (length(IRanges::unique(strand(controls))) >1){
 			stop(paste("Different strands found in GRanges object. Please make",
 							"read counts independent of strand."))
 		}

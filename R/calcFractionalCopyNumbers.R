@@ -10,7 +10,7 @@
 #' "mean" or "median". (Default="mean"). 
 #' @examples
 #' data(cn.mops)
-#' r <- referencecn.mops(X[1:100,],rowMedians(X[1:100,]))
+#' r <- referencecn.mops(X[,1:2],rowMedians(X))
 #' calcFractionalCopyNumbers(r)
 #' @return \code{calcFractionalCopyNumbers} returns an 
 #' instance of "CNVDetectionResult".
@@ -72,15 +72,20 @@ setMethod("calcFractionalCopyNumbers", signature="CNVDetectionResult",
 #				CN <-t(sapply(1:length(XX),function(j) {
 #									round(mainCN*XX[[j]]/ll[[j]],1)								
 #								}))
+	alpha.prior <- rep(1,length(I))
+	alpha.prior[which(classes=="CN2")] <- 1+priorImpact
+	alpha.prior <- alpha.prior/sum(alpha.prior)
+	
 				CN <-t(sapply(1:length(XX),function(j) {
 									paste("CN",format(
 									round(mainCN*2^(usedMethod(x=XX[[j]],
-															lambda=ll[[j]],
-																I=I,
-															classes=classes,
-															cov=cov,
-											minReadCount=minReadCount)$sini),1),
-													nsmall=1),sep="")
+													lambda=ll[[j]],
+													I=I,
+													classes=classes,
+													cov=cov,
+													minReadCount=minReadCount, 
+													alpha.prior=alpha.prior,
+													)$sini),1),nsmall=1),sep="")
 								}))
 				
 			} else {

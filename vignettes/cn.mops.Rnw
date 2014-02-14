@@ -91,15 +91,15 @@ information.\par
 
 To avoid the false discoveries induced by read count variations along
 the chromosome or across samples, we
-propose a ``Mixture Of PoissonS model for CNV detection'' (\method{cn.mops}). 
-The \method{cn.mops} model is not affected by read count variations along the chromosome, because
-at each DNA position a local model is constructed. 
+propose a ``Mixture Of PoissonS model for CNV detection'' (\method{cn.MOPS}). 
+The \method{cn.MOPS} model is not affected by read count variations along the
+chromosome, because at each DNA position a local model is constructed. 
 Read count variations across samples are decomposed by the
-\method{cn.mops} model
+\method{cn.MOPS} model
 into integer copy numbers and noise by
 its mixture components and Poisson distributions, respectively.
-In contrast to existing methods, \method{cn.mops} model's posterior provides integer
-copy numbers together with their uncertainty. Model selection in a
+In contrast to existing methods, \method{cn.MOPS} model's posterior provides
+integer copy numbers together with their uncertainty. Model selection in a
 Bayesian framework is based on maximizing the posterior given the
 samples by an expectation
 maximization (EM) algorithm. 
@@ -112,7 +112,7 @@ The more the data drives the posterior away from the Dirichlet prior
 corresponding to copy number two, 
 the more likely the data is caused by a CNV, and, 
 the higher is the informative/non-informative (I/NI) call.
-\method{cn.mops} detects a CNV in the DNA of an individual as a segment 
+\method{cn.MOPS} detects a CNV in the DNA of an individual as a segment 
 with high I/NI calls.
 I/NI call based CNV detection guarantees a low false discovery rate (FDR)
  because wrong detections are
@@ -126,7 +126,7 @@ both read count variations due to technical or biological noise and
 variations stemming from copy number variations.
 For further information regarding the algorithm and its assessment 
 see the %\cnmops\ 
-\method{cn.mops} homepage at
+\method{cn.MOPS} homepage at
 \url{http://www.bioinf.jku.at/software/cnmops/cnmops.html}.
 
 
@@ -176,7 +176,8 @@ dev.off()
 \end{figure} 
 \end{enumerate}
 
-\section{Input of cn.mops: BAM files, GRanges objects, or numeric matrices} %!!!!!
+\section{Input of \cnmops: BAM files, GRanges objects, or numeric matrices}
+%!!!!!
 \label{s:input}
 \subsection{Read count matrices as input}
 \cnmops\ does not require the data samples to be of any
@@ -211,7 +212,7 @@ $17$ reads in the second segment: $x_{23}=71$.
 
 
 \cnmops\ can handle numeric and integer matrices or \verb+GRanges+ objects, 
-where the read counts are stored as \verb+values+ of the object. 
+in which the read counts are stored as \verb+values+ of the object. 
 
 
 
@@ -239,9 +240,9 @@ $\mid$'s) and the read counts (right of the $\mid$'s):
 @
 
 
-\section{Copy number estimation with cn.mops}
+\section{Copy number estimation with \cnmops}
 \label{s:cn.mops}
-To get a first impression, we use a data set, where CNVs have been
+To get a first impression, we use a data set, in which CNVs have been
 artificially implanted. The simulated data set was generated using
 distributions of read counts as they appear in real sequencing experiments. 
 CNVs were implanted under the assumption that the expected read count is linear
@@ -251,7 +252,7 @@ copy number 4.
 The linear relationship was confirmed in different studies, like 
 \citet{Alkan:09}, \citet{Chiang:09} and \citet{Quackenbush:11}.
  
-\subsection{Running cn.mops}
+\subsection{Running \cnmops}
  The read counts are stored in the objects \verb+X+ and
 \verb+XRanges+, which are the two basic input types that \cnmops\ allows:
 <<echo=TRUE>>=
@@ -274,7 +275,7 @@ To calculate integer copy number use the command {\tt calcIntegerCopyNumbers}:
 resCNMOPS <- calcIntegerCopyNumbers(resCNMOPS)
 @
 
-Alternatively, it is possible to use an integer matrix, where the genomic
+Alternatively, it is possible to use an integer matrix, in which the genomic
 coordinates can be stored as \verb+rownames+ and the entries are the read counts. 
 For example the data from above represented by an integer matrix \verb+X+:
 <<>>=
@@ -332,7 +333,7 @@ ranges(cnvr(resCNMOPS)) %over% ranges(CNVRanges)
 The detected CNV regions all overlap with the known CNV regions contained in 
 \verb+CNVRanges+.\\
 
-The function \verb+cn.mops+ creates an instance of the S4
+The function \cnmops\ creates an instance of the S4
 class \verb+CNVDetectionResult+ that is defined by the present package. To get
 detailed information on which data are stored in such objects, enter
 <<eval=FALSE>>=
@@ -401,36 +402,6 @@ CNV call produced by the segmentation algorithm. Blue lines mark samples having
 
 
 
-\section{Adjusting sensitivity, specificity and resolution for specific
-applications}
-The default parameters of both the local models of \cnmops and the segmentation
-algorithm were optimized on a wide ranged of different data sets. However, you 
-might want to adjust sensitivity and specificity or resolution to your specific
-needs.
-
-\begin{itemize}
-\item[\tt upperThreshold] The calling threshold for copy number 
-gains, a positive value.  
-Lowering the threshold will increase the detections, raising will decrease
- the detections.
-\item[\tt lowerThreshold] The calling threshold for copy number 
-losses, a negative value. Raising the threshold will increase the detections, 
-lowering will decrease the detections.
-\item[\tt priorImpact] This parameter should be optimized for each data set, 
-since it is influenced by number of samples as well as noise level. 
-The higher the value, the more samples will have copy number 2, and 
-consequently less CNVs will be detected. 
-\item[\tt minWidth] The minimum length of CNVs measured in number of segments.
-The more adjacent segments with a high or low copy number call are joined, the
-higher the confidence in the detections.  A lower  value will lead to more
-shorter segments, and a higher value will yield to less, but longer segments.
-\end{itemize}
-
-The length of the initial segments is also crucial. They should be 
-chosen such that on average 100 reads lie in one segment. The {\tt WL} 
-parameter of {\tt getReadCountsFromBAM} determines this resolution.
-
-
 \section{Exome sequencing data}
 To apply \cnmops\ to exome sequencing data requires a different preprocessing,
 since constant windows spanning the whole genome are not appropiate. The initial
@@ -495,6 +466,28 @@ gr <- reduce(gr)
 @
 
 
+
+
+\section{Cases vs. Control or Tumor vs. Normal}
+For detection of CNVs in a setting in which the normal state is known, the
+function {\tt referencecn.mops} can be applied. It implements the
+\method{cn.MOPS}  algorithm adjusted to this setting. For tumor samples very
+high copy numbers can be present -- the maximum copy number with the  default
+setting is 8 -- and \cnmops\ has to be adjusted to allow higher copy numbers.
+
+<<>>=
+resRef <- referencecn.mops(cases=X[,1],controls=rowMeans(X),
+		classes=c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6",
+				"CN7","CN8","CN16","CN32","CN64","CN128"),
+		I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 8, 16, 32, 64),
+		segAlgorithm="DNAcopy")
+resRef <- calcIntegerCopyNumbers(resRef)
+(cnvs(resRef))
+@
+
+
+
+
 \section{Heterosomes and CNVs of tumor samples}
 With the default settings the normalization procedure assumes that the ploidy
 of each sample is the same. However, it is possible to account for different karyotypes. 
@@ -517,10 +510,10 @@ appearances in the cell is known. In this case normalization should be applied
 to each chromosome separately. 
 
 
-\section{cn.MOPS for haploid genomes}
+\section{\cnmops\ for haploid genomes}
 For haploid genomes the prior assumption is that all samples have copy number 1.
-The function {\tt haplocn.mops} implements the cn.MOPS algorithm adjusted to
-haploid genomes. 
+The function {\tt haplocn.mops} implements the \method{cn.MOPS} algorithm
+adjusted to haploid genomes. 
 
 <<eval=FALSE>>=
 resHaplo <- haplocn.mops(X)
@@ -528,23 +521,81 @@ resHaplo <- calcIntegerCopyNumbers(resHaplo)
 @
 
 
-\section{Cases vs. Control or Tumor vs. Normal}
-For detection of CNVs in a setting where the normal state is known, the
-function {\tt referencecn.mops} can be applied. It implements the cn.MOPS 
-algorithm adjusted to this setting. For tumor samples very high copy numbers 
-can be present -- the maximum copy number with the default setting is 8 -- and
-cn.mops has to be adjusted to allow higher copy numbers.
+\section{Adjusting sensitivity, specificity and resolution for specific
+applications}
+The default parameters of both the local models of \cnmops\ and the segmentation
+algorithm were optimized on a wide ranged of different data sets. However, you 
+might want to adjust sensitivity and specificity or resolution to your specific
+needs.
 
-<<>>=
-resRef <- referencecn.mops(cases=X[,1],controls=rowMeans(X),
-		classes=c("CN0", "CN1", "CN2", "CN3", "CN4", "CN5", "CN6",
-				"CN7","CN8","CN16","CN32","CN64","CN128"),
-		I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 8, 16, 32, 64),
-		segAlgorithm="DNAcopy")
-resRef <- calcIntegerCopyNumbers(resRef)
-(cnvs(resRef))
-@
+\begin{itemize}
+\item[\tt upperThreshold] The calling threshold for copy number 
+gains, a positive value.  
+Lowering the threshold will increase the detections, raising will decrease
+ the detections.
+\item[\tt lowerThreshold] The calling threshold for copy number 
+losses, a negative value. Raising the threshold will increase the detections, 
+lowering will decrease the detections.
+\item[\tt priorImpact] This parameter should be optimized for each data set, 
+since it is influenced by number of samples as well as noise level. 
+The higher the value, the more samples will have copy number 2, and 
+consequently less CNVs will be detected. 
+\item[\tt minWidth] The minimum length of CNVs measured in number of segments.
+The more adjacent segments with a high or low copy number call are joined, the
+higher the confidence in the detections.  A lower  value will lead to more
+shorter segments, and a higher value will yield to less, but longer segments.
+\end{itemize}
 
+The length of the initial segments is also crucial. They should be 
+chosen such that on average 50 to 100 reads lie in one segment. The {\tt WL} 
+parameter of {\tt getReadCountsFromBAM} determines this resolution.
+
+
+
+\section{Overview of study designs and \cnmops\ functions}
+
+In Table\ref{tab:caps} we give an overview of the functions implemented in 
+this package and present settings for which they are appropriate. All these
+functions work for multiple, at least two, samples.CNV detection
+for single samples usually yields many false detections, because of 
+characteristics of genomic segments that lead to a higher or lower read count
+(and coverage). These biases can usually not be corrected for (except for  the
+GC content and the mappability bias). Being aware of all these problems we have
+implemented the function {\tt singlecn.mops} for cases in which only one sample
+is available.
+
+\begin{table}[H]
+\begin{tabular}{cclcll}
+\textbf{Seq. Type} & \textbf{Ploidy} & \textbf{Study} & \textbf{Samples} &
+\textbf{Function} & \textbf{Example} \\ 
+WGS & 2n & cohort/non-tumor/GWAS & $\geq$5 & {\tt cn.mops} &  \\ 
+WGS & 2n & tumor vs. normal & $\geq$2 & {\tt referencecn.mops} &  \\ 
+ES & 2n & cohort/non-tumor/GWAS & $\geq$5 & {\tt exomecn.mops} &  \\ 
+ES & 2n & tumor vs. normal & $\geq$2 & {\tt referencecn.mops} &  \\ 
+WGS & 1n & cohort/non-tumor/GWAS & $\geq$5 & {\tt haplocn.mops} &  \\ 
+WGS & 1n & tumor vs. normal & $\geq$2 & \textit{not implemented} &  \\
+ES & 1n & cohort/non-tumor/GWAS & $\geq$5 & {\tt haplocn.mops} &  \\ 
+ES & 1n & tumor vs. normal & $\geq$2 & \textit{not implemented} &   
+\end{tabular}
+\caption{\textbf{Seq. Type} reports the sequencing technology that was used:
+whole genome sequencing (WGS) or targeted/exome sequencing (ES). \textbf{Ploidy}
+gives the usual ploidy of the samples. In case of a tumor vs. control study the
+control sample is meant. 
+\textbf{Study}: The type of study to be analyzed for CNVs: either a cohort
+study, such the HapMap or the 1000Genomes Project, or studies including
+a number of non-tumor samples or studies with both healthy and diseased
+individuals, i.e. genome wide association studies (GWAS). 
+\textbf{Samples} reports the minimum number of samples needed for the analysis.
+\textbf{Function} gives the function of the \cnmops\ package that is 
+appropriate for this setting. 
+\textbf{Example} presents a reference or a link to a  study in
+which this function was used.
+\label{tab:caps}
+}
+\end{table}
+
+
+\clearpage
 
 
 \section{How to cite this package}
@@ -558,6 +609,7 @@ into your R session:
 <<eval=FALSE>>=
 toBibtex(citation("cn.mops"))
 @ 
+
 
 \bibliographystyle{natbib}
 \bibliography{cnv}

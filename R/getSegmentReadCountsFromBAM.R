@@ -21,10 +21,10 @@
 #' algorithm was using a "paired" or "unpaired" strategy. 
 #' @param parallel The number of parallel processes to be used for this function.
 #' Default=0.
-#' @param BAIFiles The names of the index BAI files for the BAM files given 
-#' in the argument "BAMFiles". Must be in the same order as the BAM files. If
-#' omitted the function tries to find the according BAI files by matching
-#' filenames. (Default=NULL).
+#' @param BAIFiles The names of the BAI files that belong to the BAM files. The
+#' vector has to be in the same order as the vector BAMFiles. If the BAI files have
+#' the same name as the BAM files, only with ".bai" attached, this parameter needs
+#' not be set. (Default = NULL).
 #' @examples 
 #' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 #' 	full.names=TRUE)
@@ -100,7 +100,7 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 			XL <- parLapply(cl,1:length(BAMFiles),function(jj){
 						return(Rsamtools::countBam(BAMFiles[jj],param=param,index=newBAI[jj]))	
 					})
-			
+						
 		}
 		
 		stopCluster(cl)

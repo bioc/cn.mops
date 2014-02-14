@@ -3,8 +3,7 @@
 \title{Fast segmentation of CNV calls.}
 \usage{
   segment(x, alpha = 0.05, segMedianT = NULL, minSeg = 3,
-    eps = 0, delta = 20, maxInt = 40, squashing = 0,
-    cyberWeight = 50)
+    eps = 0, delta = 20, maxInt = 40, cyberWeight = 50)
 }
 \arguments{
   \item{x}{Values to be segmented.}
@@ -39,11 +38,6 @@
   breakpoint and right of the breakpoint that is
   considered. Default = 40.}
 
-  \item{squashing}{An experimental parameter that squashes
-  the values "x" before segmentation. Should be left to
-  zero, which means that squashing is not performed.
-  Default = 0.}
-
   \item{cyberWeight}{The "nu" parameter of the cyber
   t-test. Default = 50.}
 }
@@ -52,7 +46,13 @@
 }
 \description{
   Performs a fast segmentation algorithm based on the cyber
-  t test and the t statistics.
+  t test and the t statistics. This is a special version
+  for log-ratios or I/NI calls that are assumed to be
+  centered around 0. For segmentation of data with
+  different characteristics you can a) substract the
+  mean/median/mode from your data or b) use the more
+  general version of this algorithm in the R Bioconductor
+  package "fastseg".
 }
 \examples{
 x <- rnorm(n=500,sd=0.5)
