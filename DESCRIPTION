@@ -34,4 +34,4 @@ Collate: 'AllClasses.R' 'cn.mops.R' 'getReadCountsFromBAM.R'
         'referencecn.mops.R' 'calcFractionalCopyNumbers.R'
         'singlecn.mops.R'
 biocViews: Sequencing, Sequencing, CopyNumberVariation, Homo_sapiens,
-        CellBiology, Sequencing, HapMap, Genetics
+        CellBiology,  HapMap, Genetics
