@@ -567,15 +567,15 @@ is available.
 \begin{table}[H]
 \begin{tabular}{cclcll}
 \textbf{Seq. Type} & \textbf{Ploidy} & \textbf{Study} & \textbf{Samples} &
-\textbf{Function} & \textbf{Example} \\ 
-WGS & 2n & cohort/non-tumor/GWAS & $\geq$5 & {\tt cn.mops} &  \\ 
-WGS & 2n & tumor vs. normal & $\geq$2 & {\tt referencecn.mops} &  \\ 
-ES & 2n & cohort/non-tumor/GWAS & $\geq$5 & {\tt exomecn.mops} &  \\ 
-ES & 2n & tumor vs. normal & $\geq$2 & {\tt referencecn.mops} &  \\ 
-WGS & 1n & cohort/non-tumor/GWAS & $\geq$5 & {\tt haplocn.mops} &  \\ 
-WGS & 1n & tumor vs. normal & $\geq$2 & \textit{not implemented} &  \\
-ES & 1n & cohort/non-tumor/GWAS & $\geq$5 & {\tt haplocn.mops} &  \\ 
-ES & 1n & tumor vs. normal & $\geq$2 & \textit{not implemented} &   
+\textbf{Function}  \\ 
+WGS & 2n & cohort/non-tumor/GWAS & $\geq$5 & {\tt cn.mops}   \\ 
+WGS & 2n & tumor vs. normal & $\geq$2 & {\tt referencecn.mops}   \\ 
+ES & 2n & cohort/non-tumor/GWAS & $\geq$5 & {\tt exomecn.mops}   \\ 
+ES & 2n & tumor vs. normal & $\geq$2 & {\tt referencecn.mops}   \\ 
+WGS & 1n & cohort/non-tumor/GWAS & $\geq$5 & {\tt haplocn.mops}   \\ 
+WGS & 1n & tumor vs. normal & $\geq$2 & \textit{not implemented}   \\
+ES & 1n & cohort/non-tumor/GWAS & $\geq$5 & {\tt haplocn.mops}   \\ 
+ES & 1n & tumor vs. normal & $\geq$2 & \textit{not implemented}    
 \end{tabular}
 \caption{\textbf{Seq. Type} reports the sequencing technology that was used:
 whole genome sequencing (WGS) or targeted/exome sequencing (ES). \textbf{Ploidy}
@@ -588,8 +588,8 @@ individuals, i.e. genome wide association studies (GWAS).
 \textbf{Samples} reports the minimum number of samples needed for the analysis.
 \textbf{Function} gives the function of the \cnmops\ package that is 
 appropriate for this setting. 
-\textbf{Example} presents a reference or a link to a  study in
-which this function was used.
+%\textbf{Example} presents a reference or a link to a  study in
+%which this function was used.
 \label{tab:caps}
 }
 \end{table}
