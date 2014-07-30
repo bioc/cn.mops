@@ -56,10 +56,10 @@
 
 
 normalizeChromosomes <-
-		function(X,chr,normType="poisson",qu=0.25,ploidy){
-	if (!(normType %in% c("mean","min","median","quant","mode","poisson"))){
+		function(X,chr,normType="median",qu=0.75,ploidy){
+	if (!(normType %in% c("mean","median","quant","mode","poisson"))){
 		stop(paste("Set TO of normalization to \"mean\"",
-						"\"min\", \"median\", \"quant\" or \"mode\"."))
+						"\"median\", \"quant\" or \"mode\"."))
 	}
 	input <- X
 	returnGRanges <- FALSE
@@ -99,7 +99,6 @@ normalizeChromosomes <-
 	
 	ploidy2flag <- FALSE
 	ploidy2median <- c()
-	
 	for (pp in unique(c(2,ploidy))){
 		X <- Xorig[,ploidy==pp,drop=FALSE]
 		if (ncol(X)==1){
@@ -116,65 +115,62 @@ normalizeChromosomes <-
 				
 				if (nrow(Ytmp) > 1){
 					
-					mappedreads <- colSums(Ytmp,na.rm=TRUE)
-					if (any(mappedreads==0)){
-						warning(paste("There exists a reference sequence with zero reads"
-										,"for some samples."))
-						mappedreads <- pmax(mappedreads, 1)
+					normFactors <- colSums(Ytmp,na.rm=TRUE)
+					
+					if (normType=="mean"){
+						normFactors <- colMeans(Ytmp,na.rm=TRUE)					 
+						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
+					} else if (normType=="median" | normType=="poisson"){
+						normFactors <- apply(Ytmp,2,median,na.rm=TRUE)
+						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
+					} else if (normType=="quant"){
+						normFactors <- apply(Ytmp,2,quantile,probs=qu,na.rm=TRUE)						
+						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
+						
+					} else if (normType=="mode"){
+						normFactors <- apply(Ytmp,2,function(x) .statmod(x[x!=0],na.rm=TRUE) )
+						asm <- .statmod(Ytmp[Ytmp!=0],na.rm=TRUE)
+						correctwiththis <- asm/normFactors
 					}
 					
-					if (normType == "min"){
-						correctwiththis <-  min(mappedreads,na.rm=TRUE)/mappedreads
-						
-					} else if (normType=="mean"){
-						correctwiththis <-  mean(mappedreads,na.rm=TRUE)/mappedreads
-					} else if (normType=="median"){
-						cat("normalizing to median \n")
-						correctwiththis <-  median(mappedreads,na.rm=TRUE)/mappedreads
-					} else if (normType=="quant"){
-						correctwiththis <-  quantile(mappedreads,probs=qu,
-								na.rm=TRUE)/mappedreads
-					} else if (normType=="mode"){
-						ssm <- apply(Ytmp,2,function(x) .statmod(x[x!=0],na.rm=TRUE) )
-						asm <- .statmod(Ytmp[Ytmp!=0],na.rm=TRUE)
-						correctwiththis <- asm/ssm
-						
-					} else if (normType=="poisson"){
-						#browser()
-						correctwiththis <-  median(mappedreads,na.rm=TRUE)/mappedreads
-						YYtmp <- t(t(Ytmp)*correctwiththis)
-						v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
-						uut <- quantile(v2m,probs=0.95,na.rm=TRUE)
-						dd <- density(v2m,na.rm=TRUE,from=0,
-								to=uut,n=uut*100)
-						#mv2m <- median(v2m,na.rm=TRUE)
-						mv2m <- dd$x[which.max(dd$y)]
-						if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
-					} else {
-						stop("normType not known.")
+					if (any(normFactors==0)){
+						warning(paste("There exists a reference sequence with zero reads"
+										,"for some samples."))
+					normFactors[which(normFactors==0)] <- 1
 					}
-					if (any(!is.finite(correctwiththis))){
-						warning(paste("Normalization for reference sequence ",l,"not", 
-										"applicable, because at least one sample has zero",
-										"reads."))
-						correctwiththis <- rep(1,ncol(X))
-					}
-					Ytmp <- t(t(Ytmp)*correctwiththis)
-					Ytmp[idxSG, ] <- 0
+					#browser()
+					
+					YYtmp <- t(t(Ytmp)*correctwiththis)
+					v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
+					uut <- quantile(v2m,probs=0.95,na.rm=TRUE)
+					dd <- density(v2m,na.rm=TRUE,from=0,
+							to=uut,n=uut*100)
+					#mv2m <- median(v2m,na.rm=TRUE)
+					mv2m <- dd$x[which.max(dd$y)]
+					if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
+				} else {
+					stop("normType not known.")
+				}
+				if (any(!is.finite(correctwiththis))){
+					warning(paste("Normalization for reference sequence ",l,"not", 
+									"applicable, because at least one sample has zero",
+									"reads."))
+					correctwiththis <- rep(1,ncol(X))
 				}
 				
+				
+				Ytmp <- t(t(Ytmp)*correctwiththis)
+				Ytmp[idxSG, ] <- 0
+				
 				Y[chrIdx, ] <- Ytmp
-				
-				
-			} # over chr
-			
-			if (!ploidy2flag){
-				ploidy2flag <- TRUE
-				ploidy2median <- median(Y[!idxSG, ],na.rm=TRUE)
 			}
 			
+		} # over chr
+		
+		if (!ploidy2flag){
+			ploidy2flag <- TRUE
+			ploidy2median <- median(Y[!idxSG, ],na.rm=TRUE)
 		}
-		#browser()
 		
 		YY[,ploidy==pp] <- Y*ploidy2median/median(Y[!idxSG, ],na.rm=TRUE)*pp/2
 	}
