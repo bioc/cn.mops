@@ -197,7 +197,8 @@ referencecn.mops <- function(cases,controls,
 		rownames(X) <- paste(chr,start,end,sep="_")
 		
 		irAllRegions <- IRanges(start,end)
-		grAllRegions <- GRanges(chr,irAllRegions)
+		grAllRegions <- GRanges(chr,irAllRegions,seqinfo=seqinfo(cases))
+		grAllRegions <- sortSeqlevels(grAllRegions)
 		names(irAllRegions) <- NULL
 		
 	} else if (is.matrix(cases) & is.matrix(controls)){
@@ -562,7 +563,11 @@ referencecn.mops <- function(cases,controls,
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
 			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
-							IRanges(segDfSubset$start,segDfSubset$end)))
+							IRanges(segDfSubset$start,segDfSubset$end),
+							seqinfo=seqinfo(grAllRegions)
+			))
+			cnvrR <- sortSeqlevels(cnvrR)
+	
 			cnvrCN <- matrix(NA,ncol=N,nrow=length(cnvrR))
 			
 			colnames(cnvrCN) <- colnames(X) 
@@ -593,12 +598,17 @@ referencecn.mops <- function(cases,controls,
 			}
 			
 			
-			rd <- GRanges(seqnames=segDfSubset$chr,ir,"sampleName"=sampleNames,
+			rd <- GRanges(seqnames=segDfSubset$chr,ir,
+					seqinfo=seqinfo(grAllRegions),
+					"sampleName"=sampleNames,
 					"median"=segDfSubset$median,"mean"=segDfSubset$mean,
 					"CN"=segDfSubset$CN)
+			rd <- sortSeqlevels(rd)
 			
+			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,
+					seqinfo=seqinfo(grAllRegions))
+			cnvr <- sortSeqlevels(cnvr)
 			
-			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR)
 			values(cnvr) <- cnvrCN
 			
 			if (norm==2){
@@ -626,14 +636,20 @@ referencecn.mops <- function(cases,controls,
 					}
 				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						irS,
+						irS,seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+						
 			} else if (inputType=="DataMatrix"){
 				r@segmentation <- GRanges(seqnames=segDf$chr,
-						IRanges(segDf$start,segDf$end),"sampleName"=segDf$sample,
+						IRanges(segDf$start,segDf$end),
+						seqinfo=seqinfo(grAllRegions),
+						"sampleName"=segDf$sample,
 						"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+				
 			}
 			
 			r@gr <- grAllRegions
@@ -660,14 +676,19 @@ referencecn.mops <- function(cases,controls,
 					}
 				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						irS,
+						irS, seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+				
+				
 			} else if (inputType=="DataMatrix"){
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						IRanges(segDf$start,segDf$end),
+						IRanges(segDf$start,segDf$end),seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+				
 			}
 			
 			r@gr <- grAllRegions

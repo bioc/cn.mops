@@ -6,22 +6,22 @@
 \alias{cnvdetectionresult}
 \alias{CnvDetectionResult}
 \alias{CNVDetectionResult-class}
-\alias{gr,CNVDetectionResult-method}
-\alias{cnvr,CNVDetectionResult-method}
-\alias{cnvs,CNVDetectionResult-method}
-\alias{individualCall,CNVDetectionResult-method}
-\alias{iniCall,CNVDetectionResult-method}
-\alias{integerCopyNumber,CNVDetectionResult-method}
-\alias{localAssessments,CNVDetectionResult-method}
-\alias{normalizedData,CNVDetectionResult-method}
-\alias{params,CNVDetectionResult-method}
-\alias{posteriorProbs,CNVDetectionResult-method}
-\alias{segmentation,CNVDetectionResult-method}
-\alias{segplot,CNVDetectionResult-method}
-\alias{sampleNames,CNVDetectionResult-method}
-\alias{calcIntegerCopyNumbers,CNVDetectionResult-method}
-\alias{calcFractionalCopyNumbers,CNVDetectionResult-method}
-\alias{makeRobustCNVR,CNVDetectionResult-method}
+%\alias{gr,CNVDetectionResult-method}
+%\alias{cnvr,CNVDetectionResult-method}
+%\alias{cnvs,CNVDetectionResult-method}
+%\alias{individualCall,CNVDetectionResult-method}
+%\alias{iniCall,CNVDetectionResult-method}
+%\alias{integerCopyNumber,CNVDetectionResult-method}
+%\alias{localAssessments,CNVDetectionResult-method}
+%\alias{normalizedData,CNVDetectionResult-method}
+%\alias{params,CNVDetectionResult-method}
+%\alias{posteriorProbs,CNVDetectionResult-method}
+%\alias{segmentation,CNVDetectionResult-method}
+%\alias{segplot,CNVDetectionResult-method}
+%\alias{sampleNames,CNVDetectionResult-method}
+%\alias{calcIntegerCopyNumbers,CNVDetectionResult-method}
+%\alias{calcFractionalCopyNumbers,CNVDetectionResult-method}
+%\alias{makeRobustCNVR,CNVDetectionResult-method}
 
 
 \title{Class "CNVDetectionResult"}
@@ -64,6 +64,7 @@ The following slots are defined for \link{CNVDetectionResult} objects:
     \item{segplot}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{show}{\code{signature(object = "CNVDetectionResult")}: ... }
     \item{calcIntegerCopyNumbers}{\code{signature(object = "CNVDetectionResult")}: ... }
+    \item{makeRobustCNVR}{\code{signature(object = "CNVDetectionResult")}: ... }
 	 }
  }
 \author{
