@@ -337,7 +337,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	#IRanges::colnames(IRanges::elementMetadata(gr)) <- sampleNames
 	
 	
-	gr <- GenomicRanges::sortSeqlevels(gr)
+	gr <- sortSeqlevels(gr)
 	seqlengths(gr) <- targets[[1]][match(seqlevels(gr),names(targets[[1]]))]
 	
 	return(gr)
