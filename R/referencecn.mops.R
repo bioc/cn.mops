@@ -135,6 +135,8 @@
 #' @param minReadCount If all samples are below this value the algorithm will
 #' return the prior knowledge. This prevents that the algorithm from being 
 #' applied to segments with very low coverage. Default=1. 
+#' @param verbose Flag that decides whether referencecn.mops gives status
+#' if (verbose>0) messages. Default=1.
 #' @param returnPosterior Flag that decides whether the posterior probabilities
 #' should be returned. The posterior probabilities have a dimension of samples
 #' times copy number states times genomic regions and therefore consume a lot
@@ -155,11 +157,11 @@ referencecn.mops <- function(cases,controls,
 		priorImpact = 1,cyc = 20,parallel=0,
 		normType="mode",normQu=0.25,norm=1,
 		upperThreshold=0.5,lowerThreshold=-0.9,
-		minWidth=4,segAlgorithm="DNAcopy",minReadCount=1,
+		minWidth=4,segAlgorithm="DNAcopy",minReadCount=1, verbose=1,
 		returnPosterior=FALSE,...){
 	
 	############ check input ##################################################
-	message("NOTE: The default parameters are adjusted for \"tumor-vs-normal\"!")
+	if (verbose>0) message("NOTE: The default parameters are adjusted for \"tumor-vs-normal\"!")
 	
 	if (is.vector(cases))
 		cases <- matrix(cases,ncol=1)
@@ -195,7 +197,8 @@ referencecn.mops <- function(cases,controls,
 		rownames(X) <- paste(chr,start,end,sep="_")
 		
 		irAllRegions <- IRanges(start,end)
-		grAllRegions <- GRanges(chr,irAllRegions)
+		grAllRegions <- GRanges(chr,irAllRegions,seqinfo=seqinfo(cases))
+		grAllRegions <- sortSeqlevels(grAllRegions)
 		names(irAllRegions) <- NULL
 		
 	} else if (is.matrix(cases) & is.matrix(controls)){
@@ -318,7 +321,7 @@ referencecn.mops <- function(cases,controls,
 		R.norm <- R
 		cov <- rep(1,N)
 	} else if (norm==1) {
-		message("Normalizing...")
+		if (verbose>0) if (verbose>0) message("Normalizing...")
 		XR.norm <- normalizeChromosomes(cbind(X,R),chr=chr,normType=normType,qu=normQu)
 		X.norm <- XR.norm[,1:N,drop=FALSE]
 		R.norm <- XR.norm[,(N+1):(N+M),drop=FALSE]
@@ -345,7 +348,7 @@ referencecn.mops <- function(cases,controls,
 	}
 	params$cov <- cov
 	
-	message("Starting local modeling, please be patient...  ")
+	if (verbose>0) message("Starting local modeling, please be patient...  ")
 	
 	if (parallel > 0){
 		library(snow)
@@ -358,7 +361,7 @@ referencecn.mops <- function(cases,controls,
 	lambda <- pmax(lambda,1e-5)
 	
 	for (chrom in chrOrder){
-		message(paste("Reference sequence: ",chrom))
+		if (verbose>0) message(paste("Reference sequence: ",chrom))
 		chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
 		
 		#cn.mops params
@@ -427,7 +430,7 @@ referencecn.mops <- function(cases,controls,
 	if (returnPosterior){
 		tt <- try(post <- array(dim=c(m,n,N)))
 		if (inherits(tt,"try-error")){
-			message("Posterior too large for array extent.")
+			if (verbose>0) message("Posterior too large for array extent.")
 			post <- array(NA,dim=c(1,1,1))
 		} else {
 			post.tmp <- t(lapply(res,.subset2,6))
@@ -444,17 +447,17 @@ referencecn.mops <- function(cases,controls,
 	
 	
 	if (m>5){
-		message("Starting segmentation algorithm...")
+		if (verbose>0) message("Starting segmentation algorithm...")
 		
 		if (segAlgorithm=="DNAcopy"){
-			message("Using \"DNAcopy\" for segmentation.")
+			if (verbose>0) message("Using \"DNAcopy\" for segmentation.")
 			library(DNAcopy)
 			if (!exists("eta")){eta <- 0.05}
 			if (!exists("nperm")){nperm <- 10000}
 			if (!exists("alpha")){alpha <- 0.01}
 			if (minWidth > 5){
-				message("For DNAcopy the maximum \"minWidth\" is 5.")
-				message("Resetting \"minWidth\" to 5.")
+				if (verbose>0) message("For DNAcopy the maximum \"minWidth\" is 5.")
+				if (verbose>0) message("Resetting \"minWidth\" to 5.")
 				minWidth <- 5
 			}
 			DNAcopyBdry <- DNAcopy::getbdry(eta=eta,nperm=nperm,tol=alpha,
@@ -508,7 +511,7 @@ referencecn.mops <- function(cases,controls,
 			
 			
 		} else {
-			message("Using \"fastseg\" for segmentation.")
+			if (verbose>0) message("Using \"fastseg\" for segmentation.")
 			resSegmList <- list()
 			segDf <- data.frame(stringsAsFactors=FALSE)
 			
@@ -560,7 +563,11 @@ referencecn.mops <- function(cases,controls,
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
 			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
-							IRanges(segDfSubset$start,segDfSubset$end)))
+							IRanges(segDfSubset$start,segDfSubset$end),
+							seqinfo=seqinfo(grAllRegions)
+			))
+			cnvrR <- sortSeqlevels(cnvrR)
+	
 			cnvrCN <- matrix(NA,ncol=N,nrow=length(cnvrR))
 			
 			colnames(cnvrCN) <- colnames(X) 
@@ -591,12 +598,17 @@ referencecn.mops <- function(cases,controls,
 			}
 			
 			
-			rd <- GRanges(seqnames=segDfSubset$chr,ir,"sampleName"=sampleNames,
+			rd <- GRanges(seqnames=segDfSubset$chr,ir,
+					seqinfo=seqinfo(grAllRegions),
+					"sampleName"=sampleNames,
 					"median"=segDfSubset$median,"mean"=segDfSubset$mean,
 					"CN"=segDfSubset$CN)
+			rd <- sortSeqlevels(rd)
 			
+			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR,
+					seqinfo=seqinfo(grAllRegions))
+			cnvr <- sortSeqlevels(cnvr)
 			
-			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR)
 			values(cnvr) <- cnvrCN
 			
 			if (norm==2){
@@ -624,14 +636,20 @@ referencecn.mops <- function(cases,controls,
 					}
 				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						irS,
+						irS,seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+						
 			} else if (inputType=="DataMatrix"){
 				r@segmentation <- GRanges(seqnames=segDf$chr,
-						IRanges(segDf$start,segDf$end),"sampleName"=segDf$sample,
+						IRanges(segDf$start,segDf$end),
+						seqinfo=seqinfo(grAllRegions),
+						"sampleName"=segDf$sample,
 						"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+				
 			}
 			
 			r@gr <- grAllRegions
@@ -642,7 +660,7 @@ referencecn.mops <- function(cases,controls,
 			
 			return(r)	
 		} else {
-			message(paste("No CNVs detected. Try changing \"normalization\",", 
+			if (verbose>0) message(paste("No CNVs detected. Try changing \"normalization\",", 
 							"\"priorImpact\" or \"thresholds\"."))
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
@@ -658,14 +676,19 @@ referencecn.mops <- function(cases,controls,
 					}
 				}
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						irS,
+						irS, seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+				
+				
 			} else if (inputType=="DataMatrix"){
 				r@segmentation 			<- GRanges(seqnames=segDf$chr,
-						IRanges(segDf$start,segDf$end),
+						IRanges(segDf$start,segDf$end),seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
+				r@segmentation 	<- sortSeqlevels(r@segmentation)
+				
 			}
 			
 			r@gr <- grAllRegions
@@ -686,7 +709,7 @@ referencecn.mops <- function(cases,controls,
 		
 		
 	} else {
-		message(paste("Less than five genomic segments considered, therefore no",
+		if (verbose>0) message(paste("Less than five genomic segments considered, therefore no",
 						" segmentation."))	
 		# Assembly of result object
 		r <- new("CNVDetectionResult")	#

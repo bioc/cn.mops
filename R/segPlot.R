@@ -37,7 +37,7 @@
 		xdat <- do.call("cbind",values(x)@listData)
 		nsample <- ncol(values(x))
 		chrom <- as.character(seqnames(x))
-	
+		
 		#chrom <- rep(unique(chrom),length(x))
 		maploc <- (  start(ranges(x)) + end(ranges(x))  )/2
 		xmaploc=TRUE
@@ -53,16 +53,16 @@
 	
 	
 	xres <- data.frame("ID" = values(res)$ID,
-	"num.mark" = values(res)$num.mark,
-	"chrom" = as.character(seqnames(res)),
-	"seg.mean" = values(res)$seg.mean,stringsAsFactors=FALSE)
+			"num.mark" = values(res)$num.mark,
+			"chrom" = as.character(seqnames(res)),
+			"seg.mean" = values(res)$seg.mean,stringsAsFactors=FALSE)
 	xres <- xres[order(values(res)$ID,as.character(seqnames(res)),
-				values(res)$startRow), ]
+					values(res)$startRow), ]
 	
 	#browser()
-
-
-
+	
+	
+	
 	if(dev.cur() <= 1) dev.new()
 	int.dev <- dev.interactive()
 	#plot.type <- match.arg(plot.type)
@@ -106,8 +106,8 @@
 	if (missing(lwd)) lwd <- 3
 	if (plot.type == "chrombysample" | plot.type == "c" ) {
 		#cat("Setting multi-figure configuration\n")
-	#browser()	
-	par(mar = c(0, 4, 0, 2), oma = c(4, 0, 4, 0), mgp = c(2, 0.7, 0))
+		#browser()	
+		par(mar = c(0, 4, 0, 2), oma = c(4, 0, 4, 0), mgp = c(2, 0.7, 0))
 		if (missing(cbys.layout)) {
 			nrow <- ncol <- ceiling(sqrt(nsample))
 			if (nrow*ncol - nsample > 0) {
@@ -199,34 +199,35 @@
 			genomdat <- genomdat[ina]
 			wcol <- wcol0[ina]
 			chrom <- chrom0[ina]
-			if (xmaploc) maploc <- maploc0[ina]
+			#if (xmaploc) maploc <- maploc0[ina]
+			maploc <- maploc0[ina]
 			ii <- cumsum(c(0, xres$num.mark[xres$ID == sampleid[isamp]]))
 			mm <- xres$seg.mean[xres$ID == sampleid[isamp]]
 			kk <- length(ii)
 			zz <- cbind(ii[-kk] + 1, ii[-1])
 			if(missing(ylim)) ylim <- range(c(genomdat, -genomdat))
-			if (plot.type=="whole" | plot.type == "w")
-			{	#browser()
-				if (xmaploc) {
-					plot(maploc, genomdat, pch = pt.pch, cex=pt.cex, 
-							col=pt.cols[wcol], main = sampleid[isamp], 
-							ylab = "", ylim = ylim)
-					if(zeroline) abline(h=0, col=zlcol, lwd=lwd)
-				} else {
-					plot(genomdat, pch = pt.pch, cex=pt.cex, 
-							col=pt.cols[wcol], main = sampleid[isamp], 
-							ylab = "", ylim = ylim)
-					if(zeroline) abline(h=0, col=zlcol, lwd=lwd)
-				}
+			if (plot.type=="whole" | plot.type == "w"){
+				#browser()
+				#if (xmaploc) {
+				#	plot(maploc, genomdat, pch = pt.pch, cex=pt.cex, 
+				#			col=pt.cols[wcol], main = sampleid[isamp], 
+				#			ylab = "", ylim = ylim)
+				#	if(zeroline) abline(h=0, col=zlcol, lwd=lwd)
+				#} else {
+				plot(genomdat, pch = pt.pch, cex=pt.cex, 
+						col=pt.cols[wcol], main = sampleid[isamp], 
+						ylab = "", ylim = ylim)
+				if(zeroline) abline(h=0, col=zlcol, lwd=lwd)
+				#}
 				if (include.means) {
 					for (i in 1:(kk - 1))
 					{
-						if (xmaploc) { 
-							lines(maploc[zz[i, ]], rep(mm[i], 2),
-									col = segcol, lwd=lwd)
-						} else {
-							lines(zz[i, ], rep(mm[i], 2), col = segcol, lwd=lwd)
-						}
+						#if (xmaploc) { 
+						#	lines(maploc[zz[i, ]], rep(mm[i], 2),
+						#			col = segcol, lwd=lwd)
+						#} else {
+						lines(zz[i, ], rep(mm[i], 2), col = segcol, lwd=lwd)
+						#}
 					}
 				}
 			}

@@ -7,8 +7,8 @@ samples, i.e., correcting for different library sizes or coverages.
 Scales each samples' reads such that the coverage is even for
 all samples after normalization.}
 \usage{
-  normalizeChromosomes(X, chr, normType = "poisson",
-    qu = 0.25, ploidy)
+  normalizeChromosomes(X, chr, normType = "median",
+    qu = 0.75, ploidy)
 }
 \arguments{
   \item{X}{Matrix of positive real values, where columns
@@ -31,13 +31,11 @@ all samples after normalization.}
   ("quant"). If this parameter is set to the value "mode",
   the read counts are scaled such that each samples' most
   frequent value (the "mode") is equal after normalization.
-  If the parameter is set to "poisson" the values are
-  scaled such that the distribution is (rowwise) close to a
-  Poisson distribution. Possible values are
-  "mean","min","median","quant","poisson, and "mode".
-  Default = "poisson".}
+   Possible values are "mean","min","median","quant", and "mode".
+  Default = "median".}
 
-  \item{qu}{Real value between 0 and 1. Default = 0.25.}
+  \item{qu}{Real value between 0 and 1 that determines the quantile 
+  to be used for normalization (see above). Default = 0.75.}
 
   \item{ploidy}{An integer value for each sample or each
   column in the read count matrix. At least two samples

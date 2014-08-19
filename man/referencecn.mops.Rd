@@ -10,7 +10,7 @@ setting.}
     normType = "mode", normQu = 0.25, norm = 1,
     upperThreshold = 0.5, lowerThreshold = -0.9,
     minWidth = 4, segAlgorithm = "DNAcopy",
-    minReadCount = 1, returnPosterior = FALSE, ...)
+    minReadCount = 1, verbose=1, returnPosterior = FALSE, ...)
 }
 \arguments{
   \item{cases}{Either an instance of "GRanges" or a raw
@@ -93,7 +93,10 @@ setting.}
   the algorithm will return the prior knowledge. This
   prevents that the algorithm from being applied to
   segments with very low coverage. Default=1.}
-
+  
+  \item{verbose}{Flag that decides whether referencecn.mops gives status
+   messages. Default=1.}
+   
   \item{returnPosterior}{Flag that decides whether the
   posterior probabilities should be returned. The posterior
   probabilities have a dimension of samples times copy
