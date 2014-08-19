@@ -7,7 +7,7 @@
 #' @description This generic function calculates robust CNV regions by 
 #' segmenting the I/NI call per genomic region
 #' of an object \code{\link{CNVDetectionResult-class}}.
-#' 
+#' @aliases makeRobustCNVR,CNVDetectionResult-method
 #' @param object An instance of "CNVDetectionResult" 
 #' @param robust Robustness parameter. The higher the value, the more samples
 #' are required to have a CNV that confirms the CNV region. Setting this 

@@ -32,17 +32,16 @@
 #' vector assigns each genomic segment to a reference sequence (chromosome).
 #' @param normType Type of the normalization technique. Each samples'
 #' read counts
-#' are scaled such that the total number of reads is equal after normalization.
-#' By this parameter one can decide to which coverage (i.e. total reads) the 
-#' read counts should be normalized. Possible choices are the minimal coverage 
+#' are scaled such that the total number of reads are comparable across 
+#' samples.
+#' By this parameter one can decide to how the size factors are calculated
+#' Possible choices are the minimal coverage 
 #' ("min"), the mean or median coverage ("mean", "median") or any quantile 
 #' ("quant"). If this parameter is set to the value "mode", 
 #' the read counts are scaled such that each samples'
-#' most frequent value (the "mode") is equal after normalization. If the
-#' parameter is set to "poisson" the values are scaled such that the 
-#' distribution is (rowwise) close to a Poisson distribution.
-#' Possible values are "mean","min","median","quant","poisson, and "mode". 
-#' Default = "poisson".
+#' most frequent value (the "mode") is equal after normalization. 
+#' Possible values are "mean","min","median","quant", and "mode". 
+#' Default = "median".
 #' @param qu Real value between 0 and 1. Default = 0.25.
 #' @param ploidy An integer value for each sample or each column in the read
 #' count matrix. At least two samples must have a ploidy of 2. Default = "missing".
@@ -56,7 +55,7 @@
 
 
 normalizeChromosomes <-
-		function(X,chr,normType="median",qu=0.75,ploidy){
+		function(X,chr,normType="median",qu=0.25,ploidy){
 	if (!(normType %in% c("mean","median","quant","mode","poisson"))){
 		stop(paste("Set TO of normalization to \"mean\"",
 						"\"median\", \"quant\" or \"mode\"."))
@@ -72,6 +71,9 @@ normalizeChromosomes <-
 	if (missing(chr)){
 		chr <- rep("undef",nrow(X))
 	}
+	if (missing(chr) & class(X)=="GRanges"){
+		chr <- as.character(seqnames(X))
+	}
 	if (missing(ploidy)){
 		ploidy <- rep(2,ncol(X))
 	}
@@ -83,6 +85,7 @@ normalizeChromosomes <-
 				"columns of the read count matrix!")
 	}
 	ploidy <- as.integer(ploidy)
+	if (length(unique(ploidy))==1) ploidy <- rep(2, ncol(X))
 	if (!length(which(ploidy>=2))){
 		stop("At least two diploid samples must be contained in the data.")
 	}
@@ -118,13 +121,13 @@ normalizeChromosomes <-
 					normFactors <- colSums(Ytmp,na.rm=TRUE)
 					
 					if (normType=="mean"){
-						normFactors <- colMeans(Ytmp,na.rm=TRUE)					 
+						normFactors <- colMeans(Ytmp,na.rm=TRUE)
 						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
 					} else if (normType=="median" | normType=="poisson"){
 						normFactors <- apply(Ytmp,2,median,na.rm=TRUE)
 						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
 					} else if (normType=="quant"){
-						normFactors <- apply(Ytmp,2,quantile,probs=qu,na.rm=TRUE)						
+						normFactors <- apply(Ytmp,2,quantile,probs=qu,na.rm=TRUE)
 						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
 						
 					} else if (normType=="mode"){
@@ -134,8 +137,7 @@ normalizeChromosomes <-
 					}
 					
 					if (any(normFactors==0)){
-						warning(paste("There exists a reference sequence with zero reads"
-										,"for some samples."))
+						warning(paste("Some normalization factors are zero!"))
 					normFactors[which(normFactors==0)] <- 1
 					}
 					#browser()
@@ -164,7 +166,6 @@ normalizeChromosomes <-
 				
 				Y[chrIdx, ] <- Ytmp
 			}
-			
 		} # over chr
 		
 		if (!ploidy2flag){
@@ -172,7 +173,16 @@ normalizeChromosomes <-
 			ploidy2median <- median(Y[!idxSG, ],na.rm=TRUE)
 		}
 		
-		YY[,ploidy==pp] <- Y*ploidy2median/median(Y[!idxSG, ],na.rm=TRUE)*pp/2
+		if (pp!=2){
+			mm <- median(Y[!idxSG, ],na.rm=TRUE)
+			if (ploidy2median==0 & mm==0){
+				YY[,ploidy==pp] <- Y*pp/2
+			} else {
+				YY[,ploidy==pp] <- Y*ploidy2median/mm*pp/2
+			}
+		} else{
+			YY[,ploidy==pp] <- Y
+		}
 	}
 	
 	rownames(YY) <- rownames(Xorig)
