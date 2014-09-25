@@ -19,8 +19,7 @@
 #' @param cyc Positive integer that sets the number of cycles for the algorithm.
 #' Usually after less than 15 cycles convergence is reached. Default = 20.
 #' @param parallel How many cores are used for the computation. If set to zero
-#' than no parallelization is applied. The package "snow" has to be installed
-#' for this option. Default = 0.
+#' than no parallelization is applied. Default = 0.
 #' @param normType Mode of the normalization technique. Possible values are 
 #' "mean","min","median","quant", "poisson" and "mode". 
 #' Read counts will be scaled sample-wise. Default = "poisson".

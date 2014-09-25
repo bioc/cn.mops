@@ -30,11 +30,16 @@
 #' 	full.names=TRUE)
 #' gr <- GRanges(c("20","20"),IRanges(c(60000,70000),c(70000,80000)))
 #' bamDataRanges <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr,mode="unpaired")
+#' bamDataRanges <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr,mode="unpaired",parallel=2)
 #' @return An instance of "GRanges", that contains the breakpoints of the 
 #' initial segments and the raw read counts that were extracted from the BAM
 #' files. This object can be used as input for cn.mops and other CNV detection
 #' methods.
 #' @importFrom Rsamtools countBam
+#' @importFrom parallel makeCluster
+#' @importFrom parallel clusterEvalQ
+#' @importFrom parallel parApply
+#' @importFrom parallel stopCluster 
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
@@ -90,20 +95,19 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,
 		}	
 	} else {
 		message("Using parallel version of this function.")
-		library(snow)
-		cl <- makeCluster(as.integer(parallel),type="SOCK")
-		clusterEvalQ(cl,"Rsamtools::countBam")
+		cl <- parallel::makeCluster(as.integer(parallel),type="SOCK")
+		parallel::clusterEvalQ(cl,"Rsamtools::countBam")
 		if (is.null(BAIFiles)){
-			XL <- parLapply(cl,BAMFiles,Rsamtools::countBam,param=param)
+			XL <- parallel::parLapply(cl,BAMFiles,Rsamtools::countBam,param=param)
 		} else {
 			newBAI <- gsub(".bai","",BAIFiles)
-			XL <- parLapply(cl,1:length(BAMFiles),function(jj){
+			XL <- parallel::parLapply(cl,1:length(BAMFiles),function(jj){
 						return(Rsamtools::countBam(BAMFiles[jj],param=param,index=newBAI[jj]))	
 					})
 						
 		}
 		
-		stopCluster(cl)
+		parallel::stopCluster(cl)
 		for (i in 1:length(BAMFiles)){
 			X[,i] <- XL[[i]]$records
 		}

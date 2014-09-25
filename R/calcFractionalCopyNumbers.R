@@ -47,9 +47,9 @@ setMethod("calcFractionalCopyNumbers", signature="CNVDetectionResult",
 			mainCN <- 2*I[which(classes==mainClass)]
 			
 			usedMethod <- switch(method,
-					"cn.mops"=cn.mops:::.cn.mopsC,
+					"cn.mops"=.cn.mopsC,
 					"haplocn.mops"=haplocn.mopsC,
-					"referencecn.mops"=cn.mops:::.referencecn.mops)
+					"referencecn.mops"=.referencecn.mops)
 			segStatI <- switch(segStat,"mean"=mean,"median"=median)
 			
 			if (length(cnvr)==0 | length(cnvs)==0)

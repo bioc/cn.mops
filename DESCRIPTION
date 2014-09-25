@@ -30,21 +30,10 @@ Depends:
 Imports:
     methods,
     graphics,
-    BiocGenerics,
-    IRanges,
     Rsamtools,
-    GenomeInfoDb
+    parallel
 Suggests:
-    snow,
     DNAcopy
 LazyLoad: yes
-Collate: 'AllClasses.R' 'cn.mops.R' 'getReadCountsFromBAM.R'
-        'normalizeChromosomes.R' 'normalizeGenome.R' 'plot-methods.R'
-        'show-methods.R' 'segment.R' 'zzz.R' 'AllGenerics.R'
-        'methodsAccess.R' 'getSegmentReadCountsFromBAM.R'
-        'haplocn.mops.R' 'segPlot.R' 'exomecn.mops.R'
-        'calcIntegerCopyNumbers.R' 'makeRobustCNVR.R'
-        'referencecn.mops.R' 'calcFractionalCopyNumbers.R'
-        'singlecn.mops.R'
 biocViews: Sequencing, CopyNumberVariation, Homo_sapiens,
     CellBiology,  HapMap, Genetics

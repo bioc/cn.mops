@@ -303,8 +303,8 @@ setMethod("segplot",
 				
 				
 			} 
-			R <- cn.mops:::.makeLogRatios(r,mainCN)
-			segm <- cn.mops:::.convertToFastSegRes(r,segStat=segStat)			
+			R <- .makeLogRatios(r,mainCN)
+			segm <- .convertToFastSegRes(r,segStat=segStat)			
 			
 			.segPlot(x=R,
 					res=segm,

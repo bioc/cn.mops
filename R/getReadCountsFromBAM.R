@@ -188,6 +188,8 @@
 #' 	full.names=TRUE)
 #' bamDataRanges <- getReadCountsFromBAM(BAMFiles,
 #' 					sampleNames=paste("Sample",1:3),WL=5000,mode="unpaired")
+#' X <- getReadCountsFromBAM(BAMFiles,
+#' 					sampleNames=paste("Sample",1:3),WL=5000,mode="unpaired",parallel=2)
 #' @return An instance of "GRanges", that contains the breakpoints of the 
 #' initial segments and the raw read counts that were extracted from the BAM
 #' files. This object can be used as input for cn.mops and other CNV detection
@@ -196,6 +198,10 @@
 #' @importFrom Rsamtools ScanBamParam
 #' @importFrom Rsamtools scanBamFlag
 #' @importFrom Rsamtools scanBam
+#' @importFrom parallel makeCluster
+#' @importFrom parallel clusterEvalQ
+#' @importFrom parallel parApply
+#' @importFrom parallel stopCluster 
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
@@ -289,12 +295,11 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 		
 	} else {
 		message("Using parallel version of this function.")
-		library(snow)
-		cl <- makeCluster(as.integer(parallel),type="SOCK")
-		clusterEvalQ(cl,".countBAM")
-		XL <- parLapply(cl,BAMFiles,.countBAM,sl=sl,WL=WL,mode=mode,
+		cl <- parallel::makeCluster(as.integer(parallel),type="SOCK")
+		parallel::clusterEvalQ(cl,".countBAM")
+		XL <- parallel::parLapply(cl,BAMFiles,.countBAM,sl=sl,WL=WL,mode=mode,
 				refSeqName=refSeqName)	
-		stopCluster(cl)
+		parallel::stopCluster(cl)
 	}
 	
 	if (length(BAMFiles)==1){

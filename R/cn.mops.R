@@ -172,8 +172,7 @@
 #' @param cyc Positive integer that sets the number of cycles for the algorithm.
 #' Usually after less than 15 cycles convergence is reached. Default = 20.
 #' @param parallel How many cores are used for the computation. If set to zero
-#' than no parallelization is applied. The package "snow" has to be installed
-#' for this option. Default = 0.
+#' than no parallelization is applied. Default = 0.
 #' @param normType Mode of the normalization technique. Possible values are 
 #' "mean","min","median","quant", "poisson" and "mode". 
 #' Read counts will be scaled sample-wise. Default = "poisson".
@@ -214,7 +213,12 @@
 #' @examples 
 #' data(cn.mops)
 #' cn.mops(XRanges)
-#'
+#' cn.mops(XRanges,parallel=2)
+#' 
+#' @importFrom parallel makeCluster
+#' @importFrom parallel clusterEvalQ
+#' @importFrom parallel parApply
+#' @importFrom parallel stopCluster 
 #' @useDynLib cn.mops
 #' @return An instance of "CNVDetectionResult".
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
@@ -379,9 +383,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	message("Starting local modeling, please be patient...  ")
 	
 	if (parallel > 0){
-		library(snow)
-		cl <- makeCluster(as.integer(parallel),type="SOCK")
-		clusterEvalQ(cl,".cn.mopsCE")
+		cl <- parallel::makeCluster(as.integer(parallel),type="SOCK")
+		parallel::clusterEvalQ(cl,".cn.mopsCE")
 	} 
 	
 	res <- list()
@@ -405,7 +408,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 					alphaInit=alphaInit,alphaPrior=alphaPrior,
 					minReadCount=minReadCount,returnPosterior=returnPosterior)
 		} else {
-			resChr <- parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsCE, I=I,
+			resChr <- parallel::parApply(cl,X.norm[chrIdx, ,drop=FALSE],1,.cn.mopsCE, I=I,
 					classes=classes,cov=cov,cyc=cyc,N=N,n=n,idxCN2=idxCN2,
 					alphaInit=alphaInit,alphaPrior=alphaPrior,
 					minReadCount=minReadCount,returnPosterior=returnPosterior)
@@ -414,7 +417,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		res <- c(res, resChr)
 	}
 	if (parallel > 0){
-		stopCluster(cl)
+		parallel::stopCluster(cl)
 	} 
 	
 	
@@ -477,11 +480,11 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				resSegm <- apply(sINI,2,.segmentation,
 						chr=chr,minWidth=minWidth,DNAcopyBdry=DNAcopyBdry,...)
 			} else {
-				cl <- makeCluster(as.integer(parallel),type="SOCK")
-				clusterEvalQ(cl,".segmentation")
-				resSegm <- parApply(cl,sINI,2,.segmentation,
+				cl <- parallel::makeCluster(as.integer(parallel),type="SOCK")
+				parallel::clusterEvalQ(cl,".segmentation")
+				resSegm <- parallel::parApply(cl,sINI,2,.segmentation,
 						chr=chr,minWidth=minWidth,DNAcopyBdry=DNAcopyBdry,...)
-				stopCluster(cl)
+				parallel::stopCluster(cl)
 			}
 			
 			#browser()
@@ -544,14 +547,14 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 				
 				if (parallel==0){
 					resSegmList[[chrom]] <- apply(sINI[chrIdx, ,drop=FALSE],2,
-							cn.mops:::segment,
+							segment,
 							minSeg=minWidth,...)
 				} else {
-					cl <- makeCluster(as.integer(parallel),type="SOCK")
-					clusterEvalQ(cl,"segment")
-					resSegmList[[chrom]] <- parApply(cl,sINI[chrIdx, ,drop=FALSE],2,
+					cl <- parallel::makeCluster(as.integer(parallel),type="SOCK")
+					parallel::clusterEvalQ(cl,"segment")
+					resSegmList[[chrom]] <- parallel::parApply(cl,sINI[chrIdx, ,drop=FALSE],2,
 							segment,minSeg=minWidth,...)
-					stopCluster(cl)
+					parallel::stopCluster(cl)
 				}
 				
 				segDfTmp <- cbind(do.call(rbind,resSegmList[[chrom]]),
