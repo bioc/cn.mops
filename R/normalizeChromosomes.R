@@ -71,8 +71,8 @@ normalizeChromosomes <-
 	if (missing(chr)){
 		chr <- rep("undef",nrow(X))
 	}
-	if (missing(chr) & class(X)=="GRanges"){
-		chr <- as.character(seqnames(X))
+	if (missing(chr) & class(input)=="GRanges"){
+		chr <- as.character(seqnames(input))
 	}
 	if (missing(ploidy)){
 		ploidy <- rep(2,ncol(X))
@@ -137,9 +137,11 @@ normalizeChromosomes <-
 					}
 					
 					if (any(normFactors==0)){
-						warning(paste("Some normalization factors are zero!"))
-					normFactors[which(normFactors==0)] <- 1
+						stop(paste("Some normalization factors are zero!",
+										"Remove samples or chromosomes for which the average read count is zero,",
+										"e.g. chromosome Y."))
 					}
+					
 					#browser()
 					
 					YYtmp <- t(t(Ytmp)*correctwiththis)
