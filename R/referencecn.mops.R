@@ -107,7 +107,7 @@
 #' than no parallelization is applied. Default = 0.
 #' @param normType Mode of the normalization technique. Possible values are 
 #' "mean","min","median","quant", "poisson" and "mode". 
-#' Read counts will be scaled sample-wise. Default = "mode".
+#' Read counts will be scaled sample-wise. Default = "mean".
 #' @param normQu Real value between 0 and 1.  
 #' If the "normType" parameter is set to "quant" then this parameter sets the 
 #' quantile that is used for the normalization. Default = 0.25. 
@@ -158,7 +158,7 @@ referencecn.mops <- function(cases,controls,
 		I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4,8,16,32,64),
 		classes=paste("CN",c(0:8,16,32,64,128),sep=""),
 		priorImpact = 1,cyc = 20,parallel=0,
-		normType="mode",normQu=0.25,norm=1,
+		normType="mean",normQu=0.25,norm=1,
 		upperThreshold=0.5,lowerThreshold=-0.9,
 		minWidth=4,segAlgorithm="DNAcopy",minReadCount=1, verbose=1,
 		returnPosterior=FALSE,...){

@@ -6,7 +6,7 @@ setting.}
 \usage{
 referencecn.mops(cases, controls, I = c(0.025, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4,
   8, 16, 32, 64), classes = paste("CN", c(0:8, 16, 32, 64, 128), sep = ""),
-  priorImpact = 1, cyc = 20, parallel = 0, normType = "mode",
+  priorImpact = 1, cyc = 20, parallel = 0, normType = "mean",
   normQu = 0.25, norm = 1, upperThreshold = 0.5, lowerThreshold = -0.9,
   minWidth = 4, segAlgorithm = "DNAcopy", minReadCount = 1, verbose = 1,
   returnPosterior = FALSE, ...)

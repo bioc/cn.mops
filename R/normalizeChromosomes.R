@@ -104,69 +104,87 @@ normalizeChromosomes <-
 	ploidy2median <- c()
 	for (pp in unique(c(2,ploidy))){
 		X <- Xorig[,ploidy==pp,drop=FALSE]
+		globalNormFactors <- colSums(X,na.rm=TRUE)
+		
+		if (any(is.na(globalNormFactors))) stop("NAs in readcount matrix.")
+		if (any(globalNormFactors==0)) stop("Zero columns in readcount matrix.")
+		
 		if (ncol(X)==1){
 			Y <- X
-			
 		} else {
 			
 			Y <- matrix(0,nrow=nrow(X),ncol=ncol(X))
 			for (l in (unique(chr))){
 				chrIdx <- which(chr==l)
 				Ytmp <- X[chrIdx, ,drop=FALSE]
-				idxSG <- apply(Ytmp,1,function(x) all(x<1))
-				Ytmp[idxSG, ] <- NA
 				
-				if (nrow(Ytmp) > 1){
-					
-					normFactors <- colSums(Ytmp,na.rm=TRUE)
-					
-					if (normType=="mean"){
-						normFactors <- colMeans(Ytmp,na.rm=TRUE)
-						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
-					} else if (normType=="median" | normType=="poisson"){
-						normFactors <- apply(Ytmp,2,median,na.rm=TRUE)
-						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
-					} else if (normType=="quant"){
-						normFactors <- apply(Ytmp,2,quantile,probs=qu,na.rm=TRUE)
-						correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
-						
-					} else if (normType=="mode"){
-						normFactors <- apply(Ytmp,2,function(x) .statmod(x[x!=0],na.rm=TRUE) )
-						asm <- .statmod(Ytmp[Ytmp!=0],na.rm=TRUE)
-						correctwiththis <- asm/normFactors
-					}
-					
-					if (any(normFactors==0)){
-						stop(paste("Some normalization factors are zero!",
-										"Remove samples or chromosomes for which the average read count is zero,",
-										"e.g. chromosome Y."))
-					}
-					
-					#browser()
-					
-					YYtmp <- t(t(Ytmp)*correctwiththis)
-					v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
-					uut <- quantile(v2m,probs=0.95,na.rm=TRUE)
-					dd <- density(v2m,na.rm=TRUE,from=0,
-							to=uut,n=uut*100)
-					#mv2m <- median(v2m,na.rm=TRUE)
-					mv2m <- dd$x[which.max(dd$y)]
-					if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
+				if (all(Ytmp==0)){
+					Y[chrIdx, ] <- Ytmp
 				} else {
-					stop("normType not known.")
+					idxSG <- apply(Ytmp,1,function(x) all(x<1))
+					Ytmp[idxSG, ] <- NA
+					
+					if ((nrow(Ytmp)-length(which(idxSG))) > 1){
+						
+						normFactors <- colSums(  rbind(Ytmp,rep(0,ncol(X))) ,na.rm=TRUE)
+						
+						if (normType=="mean"){
+							normFactors <- colMeans(Ytmp,na.rm=TRUE)
+							correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
+						} else if (normType=="median" | normType=="poisson"){
+							normFactors <- apply(Ytmp,2,median,na.rm=TRUE)
+							correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
+						} else if (normType=="quant"){
+							normFactors <- apply(Ytmp,2,quantile,probs=qu,na.rm=TRUE)
+							correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
+							
+						} else if (normType=="mode"){
+							normFactors <- apply(Ytmp,2,function(x) .statmod(x[x!=0],na.rm=TRUE) )
+							asm <- .statmod(Ytmp[Ytmp!=0],na.rm=TRUE)
+							correctwiththis <- asm/normFactors
+						}
+						
+						if (any(is.na(normFactors))){
+							warning(paste("Normalization failed for reference sequence ",l,
+											". Using global normFactors!"))
+							normFactors <- globalNormFactors
+						}
+						
+						if (any(normFactors==0)){
+							stop(paste("Some normalization factors are zero!",
+											"Remove samples or chromosomes for which the average read count is zero,",
+											"e.g. chromosome Y."))
+						}
+						
+						#browser()
+						
+						YYtmp <- t(t(Ytmp)*correctwiththis)
+						v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
+						uut <- quantile(v2m,probs=0.95,na.rm=TRUE)
+						dd <- density(v2m,na.rm=TRUE,from=0,
+								to=uut,n=uut*100)
+						#mv2m <- median(v2m,na.rm=TRUE)
+						mv2m <- dd$x[which.max(dd$y)]
+						if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
+					} else {
+						warning(paste("Normalization for reference sequence ",l,"not", 
+										"applicable, because of low number of segments"))
+						correctwiththis <- rep(1,ncol(X))
+					}
+					
+					if (any(!is.finite(correctwiththis))){
+						warning(paste("Normalization for reference sequence ",l,"not", 
+										"applicable, because at least one sample has zero",
+										"reads."))
+						correctwiththis <- rep(1,ncol(X))
+					}
+					
+					
+					Ytmp <- t(t(Ytmp)*correctwiththis)
+					Ytmp[idxSG, ] <- 0
+					
+					Y[chrIdx, ] <- Ytmp
 				}
-				if (any(!is.finite(correctwiththis))){
-					warning(paste("Normalization for reference sequence ",l,"not", 
-									"applicable, because at least one sample has zero",
-									"reads."))
-					correctwiththis <- rep(1,ncol(X))
-				}
-				
-				
-				Ytmp <- t(t(Ytmp)*correctwiththis)
-				Ytmp[idxSG, ] <- 0
-				
-				Y[chrIdx, ] <- Ytmp
 			}
 		} # over chr
 		
