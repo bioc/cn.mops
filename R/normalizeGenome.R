@@ -38,6 +38,14 @@
 
 
 normalizeGenome <- function(X,normType="poisson",qu=0.25,ploidy){
-	YY <- normalizeChromosomes(X,normType=normType,qu=qu,ploidy=ploidy)
-	return(YY)
+	if (class(X)=="GRanges"){
+		X.counts <- as.matrix(values(X))
+		chr <- rep("Chr",nrow(X.counts))
+		YY <- normalizeChromosomes(X.counts, chr=chr, normType=normType,qu=qu,ploidy=ploidy)
+		values(X) <- YY
+		return(X)
+	} else {
+		YY <- normalizeChromosomes(X,normType=normType,qu=qu,ploidy=ploidy)
+		return(YY)
+	}
 }
