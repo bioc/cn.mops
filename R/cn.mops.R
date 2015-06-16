@@ -283,6 +283,8 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		stop("GRanges object or read count matrix needed as input.")
 	}
 	
+	if (!all(isUnique(grAllRegions))) stop(paste("Genomic Ranges must be",
+		"unique. Check \"all(isUnique(input))\" and remove identical segments."))
 	
 	if (any(X<0) | any(!is.finite(X))){
 		stop("All values must be greater or equal zero and finite.\n")
