@@ -40,7 +40,7 @@
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
-			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- pmax(alpha.ik,1e-100)
 			alpha.ik <- alpha.ik*alpha.prior
 			alpha.ik <- t(alpha.ik/rowSums(alpha.ik))
 			alpha.est <- rowMeans(alpha.ik)
@@ -52,7 +52,7 @@
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
-			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- pmax(alpha.ik,1e-100)
 			alpha.ik <- alpha.ik*alpha.prior
 			
 			alpha.ik <- alpha.ik/sum(alpha.ik)
@@ -365,6 +365,7 @@ referencecn.mops <- function(cases,controls,
 	lambda <- rowMeans(R.norm)
 	lambda <- pmax(lambda,1e-5)
 	
+	
 	for (chrom in chrOrder){
 		if (verbose>0) message(paste("Reference sequence: ",chrom))
 		chrIdx <- chrDf[chrom,1]:chrDf[chrom,2]
@@ -401,9 +402,8 @@ referencecn.mops <- function(cases,controls,
 		
 		res <- c(res, resChr)
 	}
-	if (parallel > 0){
-		parallel::stopCluster(cl)
-	} 
+	if (parallel > 0) parallel::stopCluster(cl) 
+	
 	
 	## Postprocess result
 	L <- t(sapply(res,.subset2,1))
