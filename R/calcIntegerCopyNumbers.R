@@ -101,8 +101,6 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 											minReadCount=minReadCount)$expectedCN))
 			}
 			
-			#browser()
-			
 			CN2 <- matrix(CN2,ncol=ncol(X))
 			colnames(CN2) <- colnames(X)
 			extractedCN <- CN2[cbind(1:length(idx),
