@@ -61,6 +61,9 @@ normalizeChromosomes <-
 						"\"median\", \"quant\" or \"mode\"."))
 	}
 	input <- X
+	if (!(is.matrix(input)|class(input)=="GRanges")){
+		stop("Input data must be matrix or GRanges object!")
+	}
 	returnGRanges <- FALSE
 	if(class(X)=="GRanges"){
 		returnGRanges <- TRUE
@@ -68,7 +71,7 @@ normalizeChromosomes <-
 	}	
 	if (is.vector(X)){X <- matrix(X,nrow=1)}
 	
-	if (missing(chr)){
+	if (missing(chr) & is.matrix(input)){
 		chr <- rep("undef",nrow(X))
 	}
 	if (missing(chr) & class(input)=="GRanges"){

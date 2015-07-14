@@ -61,6 +61,10 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			
 			tmpIdx <- which(values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
 			csM <- csM[tmpIdx, ,drop=FALSE]
+			
+			# check again for equality
+			csM <- csM[(segmentation[csM[,1]]==cnvs[csM[,2]]), ,drop=FALSE]
+			
 			idx <- csM[,1]
 			
 			M2 <- IRanges::as.list(IRanges::findOverlaps(segmentation[idx],object@gr))

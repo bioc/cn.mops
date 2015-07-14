@@ -263,6 +263,7 @@ setMethod("segplot",
 			}
 			
 			
+			
 			if (!missing(sampleIdx)){
 				
 				sn <- sampleNames(r)
@@ -279,7 +280,6 @@ setMethod("segplot",
 				
 			} 
 			if (!missing(seqnames)){
-				#browser()
 				idx <- which(as.character(GenomicRanges::seqnames(
 										segmentation(r))) %in% seqnames)
 				r@segmentation <- segmentation(r)[idx]

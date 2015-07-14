@@ -40,7 +40,7 @@
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
-			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- pmax(alpha.ik,1e-100)
 			alpha.ik <- alpha.ik*alpha.prior
 			alpha.ik <- t(alpha.ik/rowSums(alpha.ik))
 			alpha.est <- rowMeans(alpha.ik)
@@ -52,7 +52,7 @@
 			alpha.ik <- (sapply(I,function(ii) 
 									exp(x*log(lambda*cov*ii)-lgamma(x+1)-lambda*cov*ii)
 						))
-			alpha.ik <- pmax(alpha.ik,1e-15)
+			alpha.ik <- pmax(alpha.ik,1e-100)
 			alpha.ik <- alpha.ik*alpha.prior
 			
 			alpha.ik <- alpha.ik/sum(alpha.ik)
@@ -233,6 +233,9 @@ referencecn.mops <- function(cases,controls,
 	} else{
 		stop("GRanges object or read count matrix needed as input.")
 	}
+	
+	if (!all(isUnique(grAllRegions))) stop(paste("Genomic Ranges must be",
+						"unique. Check \"all(isUnique(input))\" and remove identical segments."))
 	
 	
 	if (any(X<0) | any(!is.finite(X))){
