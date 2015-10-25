@@ -292,7 +292,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			priorImpact,cyc,
 			normType,normQu,
 			upperThreshold,lowerThreshold,
-			minWidth,segAlgorithm,minReadCount,"CN2",version,paste(...))
+			minWidth,segAlgorithm,minReadCount,"CN1",version,paste(...))
 	names(params) <- c("method","folds",
 			"classes",
 			"priorImpact","cyc",
