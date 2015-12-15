@@ -595,6 +595,30 @@ appropriate for this setting.
 \end{table}
 
 
+
+\section{Exporting cn.MOPS results in tabular format}
+Users can extract the segmentation, the CNVs and the CNV regions with the following:
+
+<<eval=FALSE>>=
+library(cn.mops); data(cn.mops)
+result <- calcIntegerCopyNumbers(cn.mops(XRanges))
+segm <- as.data.frame(segmentation(result))
+CNVs <- as.data.frame(cnvs(result))
+CNVRegions <- as.data.frame(cnvr(result))
+@
+
+
+The results can be exported with {\tt write.csv} for Excel, LibreOffice Calc, etc.
+These files will include the genomic position, copy number and other information. 
+
+<<eval=FALSE>>=
+write.csv(segm,file="segmentation.csv")
+write.csv(CNVs,file="cnvs.csv")
+write.csv(CNVRegions,file="cnvr.csv")
+@
+
+
+
 \clearpage
 
 
