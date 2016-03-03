@@ -435,7 +435,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 		
 		if (segAlgorithm=="DNAcopy"){
 			message("Using \"DNAcopy\" for segmentation.")
-			library(DNAcopy)
+			requireNamespace("DNAcopy")
 			if (!exists("eta")){eta <- 0.05}
 			if (!exists("nperm")){nperm <- 10000}
 			if (!exists("alpha")){alpha <- 0.01}
@@ -553,7 +553,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 			
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
-			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
+			cnvrR <- GenomicRanges::reduce(GRanges(seqnames=segDfSubset$chr,
 							IRanges(segDfSubset$start,segDfSubset$end),
 							seqinfo=seqinfo(grAllRegions)))
 			cnvrR <- sortSeqlevels(cnvrR)

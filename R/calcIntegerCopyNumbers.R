@@ -112,27 +112,27 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			
 			
 			if (useMedian){		
-				values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$median > uT)] <-
+				GenomicRanges::values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$median > uT)] <-
 						classes[mainClassIdx+1]
-				values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$median < lT)] <- 
+				GenomicRanges::values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$median < lT)] <- 
 						classes[mainClassIdx-1]
 				
 				GenomicRanges::values(cnvs)$CN <- extractedCN[csM[,2]]
-				values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$median > uT)] <-
+				GenomicRanges::values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$median > uT)] <-
 						classes[mainClassIdx+1]
-				values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$median < lT)] <- 
+				GenomicRanges::values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$median < lT)] <- 
 						classes[mainClassIdx-1]
 				
 			}  else {
-				values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$mean > uT)] <-
+				GenomicRanges::values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$mean > uT)] <-
 						classes[mainClassIdx+1]
-				values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$mean < lT)] <- 
+				GenomicRanges::values(segmentation)$CN[which(values(segmentation)$CN==mainClass & values(segmentation)$mean < lT)] <- 
 						classes[mainClassIdx-1]
 				
 				GenomicRanges::values(cnvs)$CN <- extractedCN[csM[,2]]
-				values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$mean > uT)] <-
+				GenomicRanges::values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$mean > uT)] <-
 						classes[mainClassIdx+1]
-				values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$mean < lT)] <- 
+				GenomicRanges::values(cnvs)$CN[which(values(cnvs)$CN==mainClass & values(cnvs)$mean < lT)] <- 
 						classes[mainClassIdx-1]
 				
 			}

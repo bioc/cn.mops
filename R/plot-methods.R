@@ -30,7 +30,8 @@
 		r <- mopsres@params$L[,mainCN]
 		#cat("lambda.\n")
 	} else {
-		r <- rowMedians(X)
+		#r <- apply(X,1,median)
+		r <- Biobase::rowMedians(X)
 	}
 	
 	R <- (X+0.01)/(r+0.01)
@@ -157,7 +158,7 @@ setMethod("plot", signature(x="CNVDetectionResult",y="missing"),
 						xlab=xlab,xaxt="n",col=colOrd)
 				axis(1,at=1:length(plotStart:plotEnd), labels=FALSE)
 				
-				RA <- (normDataSel + 0.1) / rowMedians(normDataSel + 0.1)
+				RA <- (normDataSel + 0.1) / apply(normDataSel + 0.1, 1, median)
 				matplot(RA[, sampOrd,drop=FALSE],type="l",lty=lty,lwd=2,
 						main="Read Count Ratios",ylab="Ratio",
 						xlab=xlab,xaxt="n",col=colOrd)

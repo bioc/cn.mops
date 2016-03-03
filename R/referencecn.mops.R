@@ -150,8 +150,8 @@
 #' or the standard segmentation algorithm.
 #' @examples 
 #' data(cn.mops)
-#' referencecn.mops(X[1:200, ],rowMedians(X[1:200, ]))
-#' referencecn.mops(X[1:200, ],rowMedians(X[1:200, ]),parallel=2)
+#' referencecn.mops(X[1:200, ],apply(X[1:200, ],1, median))
+#' referencecn.mops(X[1:200, ],apply(X[1:200, ],1, median),parallel=2)
 #' @importFrom parallel makeCluster
 #' @importFrom parallel clusterEvalQ
 #' @importFrom parallel parApply
@@ -464,7 +464,7 @@ referencecn.mops <- function(cases,controls,
 		
 		if (segAlgorithm=="DNAcopy"){
 			if (verbose>0) message("Using \"DNAcopy\" for segmentation.")
-			library(DNAcopy)
+			requireNamespace("DNAcopy")
 			if (!exists("eta")){eta <- 0.05}
 			if (!exists("nperm")){nperm <- 10000}
 			if (!exists("alpha")){alpha <- 0.01}
@@ -575,7 +575,7 @@ referencecn.mops <- function(cases,controls,
 			
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
-			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
+			cnvrR <- GenomicRanges::reduce(GRanges(seqnames=segDfSubset$chr,
 							IRanges(segDfSubset$start,segDfSubset$end),
 							seqinfo=seqinfo(grAllRegions)
 			))
@@ -622,7 +622,7 @@ referencecn.mops <- function(cases,controls,
 					seqinfo=seqinfo(grAllRegions))
 			cnvr <- sortSeqlevels(cnvr)
 			
-			values(cnvr) <- cnvrCN
+			GenomicRanges::values(cnvr) <- cnvrCN
 			
 			if (norm==2){
 				r@normalizedData    <- X.viz		

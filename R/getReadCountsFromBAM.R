@@ -343,7 +343,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	
 	
 	gr <- sortSeqlevels(gr)
-	seqlengths(gr) <- targets[[1]][match(seqlevels(gr),names(targets[[1]]))]
+	GenomeInfoDb::seqlengths(gr) <- targets[[1]][match(seqlevels(gr),names(targets[[1]]))]
 	
 	return(gr)
 }

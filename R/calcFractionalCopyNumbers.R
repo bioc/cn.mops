@@ -10,7 +10,7 @@
 #' "mean" or "median". (Default="mean"). 
 #' @examples
 #' data(cn.mops)
-#' r <- referencecn.mops(X[,1:2],rowMedians(X))
+#' r <- referencecn.mops(X[,1:2],apply(X,1,median))
 #' calcFractionalCopyNumbers(r)
 #' @return \code{calcFractionalCopyNumbers} returns an 
 #' instance of "CNVDetectionResult".
@@ -102,7 +102,7 @@ setMethod("calcFractionalCopyNumbers", signature="CNVDetectionResult",
 			#mapping from CNVs to segmentation
 			iCN <- rep(paste("CN",format(mainCN,nsmall=1),sep=""),length(segmentation))
 			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs,type="within"))
-			tmpIdx <- which(values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
+			tmpIdx <- which(IRanges::values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
 			csM <- csM[tmpIdx, ,drop=FALSE]
 			
 			M2 <- IRanges::as.data.frame(segmentation)

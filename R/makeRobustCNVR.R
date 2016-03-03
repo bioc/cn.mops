@@ -75,7 +75,7 @@ setMethod("makeRobustCNVR", signature = "CNVDetectionResult",
 					CN <- matrix(NA,nrow=length(idx),
 							ncol(object@normalizedData))
 					colnames(CN) <- colnames(object@normalizedData)
-					values(cnvr) <- CN
+					GenomicRanges::values(cnvr) <- CN
 					
 					object@cnvr <- cnvr
 					return(object)	
@@ -86,10 +86,10 @@ setMethod("makeRobustCNVR", signature = "CNVDetectionResult",
 					message("No individual CNVs in the result object.")
 					return(object)	
 				} else {
-					cnvr <- reduce(object@cnvs)
+					cnvr <- GenomicRanges::reduce(object@cnvs)
 					CN <- matrix(NA,nrow=length(cnvr),
 							ncol(object@normalizedData))
-					values(cnvr) <- CN
+					GenomicRanges::values(cnvr) <- CN
 					object@cnvr <- cnvr
 					return(object)
 				}

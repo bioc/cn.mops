@@ -138,8 +138,7 @@ segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3,
 		
 		
 		irAll <- IRanges::IRanges(1, length(x))
-		segsFinal <- IRanges::as.data.frame(IRanges::sort(
-						c(ir, IRanges::setdiff(irAll, ir))))
+		segsFinal <- IRanges::as.data.frame(sort(c(ir, IRanges::setdiff(irAll, ir))))
 		
 		bIdx <- c(0,segsFinal$end)
 		

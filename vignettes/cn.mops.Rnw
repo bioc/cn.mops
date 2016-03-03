@@ -41,6 +41,9 @@ Linz\\Altenberger Str. 69, 4040 Linz, Austria\\
 options(width=75)
 set.seed(0)
 library(cn.mops)
+library(Biobase)
+library(GenomicRanges)
+library(GenomeInfoDb)
 cn.mopsVersion <- packageDescription("cn.mops")$Version
 @
 \newcommand{\cnmopsVersion}{\Sexpr{cn.mopsVersion}}
@@ -146,7 +149,7 @@ The whole pipeline will only take a few steps, if BAM files are available
 Section \ref{s:input}).
 <<eval=FALSE>>=
 BAMFiles <- list.files(pattern=".bam$")
-bamDataRanges <- getReadCountsFromBAM(BAMFiles)
+bamDataRanges <- getReadCountsFromBAM(BAMFiles,mode="paired")
 @
 
 \item Running the algorithm (also see Section \ref{s:cn.mops}).
@@ -454,6 +457,7 @@ are inconsistent between the bed file and the bam file. For example "chr1",
 replacing the seqlevels of the GRanges object:
 <<eval=FALSE>>=
 #the following removes the "chr" from reference sequence names
+library(GenomeInfoDb)
 seqlevels(gr) <- gsub("chr","",seqlevels(gr))
 @
 

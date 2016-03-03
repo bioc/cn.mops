@@ -413,7 +413,7 @@ singlecn.mops <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		
 		if (segAlgorithm=="DNAcopy"){
 			message("Using \"DNAcopy\" for segmentation.")
-			library(DNAcopy)
+			requireNamespace("DNAcopy")
 			if (!exists("eta")){eta <- 0.05}
 			if (!exists("nperm")){nperm <- 10000}
 			if (!exists("alpha")){alpha <- 0.01}
@@ -550,7 +550,7 @@ singlecn.mops <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			
 #			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR)
-#			values(cnvr) <- cnvrCN
+#			GenomicRanges::values(cnvr) <- cnvrCN
 			
 			if (norm==2){
 				r@normalizedData    <- X.viz		

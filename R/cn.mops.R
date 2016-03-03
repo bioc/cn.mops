@@ -221,10 +221,23 @@
 #' cn.mops(XRanges)
 #' cn.mops(XRanges,parallel=2)
 #' 
+#' @import methods
+#' @import utils
+#' @import stats
 #' @importFrom parallel makeCluster
 #' @importFrom parallel clusterEvalQ
 #' @importFrom parallel parApply
 #' @importFrom parallel stopCluster 
+#' @importFrom GenomicRanges GRanges reduce values values<-
+#' @importFrom IRanges as.matrix values unique IRanges reduce ranges
+#' @importFrom S4Vectors subjectHits
+#' @importFrom grDevices dev.cur dev.interactive dev.new
+#' @importFrom GenomeInfoDb seqlevels sortSeqlevels seqnames seqinfo seqlengths
+#' @importFrom BiocGenerics strand start end
+#' @importFrom Biobase isUnique rowMedians
+#' @importFrom graphics abline axis hist layout lines matplot mtext par title
+# #' @importFrom stats density end median quantile rnorm sd start var
+# #' @importFrom utils packageDescription
 #' @useDynLib cn.mops
 #' @return An instance of "CNVDetectionResult".
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
@@ -473,7 +486,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		
 		if (segAlgorithm=="DNAcopy"){
 			message("Using \"DNAcopy\" for segmentation.")
-			library(DNAcopy)
+			requireNamespace("DNAcopy")
 			if (!exists("eta")){eta <- 0.05}
 			if (!exists("nperm")){nperm <- 10000}
 			if (!exists("alpha")){alpha <- 0.01}
@@ -609,7 +622,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			# Assembly of result object
 			r <- new("CNVDetectionResult")
-			cnvrR <- reduce(GRanges(seqnames=segDfSubset$chr,
+			cnvrR <- GenomicRanges::reduce(GRanges(seqnames=segDfSubset$chr,
 							IRanges(segDfSubset$start,segDfSubset$end),
 					seqinfo=seqinfo(grAllRegions)	))
 			cnvrR <- sortSeqlevels(cnvrR)
@@ -653,7 +666,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR, seqinfo=seqinfo(grAllRegions))
 			cnvr <-  sortSeqlevels(cnvr)
-			values(cnvr) <- cnvrCN
+			GenomicRanges::values(cnvr) <- cnvrCN
 			
 			if (norm==2){
 				r@normalizedData    <- X.viz		

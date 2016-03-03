@@ -37,3 +37,8 @@ setClass("CNVDetectionResult",
 				sampleNames			= vector("character",1)
 				)
 )
+
+
+
+
+

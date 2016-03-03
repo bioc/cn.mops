@@ -107,8 +107,8 @@ cn.mops algorithm adapted to a setting of control versus cases
 }
 \examples{
 data(cn.mops)
-referencecn.mops(X[1:200, ],rowMedians(X[1:200, ]))
-referencecn.mops(X[1:200, ],rowMedians(X[1:200, ]),parallel=2)
+referencecn.mops(X[1:200, ],apply(X[1:200, ],1, median))
+referencecn.mops(X[1:200, ],apply(X[1:200, ],1, median),parallel=2)
 }
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
