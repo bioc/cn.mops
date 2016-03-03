@@ -20,14 +20,24 @@
 #' Usually after less than 15 cycles convergence is reached. Default = 20.
 #' @param parallel How many cores are used for the computation. If set to zero
 #' than no parallelization is applied. Default = 0.
+#' @param norm The normalization strategy to be used. 
+#' If set to 0 the read counts are not normalized and cn.mops does not model 
+#' different coverages. 
+#' If set to 1 the read counts are normalized. 
+#' If set to 2 the read counts are not normalized and cn.mops models different
+#' coverages. (Default=1).
 #' @param normType Mode of the normalization technique. Possible values are 
 #' "mean","min","median","quant", "poisson" and "mode". 
 #' Read counts will be scaled sample-wise. Default = "poisson".
+#' @param sizeFactor  By this parameter one can decide to how the size factors 
+#' are calculated.
+#' Possible choices are the the mean, median or mode coverage ("mean", "median", "mode") or any quantile 
+#' ("quant").
 #' @param normQu Real value between 0 and 1.  
 #' If the "normType" parameter is set to "quant" then this parameter sets the 
 #' quantile that is used for the normalization. Default = 0.25. 
-#' @param norm Logical that indicates whether normalization should be 
-#' applied or not. Default = TRUE.
+#' @param quSizeFactor Quantile of the sizeFactor if sizeFactor is set to "quant".
+#' 0.75 corresponds to "upper quartile normalization". Real value between 0 and 1. Default = 0.75.
 #' @param upperThreshold Positive real value that sets the cut-off for copy
 #' number gains. All CNV calling values above this value will be called as 
 #' "gain". The value should be set close to the log2 of the expected foldchange
@@ -66,12 +76,12 @@
 exomecn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"),
 		priorImpact = 10,cyc = 20,parallel=0,
-		normType="poisson",normQu=0.25,norm=TRUE,
+		norm=1, normType="poisson",sizeFactor="mean",normQu=0.25, quSizeFactor=0.75,
 		upperThreshold=0.5,lowerThreshold=-0.8,
 		minWidth=5,segAlgorithm="fast",minReadCount=1,useMedian=FALSE,returnPosterior=FALSE,...){
 	res <- cn.mops(input=input,I=I,classes=classes,priorImpact=priorImpact,
-			cyc=cyc,parallel=parallel,normType=normType,normQu=normQu,norm=norm,
-			lowerThreshold=lowerThreshold,
+			cyc=cyc,parallel=parallel,normType=normType,normQu=normQu,norm=norm,sizeFactor=sizeFactor,
+			quSizeFactor=quSizeFactor, lowerThreshold=lowerThreshold,
 			upperThreshold=upperThreshold,minWidth=minWidth,segAlgorithm=segAlgorithm,
 			minReadCount=minReadCount,useMedian=useMedian,returnPosterior=returnPosterior,...)
 	return(res)

@@ -19,7 +19,7 @@
 
 #' @title Normalization of NGS data. 
 #' 
-#' Normalize quantitative NGS data in order to make counts comparable over
+#' @description Normalize quantitative NGS data in order to make counts comparable over
 #' samples, i.e., correcting for different library sizes or coverages. 
 #' Scales each samples' reads such that the coverage is even for 
 #' all samples after normalization. 
@@ -31,18 +31,20 @@
 #' @param chr Character vector that has as many elements as "X" has rows. The
 #' vector assigns each genomic segment to a reference sequence (chromosome).
 #' @param normType Type of the normalization technique. Each samples'
-#' read counts
-#' are scaled such that the total number of reads are comparable across 
+#' read counts are scaled such that the total number of reads are comparable across 
 #' samples.
-#' By this parameter one can decide to how the size factors are calculated
-#' Possible choices are the minimal coverage 
-#' ("min"), the mean or median coverage ("mean", "median") or any quantile 
-#' ("quant"). If this parameter is set to the value "mode", 
+#' If this parameter is set to the value "mode", 
 #' the read counts are scaled such that each samples'
 #' most frequent value (the "mode") is equal after normalization. 
-#' Possible values are "mean","min","median","quant", and "mode". 
-#' Default = "median".
-#' @param qu Real value between 0 and 1. Default = 0.25.
+#' Accordingly for the other options are "mean","median","poisson", "quant", and "mode". 
+#' Default = "poisson".
+#' @param sizeFactor  By this parameter one can decide to how the size factors 
+#' are calculated.
+#' Possible choices are the the mean, median or mode coverage ("mean", "median", "mode") or any quantile 
+#' ("quant").
+#' @param qu Quantile of the normType if normType is set to "quant" .Real value between 0 and 1. Default = 0.25.
+#' @param quSizeFactor Quantile of the sizeFactor if sizeFactor is set to "quant".
+#' 0.75 corresponds to "upper quartile normalization". Real value between 0 and 1. Default = 0.75.
 #' @param ploidy An integer value for each sample or each column in the read
 #' count matrix. At least two samples must have a ploidy of 2. Default = "missing".
 #' @examples 
@@ -54,9 +56,14 @@
 #' @export
 
 
-normalizeChromosomes <-
-		function(X,chr,normType="median",qu=0.25,ploidy){
-	if (!(normType %in% c("mean","median","quant","mode","poisson"))){
+normalizeChromosomes <- function(X, chr, normType="poisson", sizeFactor="mean", 
+		qu=0.25, quSizeFactor=0.75, ploidy){
+	
+	if (!(normType %in% c("mean","median","poisson","mode", "quant"))){
+		stop(paste("Set TO of normalization to \"mean\"",
+						"\"median\", \"quant\" or \"mode\"."))
+	}
+	if (!(sizeFactor %in% c("mean","median","quant","mode"))){
 		stop(paste("Set TO of normalization to \"mean\"",
 						"\"median\", \"quant\" or \"mode\"."))
 	}
@@ -107,10 +114,10 @@ normalizeChromosomes <-
 	ploidy2median <- c()
 	for (pp in unique(c(2,ploidy))){
 		X <- Xorig[,ploidy==pp,drop=FALSE]
-		globalNormFactors <- colSums(X,na.rm=TRUE)
+		globalsizeFactors <- colSums(X,na.rm=TRUE)
 		
-		if (any(is.na(globalNormFactors))) stop("NAs in readcount matrix.")
-		if (any(globalNormFactors==0)) stop("Zero columns in readcount matrix.")
+		if (any(is.na(globalsizeFactors))) stop("NAs in readcount matrix.")
+		if (any(globalsizeFactors==0)) stop("Zero columns in readcount matrix.")
 		
 		if (ncol(X)==1){
 			Y <- X
@@ -129,46 +136,52 @@ normalizeChromosomes <-
 					
 					if ((nrow(Ytmp)-length(which(idxSG))) > 1){
 						
-						normFactors <- colSums(  rbind(Ytmp,rep(0,ncol(X))) ,na.rm=TRUE)
-						
-						if (normType=="mean"){
-							normFactors <- colMeans(Ytmp,na.rm=TRUE)
-							correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
-						} else if (normType=="median" | normType=="poisson"){
-							normFactors <- apply(Ytmp,2,median,na.rm=TRUE)
-							correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
-						} else if (normType=="quant"){
-							normFactors <- apply(Ytmp,2,quantile,probs=qu,na.rm=TRUE)
-							correctwiththis <-  median(normFactors,na.rm=TRUE)/normFactors
-							
-						} else if (normType=="mode"){
-							normFactors <- apply(Ytmp,2,function(x) .statmod(x[x!=0],na.rm=TRUE) )
-							asm <- .statmod(Ytmp[Ytmp!=0],na.rm=TRUE)
-							correctwiththis <- asm/normFactors
+						if (sizeFactor=="mean"){
+							sizeFactors <- colMeans(Ytmp,na.rm=TRUE)
+						} else if (sizeFactor=="median" | normType=="poisson"){
+							sizeFactors <- apply(Ytmp,2,median,na.rm=TRUE)
+						} else if (sizeFactor=="quant"){
+							sizeFactors <- apply(Ytmp,2,quantile,probs=quSizeFactor,na.rm=TRUE)
+						} else if (sizeFactor=="mode"){
+							sizeFactors <- apply(Ytmp,2,function(x) .statmod(x[x!=0],na.rm=TRUE) )
 						}
 						
-						if (any(is.na(normFactors))){
+						if (any(is.na(sizeFactors))){
 							warning(paste("Normalization failed for reference sequence ",l,
-											". Using global normFactors!"))
-							normFactors <- globalNormFactors
+											". Using global sizeFactors!"))
+							sizeFactors <- globalsizeFactors
 						}
 						
-						if (any(normFactors==0)){
+						if (any(sizeFactors==0)){
 							stop(paste("Some normalization factors are zero!",
 											"Remove samples or chromosomes for which the average read count is zero,",
 											"e.g. chromosome Y."))
 						}
 						
+						
+						if (normType=="mean"){
+							correctwiththis <-  mean(sizeFactors,na.rm=TRUE)/sizeFactors
+						} else if (normType=="median"){
+							correctwiththis <-  median(sizeFactors,na.rm=TRUE)/sizeFactors
+						} else if (normType=="quant"){
+							correctwiththis <-  quantile(sizeFactors,probs=qu,na.rm=TRUE)/sizeFactors
+						} else if (normType=="mode"){
+							asm <- .statmod(Ytmp[Ytmp!=0],na.rm=TRUE)
+							correctwiththis <- asm/sizeFactors
+						} else if (normType=="poisson"){
+							correctwiththis <-  mean(sizeFactors,na.rm=TRUE)/sizeFactors
+							#YYtmp <- t(t(Ytmp)*correctwiththis)
+							YYtmp <- Ytmp %*% diag(correctwiththis)
+							v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
+							uut <- quantile(v2m,probs=0.95,na.rm=TRUE)
+							dd <- density(v2m,na.rm=TRUE,from=0,
+									to=uut,n=uut*100)
+							#mv2m <- median(v2m,na.rm=TRUE)
+							mv2m <- dd$x[which.max(dd$y)]
+							if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
+						}
 						#browser()
 						
-						YYtmp <- t(t(Ytmp)*correctwiththis)
-						v2m <- apply(YYtmp,1,var)/rowMeans(YYtmp)
-						uut <- quantile(v2m,probs=0.95,na.rm=TRUE)
-						dd <- density(v2m,na.rm=TRUE,from=0,
-								to=uut,n=uut*100)
-						#mv2m <- median(v2m,na.rm=TRUE)
-						mv2m <- dd$x[which.max(dd$y)]
-						if (is.finite(mv2m)) {correctwiththis <- correctwiththis*1/mv2m}
 					} else {
 						warning(paste("Normalization for reference sequence ",l,"not", 
 										"applicable, because of low number of segments"))
@@ -182,8 +195,7 @@ normalizeChromosomes <-
 						correctwiththis <- rep(1,ncol(X))
 					}
 					
-					
-					Ytmp <- t(t(Ytmp)*correctwiththis)
+					Ytmp <- Ytmp %*% diag(correctwiththis)
 					Ytmp[idxSG, ] <- 0
 					
 					Y[chrIdx, ] <- Ytmp

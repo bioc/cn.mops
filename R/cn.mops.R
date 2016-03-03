@@ -173,18 +173,24 @@
 #' Usually after less than 15 cycles convergence is reached. Default = 20.
 #' @param parallel How many cores are used for the computation. If set to zero
 #' than no parallelization is applied. Default = 0.
-#' @param normType Mode of the normalization technique. Possible values are 
-#' "mean","min","median","quant", "poisson" and "mode". 
-#' Read counts will be scaled sample-wise. Default = "poisson".
-#' @param normQu Real value between 0 and 1.  
-#' If the "normType" parameter is set to "quant" then this parameter sets the 
-#' quantile that is used for the normalization. Default = 0.25. 
 #' @param norm The normalization strategy to be used. 
 #' If set to 0 the read counts are not normalized and cn.mops does not model 
 #' different coverages. 
 #' If set to 1 the read counts are normalized. 
 #' If set to 2 the read counts are not normalized and cn.mops models different
 #' coverages. (Default=1).
+#' @param normType Mode of the normalization technique. Possible values are 
+#' "mean","min","median","quant", "poisson" and "mode". 
+#' Read counts will be scaled sample-wise. Default = "poisson".
+#' @param sizeFactor  By this parameter one can decide to how the size factors 
+#' are calculated.
+#' Possible choices are the the mean, median or mode coverage ("mean", "median", "mode") or any quantile 
+#' ("quant").
+#' @param normQu Real value between 0 and 1.  
+#' If the "normType" parameter is set to "quant" then this parameter sets the 
+#' quantile that is used for the normalization. Default = 0.25. 
+#' @param quSizeFactor Quantile of the sizeFactor if sizeFactor is set to "quant".
+#' 0.75 corresponds to "upper quartile normalization". Real value between 0 and 1. Default = 0.75.
 #' @param upperThreshold Positive real value that sets the cut-off for copy
 #' number gains. All CNV calling values above this value will be called as 
 #' "gain". The value should be set close to the log2 of the expected foldchange
@@ -227,7 +233,7 @@
 cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		classes=c("CN0","CN1","CN2","CN3","CN4","CN5","CN6","CN7","CN8"),
 		priorImpact = 1,cyc = 20,parallel=0,
-		normType="poisson",normQu=0.25,norm=1,
+		norm=1, normType="poisson",sizeFactor="mean",normQu=0.25, quSizeFactor=0.75,
 		upperThreshold=0.5,lowerThreshold=-0.9,
 		minWidth=3,segAlgorithm="fast",minReadCount=5,useMedian=FALSE,
 		returnPosterior=FALSE,...){
@@ -236,7 +242,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	############ check input ##################################################
 	if(class(input)=="GRanges"){
 		inputType <- "GRanges"
-		input <- IRanges::sort(input)
+		input <- sortSeqlevels(input)
 		X <- IRanges::as.matrix(IRanges::values(input))
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")
@@ -365,10 +371,12 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		cov <- rep(1,N)
 	} else if (norm==1) {
 		message("Normalizing...")
-		X.norm <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)
+		X.norm <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu,
+				sizeFactor=sizeFactor,quSizeFactor=quSizeFactor)
 		cov <- rep(1,N)
 	} else if (norm==2) {
-		X.viz <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu)		
+		X.viz <- normalizeChromosomes(X,chr=chr,normType=normType,qu=normQu,
+				sizeFactor=sizeFactor,quSizeFactor=quSizeFactor)
 		X.norm <- X
 		# robust estimates for the different coverages
 		cov <- apply(X.norm,2,function(x) {

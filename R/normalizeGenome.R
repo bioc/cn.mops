@@ -11,20 +11,21 @@
 #' columns are interpreted as samples and rows as genomic regions. An entry is
 #' the read count of a sample in the genomic region.  Alternatively this can be
 #' a GRanges object containing the read counts as values.
-#' @param normType normType Type of the normalization technique.
-#' Each samples' read counts
-#' are scaled such that the total number of reads is equal after normalization.
-#' By this parameter one can decide to which coverage (i.e. total reads) the 
-#' read counts should be normalized. Possible choices are the minimal coverage 
-#' ("min"), the mean or median coverage ("mean", "median") or any quantile 
-#' ("quant"). If this parameter is set to the value "mode", 
+#' @param normType Type of the normalization technique. Each samples'
+#' read counts are scaled such that the total number of reads are comparable across 
+#' samples.
+#' If this parameter is set to the value "mode", 
 #' the read counts are scaled such that each samples'
-#' most frequent value (the "mode") is equal after normalization. If the
-#' parameter is set to "poisson" the values are scaled such that the 
-#' distribution is (rowwise) close to a Poisson distribution.
-#' Possible values are "mean","min","median","quant","poisson, and "mode". 
+#' most frequent value (the "mode") is equal after normalization. 
+#' Accordingly for the other options are "mean","median","poisson", "quant", and "mode". 
 #' Default = "poisson".
-#' @param qu Real value between 0 and 1. Default = 0.25.
+#' @param sizeFactor  By this parameter one can decide to how the size factors 
+#' are calculated.
+#' Possible choices are the the mean, median or mode coverage ("mean", "median", "mode") or any quantile 
+#' ("quant").
+#' @param qu Quantile of the normType if normType is set to "quant" .Real value between 0 and 1. Default = 0.25.
+#' @param quSizeFactor Quantile of the sizeFactor if sizeFactor is set to "quant".
+#' 0.75 corresponds to "upper quartile normalization". Real value between 0 and 1. Default = 0.75.
 #' @param ploidy An integer value for each sample or each column in the read
 #' count matrix. At least two samples must have a ploidy of 2. Default = "missing".
 #' @examples 
@@ -37,15 +38,17 @@
 
 
 
-normalizeGenome <- function(X,normType="poisson",qu=0.25,ploidy){
+normalizeGenome <- function(X,normType="poisson", sizeFactor="mean", qu=0.25, quSizeFactor=0.75, ploidy){
 	if (class(X)=="GRanges"){
 		X.counts <- as.matrix(values(X))
 		chr <- rep("Chr",nrow(X.counts))
-		YY <- normalizeChromosomes(X.counts, chr=chr, normType=normType,qu=qu,ploidy=ploidy)
+		YY <- normalizeChromosomes(X.counts, chr=chr, normType=normType, 
+				sizeFactor=sizeFactor, qu=qu, quSizeFactor=quSizeFactor, ploidy=ploidy)
 		values(X) <- YY
 		return(X)
 	} else {
-		YY <- normalizeChromosomes(X,normType=normType,qu=qu,ploidy=ploidy)
+		YY <- normalizeChromosomes(X,normType=normType, 
+				sizeFactor=sizeFactor, qu=qu, quSizeFactor=quSizeFactor, ploidy=ploidy)
 		return(YY)
 	}
 }

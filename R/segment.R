@@ -36,7 +36,6 @@
 #' segment(x)
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @return A data frame containing the segments.
-#' @importFrom IRanges sort
 #' @importFrom IRanges as.data.frame
 #' @importFrom IRanges setdiff
 #' @importFrom IRanges width
@@ -168,7 +167,7 @@ segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3,
 		irLoss <- IRanges::IRanges(dfLoss$start, dfLoss$end)
 		irLoss <- IRanges::reduce(irLoss)
 		
-		ir <- IRanges::sort(c(irAmp, irLoss))
+		ir <- sort(c(irAmp, irLoss))
 		ir <- ir[which(IRanges::width(ir)>=minSeg)]
 		
 		rm(irAmp, irLoss, dfAmp, dfLoss)    
