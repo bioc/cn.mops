@@ -62,7 +62,7 @@
 		expCN <- classes[apply(post.ik,2,function(x) which(x==max(x))[1] )]
 		
 		ini <- mean(abs(log2(I)) %*% alpha.ik)
-		ExpLogFoldChange <-  log2(I) %*%  post.ik
+		ExpLogFoldChange <-  as.vector(log2(I) %*%  post.ik)
 		params <- list(n,classes,I,priorImpact,cyc)
 		names(params) <- c("nclasses","classes","I","priorImpact","cyc")
 		l <-  list ("lambda"=lambda.est, "alpha"=alpha.est, "expectedCN"=expCN, 
@@ -102,7 +102,7 @@
 				alphaPrior)
 		expCN <- classes[apply(ret$alpha.ik,2,function(x) which(x==max(x))[1] )]
 		ini <- mean(abs(log2(I)) %*% ret$alpha.ik)
-		ExpLogFoldChange <-  log2(I) %*%  ret$alpha.ik
+		ExpLogFoldChange <-  as.vector(log2(I) %*%  ret$alpha.ik)
 		if (returnPosterior){
 			l <-  list ("lambda"=ret$lambda.est, "alpha"=ret$alpha.est, "expectedCN"=expCN, 
 					"sini"=ExpLogFoldChange, "ini"=ini, "post"=ret$alpha.ik)
