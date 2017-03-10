@@ -240,8 +240,8 @@ referencecn.mops <- function(cases,controls,
 		stop("GRanges object or read count matrix needed as input.")
 	}
 	
-	if (!all(isUnique(grAllRegions))) stop(paste("Genomic Ranges must be",
-						"unique. Check \"all(isUnique(input))\" and remove identical segments."))
+	#if (!all(isUnique(grAllRegions))) stop(paste("Genomic Ranges must be",
+	#					"unique. Check \"all(isUnique(input))\" and remove identical segments."))
 	
 	
 	if (any(X<0) | any(!is.finite(X))){
