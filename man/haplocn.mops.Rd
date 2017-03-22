@@ -107,4 +107,3 @@ haplocn.mops(XRanges[1:200, ],parallel=2)
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-

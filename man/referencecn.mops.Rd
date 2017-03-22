@@ -113,4 +113,3 @@ referencecn.mops(X[1:200, ],apply(X[1:200, ],1, median),parallel=2)
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-

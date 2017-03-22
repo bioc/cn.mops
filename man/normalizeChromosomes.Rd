@@ -55,4 +55,3 @@ X.norm <- normalizeChromosomes(X)
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-

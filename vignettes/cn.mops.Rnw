@@ -149,7 +149,7 @@ The whole pipeline will only take a few steps, if BAM files are available
 Section \ref{s:input}).
 <<eval=FALSE>>=
 BAMFiles <- list.files(pattern=".bam$")
-bamDataRanges <- getReadCountsFromBAM(BAMFiles,mode="paired")
+bamDataRanges <- getReadCountsFromBAM(BAMFiles)
 @
 
 \item Running the algorithm (also see Section \ref{s:cn.mops}).
@@ -233,7 +233,7 @@ functions for input formats other than BAM upon request:
 BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
 		full.names=TRUE)
 bamDataRanges <- getReadCountsFromBAM(BAMFiles,
-		sampleNames=paste("Sample",1:3),mode="unpaired")
+		sampleNames=paste("Sample",1:3))
 @
 
 In \verb+bamDataRanges+ you have now stored the genomic segments (left of the 
@@ -420,7 +420,7 @@ library(cn.mops)
 BAMFiles <- list.files(pattern=".bam$")
 segments <- read.table("targetRegions.bed",sep="\t",as.is=TRUE)
 gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
-X <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr,mode="unpaired")
+X <- getSegmentReadCountsFromBAM(BAMFiles,GR=gr)
 resCNMOPS <- exomecn.mops(X)
 resCNMOPS <- calcIntegerCopyNumbers(resCNMOPS)
 @
