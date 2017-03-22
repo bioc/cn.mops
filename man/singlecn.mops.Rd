@@ -105,4 +105,3 @@ singlecn.mops(XRanges[,1])
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-

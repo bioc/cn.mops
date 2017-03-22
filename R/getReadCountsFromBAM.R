@@ -1,195 +1,34 @@
 # Copyright (C) 2012 Klambauer Guenter 
 # <klambauer@bioinf.jku.at>
-.countBAM <- function(bamFile,sl,WL,mode,refSeqName,quiet=FALSE){		
-	if (!quiet){message("Reading file: ",bamFile)}
-	
-	
-	x <- c()
-	if (length(bamFile)>1){
-		stop("Single BAM file accepted as input.")
-	}
-	
-	indexed <- TRUE		
-	if (file.exists(paste(bamFile,".bai",sep=""))){
-		bamIndex <- paste(bamFile,"",sep="")
-	} else if (file.exists(gsub("bam$","bai",bamFile))) {
-		bamIndex <- gsub(".bam$","",bamFile)
-	} else {
-		indexed <- FALSE
-	}
-	
-	
-	if (indexed){
-		#message("Using the index of the BAM files.")
-		for (i in 1:length(refSeqName)){
-			refSeqTmp <- refSeqName[i]
-			if (!quiet){message(paste(" ",refSeqTmp)) }
-			gr <- GenomicRanges::GRanges(refSeqTmp,IRanges::IRanges(0,sl[i]))
-			if (mode=="paired"){
-				param <- Rsamtools::ScanBamParam(
-						Rsamtools::scanBamFlag(isPaired = TRUE,
-								isFirstMateRead=TRUE,
-								isProperPair=TRUE),
-						what=c("pos","mpos"),which=gr)
-				#which=IRanges::RangesList(refSeqName))
-				readPos <-Rsamtools::scanBam(bamFile,param=param,index=bamIndex)[[1]]
-				pp <- ((readPos$pos+readPos$mpos)/2)
-				gapSize <- abs(readPos$pos-readPos$mpos)
-				rm("readPos")
-				ppFiltered <- pp[!(gapSize>5*median(gapSize,na.rm=TRUE)|
-									is.na(gapSize))]
-				ppFiltered <- ppFiltered[!is.na(ppFiltered)]
-			} else{
-				param <- Rsamtools::ScanBamParam(Rsamtools::scanBamFlag(
-								isPaired = FALSE),what=c("pos"),which=gr)
-				#which=IRanges::RangesList(refSeqName))
-				readPos <- Rsamtools::scanBam(bamFile,param=param,index=bamIndex)[[1]]
-				ppFiltered <- readPos$pos[!is.na(readPos$pos)]
-				rm("readPos")
-			}
-			if (length(ppFiltered)==0){
-				warning("No reads found in file: ",bamFile,"\n",
-						"You may have to change the mode to \"paired\" or",
-						"\"unpaired\"")
-			}
-			if (sl[i]%%WL!=1){
-				brkpts <- c(seq(1,sl[i],WL),sl[i])
-			} else{
-				brkpts <- seq(1,sl[i],WL)
-			}
-			if (any(ppFiltered>=sl[i])){
-				warning(paste("Some read positions are greater than",
-								"length of reference sequence! File: ",bamFile,"\n"))
-				ppFiltered <- ppFiltered[ppFiltered<sl[i]]
-			}
-			
-			x <- c(x,hist(ppFiltered,breaks=brkpts,plot=FALSE)$counts)
-			
-		}
-		if (!quiet){message("\n") }
-		
-	} else {
-		
-		if (mode=="paired"){
-			param <- Rsamtools::ScanBamParam(
-					Rsamtools::scanBamFlag(isPaired = TRUE,
-							isFirstMateRead=TRUE,
-							isProperPair=TRUE),
-					what=c("rname","pos","mpos"))
-			#which=IRanges::RangesList(refSeqName))
-			readPos <-Rsamtools::scanBam(bamFile,param=param)[[1]]
-			
-			for (i in 1:length(refSeqName)){
-				refSeqTmp <- refSeqName[i]
-				if (!quiet){message(paste(" ",refSeqTmp)) }
-				
-				readPosIdx <- (readPos$rname==refSeqTmp)
-				tpos <- readPos$pos[readPosIdx]
-				tmpos <- readPos$mpos[readPosIdx]
-				pp <- ((tpos+tmpos)/2)
-				gapSize <- abs(tpos-tmpos)
-				ppFiltered <- pp[!(gapSize>5*median(gapSize,na.rm=TRUE)|
-									is.na(gapSize))]
-				ppFiltered <- ppFiltered[!is.na(ppFiltered)]
-				
-				if (length(ppFiltered)==0){
-					warning("No reads found in file: ",bamFile,"\n",
-							"You may have to change the mode to \"paired\" or",
-							"\"unpaired\"")
-				}
-				if (sl[i]%%WL!=1){
-					brkpts <- c(seq(1,sl[i],WL),sl[i])
-				} else{
-					brkpts <- seq(1,sl[i],WL)
-				}
-				if (any(ppFiltered>=sl[i])){
-					warning(paste("Some read positions are greater than",
-									"length of reference sequence! File: ",bamFile,"\n"))
-					ppFiltered <- ppFiltered[ppFiltered<sl[i]]
-				}
-				
-				x <- c(x,hist(ppFiltered,breaks=brkpts,plot=FALSE)$counts)
-			}
-			if (!quiet){message("\n")}
-			
-		} else{
-			#message("No indices for the BAM files found.")
-			
-			param <- Rsamtools::ScanBamParam(Rsamtools::scanBamFlag(
-							isPaired = FALSE),what=c("rname","pos"))
-			#which=IRanges::RangesList(refSeqName))
-			readPos <- Rsamtools::scanBam(bamFile,param=param)[[1]]
-			
-			
-			for (i in 1:length(refSeqName)){
-				refSeqTmp <- refSeqName[i]
-				if (!quiet){message(paste(" ",refSeqTmp)) }
-				
-				
-				readPosIdx <- (readPos$rname==refSeqTmp)
-				tpos <- readPos$pos[readPosIdx] 
-				ppFiltered <- tpos[!is.na(tpos)]
-				
-				if (length(ppFiltered)==0){
-					warning("No reads found in file: ",bamFile,"\n",
-							"You may have to change the mode to \"paired\" or",
-							"\"unpaired\"")
-				}
-				if (sl[i]%%WL!=1){
-					brkpts <- c(seq(1,sl[i],WL),sl[i])
-				} else{
-					brkpts <- seq(1,sl[i],WL)
-				}
-				if (any(ppFiltered>=sl[i])){
-					#browser()
-					warning(paste("Some read positions are greater than",
-									"length of reference sequence! File: ",bamFile,"\n"))
-					ppFiltered <- ppFiltered[ppFiltered<sl[i]]
-				}
-				
-				x <- c(x,hist(ppFiltered,breaks=brkpts,plot=FALSE)$counts)
-				
-			}
-			if (!quiet){message("\n")}
-			
-		}
-	}
-	
-	return(x)
-}
-
 
 #' @title Calculation of read counts from BAM files.
 #' @description Generates the read counts from BAM Files. 
 #' These counts are necessary for CNV detection methods based
 #' on depth of coverage information.
-#' Note that the function is much faster, if the BAM files have an index file.
-#' The index file is assumed to be in the same folder and have an identical
-#' file name except that ".bai" is appended.
 #' 
 #' This function can also be run in a parallel version.
 #' 
 #' @param BAMFiles BAMFiles
 #' @param sampleNames The corresponding sample names to the BAM Files. 
-#' @param refSeqName Name of the reference sequence that should be analyzed.
+#' @param refSeqNames Names of the reference sequence that should be analyzed.
 #' The name must appear in the header of the BAM file. If it is not given
 #' the function will select the first reference sequence that appears in the
-#' header of the BAM files.
+#' header of the BAM files. Can be set to analyze multipe chromosomes at once, 
+#' e.g. refSeqNames=c("chr1","chr2")
 #' @param WL Windowlength. Length of the initial segmentation of the genome in
 #' basepairs. Should be chosen such that on the average 100 reads are contained
-#' in each segment. If not given, cn.mops will try to find an appropiate window 
-#' length.
-#' @param mode Possible values are "paired" and "unpaired", whether the mapping 
-#' algorithm was using a "paired" or "unpaired" strategy.
+#' in each segment. 
 #' @param parallel The number of parallel processes to be used for this function.
 #' Default=0.
+#' @param ... Additional parameters passed to the function "countBamInGRanges" 
+#' of the Bioconductor package "exomeCopy". Quality filters for read counts can 
+#' be adjusted there. Please see "??countBamInGRanges" for more information.
 #' @examples 
-#' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",
-#' 	full.names=TRUE)
+#' BAMFiles <- list.files(system.file("extdata", package="cn.mops"),pattern=".bam$",full.names=TRUE)
 #' bamDataRanges <- getReadCountsFromBAM(BAMFiles,
-#' 					sampleNames=paste("Sample",1:3),WL=5000,mode="unpaired")
+#' 					sampleNames=paste("Sample",1:3),WL=5000)
 #' X <- getReadCountsFromBAM(BAMFiles,
-#' 					sampleNames=paste("Sample",1:3),WL=5000,mode="unpaired",parallel=2)
+#' 					sampleNames=paste("Sample",1:3),WL=5000,parallel=2)
 #' @return An instance of "GRanges", that contains the breakpoints of the 
 #' initial segments and the raw read counts that were extracted from the BAM
 #' files. This object can be used as input for cn.mops and other CNV detection
@@ -202,20 +41,12 @@
 #' @importFrom parallel clusterEvalQ
 #' @importFrom parallel parApply
 #' @importFrom parallel stopCluster 
+#' @importFrom exomeCopy countBamInGRanges
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
 
-getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
-		mode,parallel=0){
-	
-	if (missing(mode)){
-		stop("Parameter \"mode\" must be \"paired\" or \"unpaired\"!")
-	}
-	
-	if ((!(mode %in% c("paired","unpaired"))) ){
-		stop("Mode parameter must be \"paired\" or \"unpaired\"!")
-	}
+getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqNames, WL=25000,parallel=0,...){
 	
 	if (missing(sampleNames)){
 		sampleNames <- basename(BAMFiles)	
@@ -231,29 +62,22 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	message(paste("Identified the following reference sequences: ",
 					paste(unique(unlist(sn)),collapse=",")   ))
 	
-	if (missing(refSeqName)){
-		refSeqName <- unique(unlist(sn))[1]
-		message(paste("Missing \"refSeqName\"! Selecting",refSeqName,
-						"as reference sequence."))
+	if (missing(refSeqNames)){
+		#refSeqNames <- unique(unlist(sn))[1]
+		refSeqNames <- unique(unlist(sn))
+		message(paste("Missing \"refSeqNames\"! Selecting all identified reference sequence for analysis."))
 	} else{
-		message("Using ",paste(refSeqName,collapse=", ")," as reference.")
+		message("Using ",paste(refSeqNames,collapse=", ")," as reference.")
 	}
 	
-	if (all(file.exists(paste(BAMFiles,".bai",sep="")))){
-		message("Using indexed BAM files.")
-	} else if (all(file.exists(gsub("bam$","bai",BAMFiles)))){
-		message("Using indexed BAM files.")
-	} else {
-		message("Note that this function is much faster, if the indices of ",
-				"the BAM files are present.")
-	}
+	message("\n PLEASE BE PATIENT... this might take a while. Consider using the parallel version of this function\n")
 	
-	if (!(all(refSeqName %in% unique(unlist(sn))))){
-		stop("RefSeqName does not match identified reference sequences.")
+	if (!(all(refSeqNames %in% unique(unlist(sn))))){
+		stop("RefSeqNames does not match identified reference sequences.")
 	}
 	
 	if (any(is.na(sn))){
-		stop(paste(refSeqName,"does not appear in header!"))}
+		stop(paste(refSeqNames,"does not appear in header!"))}
 	
 	if (length(targets)>1){
 		for (i in 2:length(targets)){
@@ -266,40 +90,45 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	}
 	
 	
-	nidx <- match(refSeqName,sn)
-	sn <- sn[nidx]
-	sl <- sl[nidx]
-	
+	nidx <- match(refSeqNames,sn)
+	sn <- sn[nidx]  # sequence names
+	sl <- sl[nidx]  # sequence lengths
 	sl <- as.integer(unique(sl))
+	m <- length(sn)  # number of sequences
 	
-	if (missing(WL)){
-		message(paste("Missing \"WL\"! cn.mops will suggest an",
-						"appropiate value for the window length."))
-		sampleNames <- sampleNames[order(file.info(BAMFiles)$size)]
-		BAMFiles <- BAMFiles[order(file.info(BAMFiles)$size)]
-		xs <- sum(.countBAM(BAMFiles[1],sl=sl,WL=min(sl),mode=mode,
-						refSeqName=refSeqName,quiet=TRUE))
-		if (xs==0){
-			message(paste("It is not possible calculate an appropiate",
-							"window length - no reads map to that reference."))
-			WL <- 25000
-		} else{
-			WL <- max(round(100*sum(sl)/(xs),-3),100)
+	# assembling GRanges
+	
+	GR <- GRanges()
+	for (i in 1:m){
+		if (WL >= sl[i]){
+			tmpGr <- GRanges(sn[i],IRanges(0,sl[i]))
+			GenomeInfoDb::seqlevels(tmpGr) <- sn
+			
+		} else {
+			if (sl[i] %% WL ==0) sl[i] <- sl[i] - 1
+			tmpBrkpts1 <- seq(0,sl[i],WL)+1
+			tmpBrkpts2 <- c(seq(WL,sl[i],WL),sl[i])
+			tmpGr <- GRanges(rep(sn[i],length(tmpBrkpts1)),IRanges(tmpBrkpts1,tmpBrkpts2)) 
+			GenomeInfoDb::seqlevels(tmpGr) <- sn
 		}
-		message("Window length set to: ",WL)
+		GR <- c(GR,tmpGr)
 	}
 	
+	
+	
+	# counting 
+	
 	if (parallel==0){
-		XL <- lapply(BAMFiles,.countBAM,sl=sl,WL=WL,mode=mode,
-				refSeqName=refSeqName)
+		XL <- list()
+		for (i in 1:length(BAMFiles)){
+			XL[[i]] <- exomeCopy::countBamInGRanges(bam.file=BAMFiles[i],granges=GR,...)
+		}
 		
 	} else {
 		message("Using parallel version of this function.")
 		cl <- parallel::makeCluster(as.integer(parallel),type="SOCK")
-		parallel::clusterEvalQ(cl,".countBAM")
-		XL <- parallel::parLapply(cl,BAMFiles,.countBAM,sl=sl,WL=WL,mode=mode,
-				refSeqName=refSeqName)	
-		parallel::stopCluster(cl)
+		parallel::clusterEvalQ(cl,"exomeCopy::countBamInGRanges")
+		XL <- parallel::parLapply(cl,BAMFiles,exomeCopy::countBamInGRanges,granges=GR,...)
 	}
 	
 	if (length(BAMFiles)==1){
@@ -307,43 +136,15 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqName,WL,
 	} else	{X <- do.call("cbind",XL)}
 	colnames(X) <- BAMFiles
 	
-	ir <- IRanges::IRanges()
-	chrv <- c()
-	rn <- c()
-	
-	for (i in 1:length(refSeqName)){
-		if (sl[i]%%WL!=1){
-			brkpts <- c(seq(1,sl[i],WL),sl[i])
-		} else{
-			brkpts <- seq(1,sl[i],WL)
-		}
-#	browser()
 		
-		nSegm <- length(brkpts)
-		#rn <- c(rn,paste(refSeqName[i],"_",brkpts[1:(nSegm-1)],"_",
-		#				brkpts[2:(nSegm)]-1,sep=""))
-		
-		ir <- c(ir,IRanges::IRanges(start=brkpts[1:(nSegm-1)],
-						end=brkpts[2:(nSegm)]-1))
-		
-		chrv <- c(chrv,rep(refSeqName[i],nSegm-1))
-	}
-	#rownames(X) <- rn
-	
-	#browser()
 	mode(X) <- "integer"
 	
-	#gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir,sampleNames=X)
-	gr <- GenomicRanges::GRanges(seqnames=chrv, ranges = ir)
-	
 	colnames(X) <- sampleNames
-	IRanges::values(gr) <- X
-	#names(gr@elementMetadata@listData) <- sampleNames
-	#IRanges::colnames(IRanges::elementMetadata(gr)) <- sampleNames
+	IRanges::values(GR) <- X
 	
 	
-	gr <- sortSeqlevels(gr)
-	GenomeInfoDb::seqlengths(gr) <- targets[[1]][match(seqlevels(gr),names(targets[[1]]))]
+	GR <- sortSeqlevels(GR)
+	GenomeInfoDb::seqlengths(GR) <- targets[[1]][match(GenomeInfoDb::seqlevels(GR),names(targets[[1]]))]
 	
-	return(gr)
+	return(GR)
 }

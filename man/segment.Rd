@@ -55,4 +55,3 @@ segment(x)
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-

@@ -88,4 +88,3 @@ segplot(r,sampleIdx=1)
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-

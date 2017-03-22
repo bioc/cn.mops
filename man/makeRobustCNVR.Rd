@@ -52,4 +52,3 @@ rr <- calcIntegerCopyNumbers(makeRobustCNVR(r,robust=0.1,minWidth=3))
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-

@@ -18,13 +18,13 @@ Description: cn.mops (Copy Number estimation by a Mixture Of PoissonS)
     guarantees a low FDR because wrong detections are indicated by
     high noise and filtered out. cn.mops is very fast and written
     in C++.
-Version: 1.21.2
+Version: 1.21.3
 Date: 2017-03-10
 URL: http://www.bioinf.jku.at/software/cnmops/cnmops.html
 Depends: R (>= 2.12), methods, utils, stats, graphics, parallel, GenomicRanges
-Imports: BiocGenerics, Biobase, IRanges, Rsamtools, GenomeInfoDb, S4Vectors
+Imports: BiocGenerics, Biobase, IRanges, Rsamtools, GenomeInfoDb, S4Vectors, exomeCopy
 Suggests: DNAcopy
 LazyLoad: yes
 biocViews: Sequencing, CopyNumberVariation, Homo_sapiens,
     CellBiology,  HapMap, Genetics
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

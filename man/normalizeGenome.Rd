@@ -51,4 +51,3 @@ X.norm <- normalizeGenome(X)
 \author{
 Guenter Klambauer \email{klambauer@bioinf.jku.at}
 }
-
