@@ -28,4 +28,3 @@ LazyLoad: yes
 biocViews: Sequencing, CopyNumberVariation, Homo_sapiens,
     CellBiology,  HapMap, Genetics
 RoxygenNote: 6.0.1
-PackageStatus: Deprecated
