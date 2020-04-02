@@ -177,7 +177,7 @@ referencecn.mops <- function(cases,controls,
 	if (is.vector(controls))
 		controls <- matrix(controls,ncol=1)
 	
-	if(class(cases)=="GRanges" & class(controls)=="GRanges"){
+	if(any(class(cases)=="GRanges") & any(class(controls)=="GRanges")){
 		inputType <- "GRanges"
 		cases <- sortSeqlevels(cases)
 		controls <- sortSeqlevels(controls)

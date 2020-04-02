@@ -68,11 +68,11 @@ normalizeChromosomes <- function(X, chr, normType="poisson", sizeFactor="mean",
 						"\"median\", \"quant\" or \"mode\"."))
 	}
 	input <- X
-	if (!(is.matrix(input)|class(input)=="GRanges")){
+	if (!(is.matrix(input)|any(class(input)=="GRanges"))){
 		stop("Input data must be matrix or GRanges object!")
 	}
 	returnGRanges <- FALSE
-	if(class(X)=="GRanges"){
+	if(any(class(X)=="GRanges")){
 		returnGRanges <- TRUE
 		X <- IRanges::as.matrix(IRanges::values(X)) 	
 	}	
@@ -81,7 +81,7 @@ normalizeChromosomes <- function(X, chr, normType="poisson", sizeFactor="mean",
 	if (missing(chr) & is.matrix(input)){
 		chr <- rep("undef",nrow(X))
 	}
-	if (missing(chr) & class(input)=="GRanges"){
+	if (missing(chr) & any(class(input)=="GRanges")){
 		chr <- as.character(seqnames(input))
 	}
 	if (missing(ploidy)){

@@ -173,7 +173,7 @@ singlecn.mops <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 		end <- 1:nrow(X)
 		rownames(X) <- paste(chr,start,end,sep="_")
 		
-	} else if(class(x)=="GRanges"){
+	} else if(any(class(X)=="GRanges")){
 	
 		inputType <- "GRanges"
 		x <- sortSeqlevels(x)

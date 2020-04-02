@@ -254,7 +254,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	#browser()
 	
 	############ check input ##################################################
-	if(class(input)=="GRanges"){
+	if(any(class(input)=="GRanges")){
 		inputType <- "GRanges"
 		input <- sortSeqlevels(input)
 		X <- IRanges::as.matrix(IRanges::values(input))
