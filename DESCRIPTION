@@ -27,4 +27,4 @@ Suggests: DNAcopy
 LazyLoad: yes
 biocViews: Sequencing, CopyNumberVariation, Homo_sapiens,
     CellBiology,  HapMap, Genetics
-RoxygenNote: 6.0.1
+RoxygenNote: 7.1.0

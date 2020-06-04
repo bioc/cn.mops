@@ -37,6 +37,7 @@ Linz\\Altenberger Str. 69, 4040 Linz, Austria\\
 \SweaveOpts{eps=FALSE}
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 <<echo=FALSE>>=
 options(width=75)
 set.seed(0)

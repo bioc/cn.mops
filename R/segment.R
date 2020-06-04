@@ -158,21 +158,22 @@ segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3,
 	} else {
 		#browser()
 		#message("Merging segments.")
+
 		dfAmp <- df[which(df$median > segMedianT[1]), ]
 		irAmp <- IRanges::IRanges(dfAmp$start, dfAmp$end)
 		irAmp <- IRanges::reduce(irAmp)
-		
+
 		dfLoss <- df[which(df$median < segMedianT[2]), ]
 		irLoss <- IRanges::IRanges(dfLoss$start, dfLoss$end)
 		irLoss <- IRanges::reduce(irLoss)
-		
-		ir <- sort(c(irAmp, irLoss))
+
+		ir <- BiocGenerics::sort(c(irAmp, irLoss))
 		ir <- ir[which(IRanges::width(ir)>=minSeg)]
-		
+
 		rm(irAmp, irLoss, dfAmp, dfLoss)    
 		
 		irAll <- IRanges(1, length(x))
-		segsFinal <- as.data.frame(sort(
+		segsFinal <- as.data.frame(BiocGenerics::sort(
 						c(ir, IRanges::setdiff(irAll, ir))))
 		
 		bIdx <- c(0,segsFinal$end)
@@ -182,10 +183,9 @@ segment <- function(x, alpha=.05, segMedianT=NULL, minSeg=3,
 							mean(x[((bIdx[i-1]+1):bIdx[i])]))
 				}
 		)
-		
+
 		df2 <- data.frame("start"=segsFinal$start, "end"=segsFinal$end, 
 				"mean"=avgs[2, ], "median"=avgs[1, ])
-		
 		
 		return(df2)
 	}
