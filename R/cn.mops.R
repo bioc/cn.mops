@@ -693,7 +693,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 										end(inputChr)[segDfChr$end]))
 					}
 				}
-				r@segmentation 			<- GRanges(seqnames=segDf$chr,
+				r@segmentation <- GRanges(seqnames=segDf$chr,
 						irS, seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)
@@ -733,14 +733,14 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 										end(inputChr)[segDfChr$end]))
 					}
 				}
-				r@segmentation 			<- GRanges(seqnames=segDf$chr,
+				r@segmentation <- GRanges(seqnames=segDf$chr,
 						irS, seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN )
 				r@segmentation <- sortSeqlevels(r@segmentation) 
 				
 			} else if (inputType=="DataMatrix"){
-				r@segmentation 			<- GRanges(seqnames=segDf$chr,
+				r@segmentation <- GRanges(seqnames=segDf$chr,
 						IRanges(segDf$start,segDf$end), seqinfo=seqinfo(grAllRegions),
 						"sampleName"=segDf$sample,"median"=segDf$median,
 						"mean"=segDf$mean,"CN"=segDf$CN)

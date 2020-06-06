@@ -40,6 +40,7 @@
 #' @importFrom IRanges setdiff
 #' @importFrom IRanges width
 #' @importFrom IRanges IRanges
+#' @importFrom BiocGenerics sort
 #' @export
 #' @useDynLib cn.mops
 
