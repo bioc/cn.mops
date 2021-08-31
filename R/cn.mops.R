@@ -229,8 +229,8 @@
 #' @importFrom parallel parApply
 #' @importFrom parallel stopCluster 
 #' @importFrom GenomicRanges GRanges reduce values values<-
-#' @importFrom IRanges as.matrix values unique IRanges reduce ranges
-#' @importFrom S4Vectors subjectHits
+#' @importFrom IRanges as.matrix unique IRanges reduce ranges
+#' @importFrom S4Vectors subjectHits values mcols
 #' @importFrom grDevices dev.cur dev.interactive dev.new
 #' @importFrom GenomeInfoDb seqlevels sortSeqlevels seqnames seqinfo seqlengths
 #' @importFrom BiocGenerics strand start end
@@ -257,7 +257,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	if(any(class(input)=="GRanges")){
 		inputType <- "GRanges"
 		input <- sortSeqlevels(input)
-		X <- IRanges::as.matrix(IRanges::values(input))
+		X <- as.matrix(mcols(input))
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")
 		}
@@ -667,7 +667,7 @@ cn.mops <- function(input,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 			
 			cnvr <- GRanges(seqnames=seqnames(cnvrR),irCNVR, seqinfo=seqinfo(grAllRegions))
 			cnvr <-  sortSeqlevels(cnvr)
-			GenomicRanges::values(cnvr) <- cnvrCN
+			mcols(cnvr) <- cnvrCN
 			
 			if (norm==2){
 				r@normalizedData    <- X.viz		

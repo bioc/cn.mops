@@ -43,7 +43,7 @@
 	R <- log2(R)
 	gr <- normalizedData(mopsres)
 	colnames(R) <-  unique(as.character(
-					IRanges::values(segmentation(mopsres))$sampleName))
+					mcols(segmentation(mopsres))$sampleName))
 	values(gr) <- R
 	return(gr)
 }
@@ -274,8 +274,8 @@ setMethod("segplot",
 				
 				r@segmentation <- segmentation(r)[idx]
 				#nd <- normalizedData(r)
-				#IRanges::values(nd) <- IRanges::values(nd)[,sampleIdx]
-				#IRanges::colnames(IRanges::values(nd)) <- sn[sampleIdx]
+				#values(nd) <- values(nd)[,sampleIdx]
+				#colnames(values(nd)) <- sn[sampleIdx]
 				r@normalizedData <- r@normalizedData[ ,sampleIdx,drop=FALSE]
 				
 				

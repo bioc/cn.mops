@@ -40,11 +40,11 @@
 
 normalizeGenome <- function(X,normType="poisson", sizeFactor="mean", qu=0.25, quSizeFactor=0.75, ploidy){
 	if (any(class(X)=="GRanges")){
-		X.counts <- as.matrix(values(X))
+		X.counts <- as.matrix(mcols(X))
 		chr <- rep("Chr",nrow(X.counts))
 		YY <- normalizeChromosomes(X.counts, chr=chr, normType=normType, 
 				sizeFactor=sizeFactor, qu=qu, quSizeFactor=quSizeFactor, ploidy=ploidy)
-		values(X) <- YY
+		mcols(X) <- YY
 		return(X)
 	} else {
 		YY <- normalizeChromosomes(X,normType=normType, 

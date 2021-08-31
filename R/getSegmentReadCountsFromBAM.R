@@ -80,7 +80,7 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,parallel=0,...){
 	mode(X) <- "integer"
 	colnames(X) <- sampleNames
 	
-	IRanges::values(GR) <- X
+	mcols(GR) <- X
 #names(gr@elementMetadata@listData) <- sampleNames
 #IRanges::colnames(IRanges::elementMetadata(GR)) <- sampleNames
 #gr <- GRanges(GenomicRanges::seqnames(GR),IRanges::ranges(GR),

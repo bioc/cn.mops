@@ -177,9 +177,9 @@ singlecn.mops <- function(x,I = c(0.025,0.5,1,1.5,2,2.5,3,3.5,4),
 	
 		inputType <- "GRanges"
 		x <- sortSeqlevels(x)
-		X <- IRanges::as.matrix(IRanges::values(x))
+		X <- as.matrix(mcols(x))
 		
-		if (ncol(as.matrix(values(x)))!=1){
+		if (ncol(as.matrix(mcols(x)))!=1){
 			stop("More than one sample detected. Use standard cn.mops!")
 		}
 		if (length(IRanges::unique(strand(x))) >1){

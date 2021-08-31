@@ -140,7 +140,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqNames, WL=25000,para
 	mode(X) <- "integer"
 	
 	colnames(X) <- sampleNames
-	IRanges::values(GR) <- X
+	mcols(GR) <- X
 	
 	
 	GR <- sortSeqlevels(GR)

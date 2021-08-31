@@ -196,8 +196,8 @@ referencecn.mops <- function(cases,controls,
 							"read counts independent of strand."))
 		}
 		
-		X <- IRanges::as.matrix(IRanges::values(cases))
-		R <- IRanges::as.matrix(IRanges::values(controls))
+		X <- as.matrix(mcols(cases))
+		R <- as.matrix(mcols(controls))
 		
 		
 		chr <- as.character(seqnames(cases))
@@ -622,7 +622,7 @@ referencecn.mops <- function(cases,controls,
 					seqinfo=seqinfo(grAllRegions))
 			cnvr <- sortSeqlevels(cnvr)
 			
-			GenomicRanges::values(cnvr) <- cnvrCN
+			mcols(cnvr) <- cnvrCN
 			
 			if (norm==2){
 				r@normalizedData    <- X.viz		

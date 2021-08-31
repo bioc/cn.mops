@@ -16,6 +16,7 @@
 #' @importFrom IRanges as.list
 #' @importFrom IRanges as.matrix
 #' @importFrom GenomicRanges values
+#' @importFrom GenomicRanges mcols
 
 
 setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
@@ -59,7 +60,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs,type="within"))
 			
 			
-			tmpIdx <- which(values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
+			tmpIdx <- which(mcols(segmentation)$sampleName[csM[,1]]==mcols(cnvs)$sampleName[csM[,2]])
 			csM <- csM[tmpIdx, ,drop=FALSE]
 			
 			# check again for equality
@@ -104,7 +105,7 @@ setMethod("calcIntegerCopyNumbers", signature="CNVDetectionResult",
 			CN2 <- matrix(CN2,ncol=ncol(X))
 			colnames(CN2) <- colnames(X)
 			extractedCN <- CN2[cbind(1:length(idx),
-							match(as.character(values(segmentation[idx])$sampleName),
+							match(as.character(mcols(segmentation[idx])$sampleName),
 									colnames(X)))]
 			
 			iCN[idx] <- extractedCN 

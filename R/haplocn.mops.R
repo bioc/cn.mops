@@ -198,7 +198,7 @@ haplocn.mops <- function(input,I = c(0.025,1,2,3,4,5,6,7,8),
 	if(any(class(input)=="GRanges")){
 		inputType <- "GRanges"
 		input <- sortSeqlevels(input)
-		X <- IRanges::as.matrix(IRanges::values(input))
+		X <- as.matrix(mcols(input))
 		
 		if (ncol(X)==1){
 			stop("It is not possible to run cn.mops on only ONE sample.\n")

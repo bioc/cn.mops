@@ -95,14 +95,14 @@ setMethod("calcFractionalCopyNumbers", signature="CNVDetectionResult",
 			CN <- matrix(CN,ncol=ncol(X))
 			colnames(CN) <- colnames(X)
 			resObject <- object
-			GenomicRanges::values(cnvr) <- CN
+			mcols(cnvr) <- CN
 			resObject@cnvr <- cnvr
 			
 			## now for individual CNVs and segmentation
 			#mapping from CNVs to segmentation
 			iCN <- rep(paste("CN",format(mainCN,nsmall=1),sep=""),length(segmentation))
 			csM <- IRanges::as.matrix(IRanges::findOverlaps(segmentation,cnvs,type="within"))
-			tmpIdx <- which(IRanges::values(segmentation)$sampleName[csM[,1]]==values(cnvs)$sampleName[csM[,2]])
+			tmpIdx <- which(mcols(segmentation)$sampleName[csM[,1]]==mcols(cnvs)$sampleName[csM[,2]])
 			csM <- csM[tmpIdx, ,drop=FALSE]
 			
 			M2 <- IRanges::as.data.frame(segmentation)
@@ -124,9 +124,9 @@ setMethod("calcFractionalCopyNumbers", signature="CNVDetectionResult",
 			}
 			
 			
-			GenomicRanges::values(segmentation)$CN <- CN2
+			mcols(segmentation)$CN <- CN2
 			
-			GenomicRanges::values(cnvs)$CN <- CN2[csM[,1]]
+			mcols(cnvs)$CN <- CN2[csM[,1]]
 			resObject@cnvs <- cnvs
 			resObject@segmentation <- segmentation
 			

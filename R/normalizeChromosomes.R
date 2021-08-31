@@ -74,7 +74,7 @@ normalizeChromosomes <- function(X, chr, normType="poisson", sizeFactor="mean",
 	returnGRanges <- FALSE
 	if(any(class(X)=="GRanges")){
 		returnGRanges <- TRUE
-		X <- IRanges::as.matrix(IRanges::values(X)) 	
+		X <- as.matrix(mcols(X)) 	
 	}	
 	if (is.vector(X)){X <- matrix(X,nrow=1)}
 	
@@ -224,7 +224,7 @@ normalizeChromosomes <- function(X, chr, normType="poisson", sizeFactor="mean",
 	colnames(YY) <- colnames(Xorig)
 	
 	if (returnGRanges){
-		values(input) <- YY
+		mcols(input) <- YY
 		return(input)
 	} else {
 		return(YY)

@@ -1,6 +1,5 @@
 Package: cn.mops
-Maintainer: Gundula Povysil <povysil@bioinf.jku.at>
-Author: Guenter Klambauer
+Authors@R: c(person(given = "Guenter", family = "Klambauer", role = "aut"), person(given = "Gundula", family = "Povysil", role = "cre", email = "povysil@bioinf.jku.at"))
 License: LGPL (>= 2.0)
 Type: Package
 Title: cn.mops - Mixture of Poissons for CNV detection in NGS data
@@ -27,4 +26,4 @@ Suggests: DNAcopy
 LazyLoad: yes
 biocViews: Sequencing, CopyNumberVariation, Homo_sapiens,
     CellBiology,  HapMap, Genetics
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
