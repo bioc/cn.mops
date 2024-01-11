@@ -32,7 +32,6 @@
 #' @importFrom parallel clusterEvalQ
 #' @importFrom parallel parApply
 #' @importFrom parallel stopCluster 
-#' @importFrom exomeCopy countBamInGRanges
 #' @author Guenter Klambauer \email{klambauer@@bioinf.jku.at}
 #' @export
 
@@ -57,14 +56,14 @@ getSegmentReadCountsFromBAM <- function(BAMFiles,GR,sampleNames,parallel=0,...){
 	if (parallel==0){
 		for (i in 1:length(BAMFiles)){
 			message("Processing ",BAMFiles[i])
-			X[,i] <- exomeCopy::countBamInGRanges(bam.file=BAMFiles[i],granges=GR,...)
+			X[,i] <- countBamInGRanges(bam.file=BAMFiles[i],granges=GR,...)
 			
 		}	
 	} else {
 		message("Using parallel version of this function.")
 		cl <- parallel::makeCluster(as.integer(parallel),type="SOCK")
-		parallel::clusterEvalQ(cl,"exomeCopy::countBamInGRanges")
-		XL <- parallel::parLapply(cl,BAMFiles,exomeCopy::countBamInGRanges,granges=GR,...)
+		parallel::clusterEvalQ(cl,"countBamInGRanges")
+		XL <- parallel::parLapply(cl,BAMFiles,countBamInGRanges,granges=GR,...)
 		
 		parallel::stopCluster(cl)
 		for (i in 1:length(BAMFiles)){
