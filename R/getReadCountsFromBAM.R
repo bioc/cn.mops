@@ -37,6 +37,7 @@
 #' @importFrom Rsamtools ScanBamParam
 #' @importFrom Rsamtools scanBamFlag
 #' @importFrom Rsamtools scanBam
+#' @importFrom BiocGenerics strand
 #' @importFrom parallel makeCluster
 #' @importFrom parallel clusterEvalQ
 #' @importFrom parallel parApply
