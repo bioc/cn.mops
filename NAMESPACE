@@ -2,7 +2,6 @@
 
 export(cn.mops)
 export(exomecn.mops)
-export(countBamInGRanges)
 export(getReadCountsFromBAM)
 export(getSegmentReadCountsFromBAM)
 export(haplocn.mops)

@@ -27,7 +27,7 @@ Default=0.}
 
 \item{...}{Additional parameters passed to the function "countBamInGRanges" 
 of the Bioconductor package "exomeCopy". Quality filters for read counts can 
-be adjusted there. Please see "??countBamInGRanges" for more information.}
+be adjusted there.}
 }
 \value{
 An instance of "GRanges", that contains the breakpoints of the 
