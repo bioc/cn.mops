@@ -15,8 +15,8 @@ extern "C" SEXP cnmops(SEXP xS, SEXP IS, SEXP covS, SEXP cycS, SEXP alphaInitS,
 		SEXP lambdaInitS, SEXP alphaPriorS) {
 	double eps=1e-100;
 	int i, k;
-	int N = length(xS);
-	int n = length(IS);
+	int N = Rf_length(xS);
+	int n = Rf_length(IS);
 	int cyc = (int)(INTEGER(cycS)[0]);
 
 	double *x=REAL(xS);
@@ -27,7 +27,7 @@ extern "C" SEXP cnmops(SEXP xS, SEXP IS, SEXP covS, SEXP cycS, SEXP alphaInitS,
 	double *cov=REAL(covS);
 
 	double meanx=0.0;
-	double *lg=Calloc(N, double);
+	double *lg=R_R_Calloc(N, double);
 	for(k = 0; k < N; k++) {
 		lg[k] = lgammafn(x[k]+1);
 		meanx += x[k];
@@ -39,19 +39,19 @@ extern "C" SEXP cnmops(SEXP xS, SEXP IS, SEXP covS, SEXP cycS, SEXP alphaInitS,
 		sumAlphaPrior=sumAlphaPrior+alphaPrior[i];
 
 	SEXP alpha_ik_RET;
-	PROTECT(alpha_ik_RET = allocMatrix(REALSXP, n, N));
+	PROTECT(alpha_ik_RET = Rf_allocMatrix(REALSXP, n, N));
 	double *alpha_ik=REAL(alpha_ik_RET);
 
 	SEXP alpha_i_RET;
-	PROTECT(alpha_i_RET = allocVector(REALSXP, n));
+	PROTECT(alpha_i_RET = Rf_allocVector(REALSXP, n));
 	double *alpha_i=REAL(alpha_i_RET);
 
 	SEXP alpha_est_RET;
-	PROTECT(alpha_est_RET = allocVector(REALSXP, n));
+	PROTECT(alpha_est_RET = Rf_allocVector(REALSXP, n));
 	double *alpha_est=REAL(alpha_est_RET);
 
 	SEXP lambda_est_RET;
-	PROTECT(lambda_est_RET = allocVector(REALSXP, n));
+	PROTECT(lambda_est_RET = Rf_allocVector(REALSXP, n));
 	double *lambda_est=REAL(lambda_est_RET);
 
 	for(i = 0; i < n; i++) {
@@ -110,22 +110,22 @@ extern "C" SEXP cnmops(SEXP xS, SEXP IS, SEXP covS, SEXP cycS, SEXP alphaInitS,
 
 	}
 
-	Free(lg);
+	R_Free(lg);
 
 	SEXP namesRET;
-	PROTECT(namesRET = allocVector(STRSXP, 4));
-	SET_STRING_ELT(namesRET, 0, mkChar("alpha.ik"));
-	SET_STRING_ELT(namesRET, 1, mkChar("alpha.i"));
-	SET_STRING_ELT(namesRET, 2, mkChar("alpha.est"));
-	SET_STRING_ELT(namesRET, 3, mkChar("lambda.est"));
+	PROTECT(namesRET = Rf_allocVector(STRSXP, 4));
+	SET_STRING_ELT(namesRET, 0, Rf_mkChar("alpha.ik"));
+	SET_STRING_ELT(namesRET, 1, Rf_mkChar("alpha.i"));
+	SET_STRING_ELT(namesRET, 2, Rf_mkChar("alpha.est"));
+	SET_STRING_ELT(namesRET, 3, Rf_mkChar("lambda.est"));
 
 	SEXP RET;
-	PROTECT(RET = allocVector(VECSXP, 4));
+	PROTECT(RET = Rf_allocVector(VECSXP, 4));
 	SET_VECTOR_ELT(RET, 0, alpha_ik_RET);
 	SET_VECTOR_ELT(RET, 1, alpha_i_RET);
 	SET_VECTOR_ELT(RET, 2, alpha_est_RET);
 	SET_VECTOR_ELT(RET, 3, lambda_est_RET);
-	setAttrib(RET, R_NamesSymbol, namesRET);
+	Rf_setAttrib(RET, R_NamesSymbol, namesRET);
 	UNPROTECT(6);
 	return(RET);
 }

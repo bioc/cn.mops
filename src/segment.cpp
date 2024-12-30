@@ -15,7 +15,7 @@ using namespace std;
 extern "C" SEXP segment(SEXP xS, SEXP epsS, SEXP deltaS, SEXP maxIntS,
 		SEXP minSegS, SEXP cyberWeightS) {
 	int j, d, ll;
-	long n=LENGTH(xS);
+	long n=Rf_length(xS);
 	long i;
 
 	double eps = REAL(epsS)[0];
@@ -39,19 +39,19 @@ extern "C" SEXP segment(SEXP xS, SEXP epsS, SEXP deltaS, SEXP maxIntS,
 	//long *rightBorders=(long *) R_alloc(n, sizeof(long));
 
 	SEXP x_RET;
-	PROTECT(x_RET = allocVector(REALSXP, n));
+	PROTECT(x_RET = Rf_allocVector(REALSXP, n));
 	double *xx=REAL(x_RET);
 
 	SEXP savedStatistic_RET;
-	PROTECT(savedStatistic_RET = allocVector(REALSXP, n));
+	PROTECT(savedStatistic_RET = Rf_allocVector(REALSXP, n));
 	double *savedStatistic=REAL(savedStatistic_RET);
 
 	//SEXP hist_RET;
-	//PROTECT(hist_RET = allocVector(REALSXP, n));
+	//PROTECT(hist_RET = Rf_allocVector(REALSXP, n));
 	//double *hist=REAL(hist_RET);
 
 	SEXP leftright_RET;
-	PROTECT(leftright_RET = allocVector(INTSXP, n));
+	PROTECT(leftright_RET = Rf_allocVector(INTSXP, n));
 	int *leftright=INTEGER(leftright_RET);
 
 
@@ -250,19 +250,19 @@ extern "C" SEXP segment(SEXP xS, SEXP epsS, SEXP deltaS, SEXP maxIntS,
 	}
 
 	SEXP namesRET;
-	PROTECT(namesRET = allocVector(STRSXP, 3));
-	SET_STRING_ELT(namesRET, 0, mkChar("x"));
-	SET_STRING_ELT(namesRET, 1, mkChar("stat"));
-	//SET_STRING_ELT(namesRET, 2, mkChar("stat2"));
-	SET_STRING_ELT(namesRET, 2, mkChar("leftright"));
+	PROTECT(namesRET = Rf_allocVector(STRSXP, 3));
+	SET_STRING_ELT(namesRET, 0, Rf_mkChar("x"));
+	SET_STRING_ELT(namesRET, 1, Rf_mkChar("stat"));
+	//SET_STRING_ELT(namesRET, 2, Rf_mkChar("stat2"));
+	SET_STRING_ELT(namesRET, 2, Rf_mkChar("leftright"));
 
 	SEXP RET;
-	PROTECT(RET = allocVector(VECSXP, 3));
+	PROTECT(RET = Rf_allocVector(VECSXP, 3));
 	SET_VECTOR_ELT(RET, 0, x_RET);
 	SET_VECTOR_ELT(RET, 1, savedStatistic_RET);
 	//SET_VECTOR_ELT(RET, 2, hist_RET);
 	SET_VECTOR_ELT(RET, 2, leftright_RET);
-	setAttrib(RET, R_NamesSymbol, namesRET);
+	Rf_setAttrib(RET, R_NamesSymbol, namesRET);
 	UNPROTECT(5);
 	return(RET);
 
