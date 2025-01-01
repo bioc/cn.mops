@@ -27,7 +27,7 @@ extern "C" SEXP cnmops(SEXP xS, SEXP IS, SEXP covS, SEXP cycS, SEXP alphaInitS,
 	double *cov=REAL(covS);
 
 	double meanx=0.0;
-	double *lg=R_R_Calloc(N, double);
+	double *lg=R_Calloc(N, double);
 	for(k = 0; k < N; k++) {
 		lg[k] = lgammafn(x[k]+1);
 		meanx += x[k];
