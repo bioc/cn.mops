@@ -103,14 +103,14 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqNames, WL=25000,para
 	for (i in 1:m){
 		if (WL >= sl[i]){
 			tmpGr <- GRanges(sn[i],IRanges(0,sl[i]))
-			GenomeInfoDb::seqlevels(tmpGr) <- sn
+			Seqinfo::seqlevels(tmpGr) <- sn
 			
 		} else {
 			if (sl[i] %% WL ==0) sl[i] <- sl[i] - 1
 			tmpBrkpts1 <- seq(0,sl[i],WL)+1
 			tmpBrkpts2 <- c(seq(WL,sl[i],WL),sl[i])
 			tmpGr <- GRanges(rep(sn[i],length(tmpBrkpts1)),IRanges(tmpBrkpts1,tmpBrkpts2)) 
-			GenomeInfoDb::seqlevels(tmpGr) <- sn
+			Seqinfo::seqlevels(tmpGr) <- sn
 		}
 		GR <- c(GR,tmpGr)
 	}
@@ -145,7 +145,7 @@ getReadCountsFromBAM <- function(BAMFiles,sampleNames,refSeqNames, WL=25000,para
 	
 	
 	GR <- sortSeqlevels(GR)
-	GenomeInfoDb::seqlengths(GR) <- targets[[1]][match(GenomeInfoDb::seqlevels(GR),names(targets[[1]]))]
+	Seqinfo::seqlengths(GR) <- targets[[1]][match(Seqinfo::seqlevels(GR),names(targets[[1]]))]
 	
 	return(GR)
 }

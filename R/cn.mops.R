@@ -232,7 +232,7 @@
 #' @importFrom IRanges as.matrix unique IRanges reduce ranges
 #' @importFrom S4Vectors subjectHits values mcols
 #' @importFrom grDevices dev.cur dev.interactive dev.new
-#' @importFrom GenomeInfoDb seqlevels sortSeqlevels seqnames seqinfo seqlengths
+#' @importFrom Seqinfo seqlevels sortSeqlevels seqnames seqinfo seqlengths
 #' @importFrom BiocGenerics strand start end
 #' @importFrom Biobase isUnique rowMedians
 #' @importFrom graphics abline axis hist layout lines matplot mtext par title

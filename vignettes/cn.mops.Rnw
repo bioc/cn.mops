@@ -44,7 +44,7 @@ set.seed(0)
 library(cn.mops)
 library(Biobase)
 library(GenomicRanges)
-library(GenomeInfoDb)
+library(Seqinfo)
 cn.mopsVersion <- packageDescription("cn.mops")$Version
 @
 \newcommand{\cnmopsVersion}{\Sexpr{cn.mopsVersion}}
@@ -458,7 +458,7 @@ are inconsistent between the bed file and the bam file. For example "chr1",
 replacing the seqlevels of the GRanges object:
 <<eval=FALSE>>=
 #the following removes the "chr" from reference sequence names
-library(GenomeInfoDb)
+library(Seqinfo)
 seqlevels(gr) <- gsub("chr","",seqlevels(gr))
 @
 
